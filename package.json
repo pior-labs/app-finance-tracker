@@ -1,0 +1,23 @@
+{
+  "name": "finlens",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.8.1",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @finlens/api --filter @finlens/web dev",
+    "dev:api": "pnpm --filter @finlens/api dev",
+    "dev:web": "pnpm --filter @finlens/web dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @finlens/api db:generate",
+    "db:migrate": "pnpm --filter @finlens/api db:migrate",
+    "db:seed": "pnpm --filter @finlens/api db:seed"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "bcrypt",
+      "better-sqlite3",
+      "esbuild"
+    ]
+  }
+}

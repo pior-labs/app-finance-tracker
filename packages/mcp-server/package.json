@@ -1,0 +1,10 @@
+{
+  "name": "@finlens/mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "echo \"Phase 3 placeholder\"",
+    "typecheck": "echo \"Phase 3 placeholder\""
+  }
+}

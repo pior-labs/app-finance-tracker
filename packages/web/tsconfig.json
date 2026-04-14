@@ -9,9 +9,8 @@
     "allowJs": false,
     "noEmit": true,
     "types": ["vite/client"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/*": ["./src/*"],
       "@finlens/shared": ["../shared/src/index.ts"],
       "@finlens/shared/*": ["../shared/src/*"]
     }

@@ -5,7 +5,12 @@ const designs = [
   { to: '/2', label: '02' },
   { to: '/3', label: '03' },
   { to: '/4', label: '04' },
-  { to: '/5', label: '05' }
+  { to: '/5', label: '05' },
+  { to: '/6', label: '06' },
+  { to: '/7', label: '07' },
+  { to: '/8', label: '08' },
+  { to: '/9', label: '09' },
+  { to: '/10', label: '10' }
 ] as const;
 
 type Tone = 'light' | 'dark';

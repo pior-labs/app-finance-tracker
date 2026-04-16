@@ -8,6 +8,13 @@
       "when": 1776182006276,
       "tag": "0000_powerful_genesis",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1776309132597,
+      "tag": "0001_phase1_alignment",
+      "breakpoints": true
     }
   ]
 }

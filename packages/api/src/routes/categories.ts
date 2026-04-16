@@ -13,11 +13,16 @@ categoriesRoutes.get('/', requireAuth, async (c) => {
       name: categories.name,
       description: categories.description,
       keywords: categories.keywords,
-      userDefined: categories.userDefined
+      isDefault: categories.isDefault,
+      createdAt: categories.createdAt
     })
     .from(categories)
     .orderBy(asc(categories.name))
-    .all();
+    .all()
+    .map((category) => ({
+      ...category,
+      createdAt: category.createdAt.toISOString()
+    }));
 
   return c.json({ categories: allCategories });
 });

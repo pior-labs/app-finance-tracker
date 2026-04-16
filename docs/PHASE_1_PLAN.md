@@ -211,7 +211,7 @@ Don't parse the PDF yet. Just get the upload flow working.
    - Create a `statements` row in the database (user_id, filename, upload_date)
    - Return the created statement record
 2. Build a simple listing endpoint: `GET /api/statements`
-   - Returns all statements for the logged-in user
+   - Returns all household statements (shared between both users)
 
 **Test it:**
 

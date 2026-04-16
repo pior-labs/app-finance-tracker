@@ -1,15 +1,8 @@
-import { Button } from '@/components/ui/button';
-
 export function DashboardPage() {
   return (
-    <section>
+    <section className="page-shell">
       <h2>Dashboard</h2>
-      <p>Dashboard widgets and monthly summaries will be added in a later phase.</p>
-      <div style={{ marginTop: '1rem' }}>
-        <Button type="button" variant="outline">
-          shadcn/ui ready
-        </Button>
-      </div>
+      <p>Monthly spend totals, uncategorized count, and category bars land here in Step 7.</p>
     </section>
   );
 }

@@ -14,13 +14,14 @@ export interface User {
 
 export interface Statement {
   id: number;
-  userId: number;
+  uploadedBy: number;
   filename: string;
-  uploadDate: string;
+  originalFilename: string;
   institution: string | null;
-  statementPeriodStart: string | null;
-  statementPeriodEnd: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
   rawText: string | null;
+  createdAt: string;
 }
 
 export interface Category {
@@ -28,7 +29,8 @@ export interface Category {
   name: string;
   description: string;
   keywords: string;
-  userDefined: boolean;
+  isDefault: boolean;
+  createdAt: string;
 }
 
 export interface Transaction {
@@ -41,6 +43,6 @@ export interface Transaction {
   categoryId: number | null;
   confidenceScore: number | null;
   status: TransactionStatus;
-  categorizedBy: CategorizedBy;
+  categorizedBy: CategorizedBy | null;
   createdAt: string;
 }

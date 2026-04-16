@@ -1,8 +1,8 @@
 export function TransactionsPage() {
   return (
-    <section>
+    <section className="page-shell">
       <h2>Transactions</h2>
-      <p>Transaction list and filters will be implemented after parser integration.</p>
+      <p>Filters, table rows, and inline category assignment land here in Step 9.</p>
     </section>
   );
 }

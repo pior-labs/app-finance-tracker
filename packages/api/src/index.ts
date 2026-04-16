@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { requireAuth } from './lib/auth.js';
 import { authRoutes } from './routes/auth.js';
 import { categoriesRoutes } from './routes/categories.js';
 import { statementsRoutes } from './routes/statements.js';
@@ -13,7 +14,8 @@ await bootstrapApp();
 
 const app = new Hono();
 
-app.use('/api/*',
+app.use(
+  '/api/*',
   cors({
     origin: (origin) => {
       if (!origin) {
@@ -27,6 +29,20 @@ app.use('/api/*',
     credentials: true
   })
 );
+
+app.use('/api/*', async (c, next) => {
+  if (c.req.method === 'OPTIONS') {
+    await next();
+    return;
+  }
+
+  if (c.req.path === '/api/auth/login') {
+    await next();
+    return;
+  }
+
+  await requireAuth(c, next);
+});
 
 app.get('/health', (c) => c.json({ status: 'ok' }));
 

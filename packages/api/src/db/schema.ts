@@ -17,17 +17,18 @@ export const users = sqliteTable('users', {
 
 export const statements = sqliteTable('statements', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  userId: integer('user_id')
+  uploadedBy: integer('uploaded_by')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   filename: text('filename').notNull(),
-  uploadDate: integer('upload_date', { mode: 'timestamp_ms' })
-    .$defaultFn(() => new Date())
-    .notNull(),
+  originalFilename: text('original_filename').notNull(),
   institution: text('institution'),
-  statementPeriodStart: text('statement_period_start'),
-  statementPeriodEnd: text('statement_period_end'),
-  rawText: text('raw_text')
+  periodStart: text('period_start'),
+  periodEnd: text('period_end'),
+  rawText: text('raw_text'),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .$defaultFn(() => new Date())
+    .notNull()
 });
 
 export const categories = sqliteTable('categories', {
@@ -35,8 +36,11 @@ export const categories = sqliteTable('categories', {
   name: text('name').notNull().unique(),
   description: text('description').notNull(),
   keywords: text('keywords').notNull(),
-  userDefined: integer('user_defined', { mode: 'boolean' })
+  isDefault: integer('is_default', { mode: 'boolean' })
     .default(false)
+    .notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .$defaultFn(() => new Date())
     .notNull()
 });
 
@@ -47,17 +51,14 @@ export const transactions = sqliteTable('transactions', {
     .references(() => statements.id, { onDelete: 'cascade' }),
   date: text('date').notNull(),
   description: text('description').notNull(),
-  amount: real('amount').notNull(),
+  amount: integer('amount').notNull(),
   type: text('type').$type<TransactionType>().notNull(),
   categoryId: integer('category_id').references(() => categories.id, {
     onDelete: 'set null'
   }),
   confidenceScore: real('confidence_score'),
   status: text('status').$type<TransactionStatus>().notNull().default('needs_review'),
-  categorizedBy: text('categorized_by')
-    .$type<CategorizedBy>()
-    .notNull()
-    .default('human'),
+  categorizedBy: text('categorized_by').$type<CategorizedBy>(),
   createdAt: integer('created_at', { mode: 'timestamp_ms' })
     .$defaultFn(() => new Date())
     .notNull()
@@ -70,5 +71,8 @@ export const categoryExamples = sqliteTable('category_examples', {
     .references(() => categories.id, { onDelete: 'cascade' }),
   transactionDescription: text('transaction_description').notNull(),
   notes: text('notes'),
-  source: text('source').notNull()
+  source: text('source').notNull(),
+  createdAt: integer('created_at', { mode: 'timestamp_ms' })
+    .$defaultFn(() => new Date())
+    .notNull()
 });

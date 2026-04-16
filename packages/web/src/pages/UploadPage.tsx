@@ -1,8 +1,8 @@
 export function UploadPage() {
   return (
-    <section>
+    <section className="page-shell">
       <h2>Upload</h2>
-      <p>PDF upload form placeholder. Statement parsing lands in Phase 1 implementation.</p>
+      <p>PDF upload and past statement history land here in Step 8.</p>
     </section>
   );
 }

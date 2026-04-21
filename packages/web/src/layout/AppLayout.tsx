@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { Button } from '@/components/ui/button';
 
 const navItems = [
   { to: '/', label: 'Dashboard' },
@@ -44,13 +45,9 @@ export function AppLayout() {
             <p className="text-base font-bold text-slate-900">Household Workspace</p>
             <p className="mt-1 text-sm text-slate-600">Signed in as {user?.name ?? 'Unknown'}</p>
           </div>
-          <button
-            type="button"
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-50"
-            onClick={handleLogout}
-          >
+          <Button type="button" variant="outline" onClick={handleLogout}>
             Log out
-          </button>
+          </Button>
         </header>
 
         <main className="px-4 py-6 md:px-8 md:py-8">

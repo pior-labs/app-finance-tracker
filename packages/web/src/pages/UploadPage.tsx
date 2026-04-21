@@ -1,5 +1,7 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 interface StatementListItem {
   id: number;
@@ -90,7 +92,9 @@ export function UploadPage() {
           return;
         }
 
-        setError(err instanceof Error ? err.message : 'Unable to load statements.');
+        const message = err instanceof Error ? err.message : 'Unable to load statements.';
+        setError(message);
+        toast.error(message);
       } finally {
         if (mounted) {
           setLoadingStatements(false);
@@ -115,7 +119,9 @@ export function UploadPage() {
     event.preventDefault();
 
     if (!selectedFile) {
-      setError('Choose a PDF file first.');
+      const message = 'Choose a PDF file first.';
+      setError(message);
+      toast.error(message);
       return;
     }
 
@@ -143,9 +149,12 @@ export function UploadPage() {
 
       setSuccessStatementId(uploadedStatement?.id ?? payload.statement.id);
       setSelectedFile(null);
+      toast.success('Statement uploaded successfully.');
     } catch (err) {
       setSuccessStatementId(null);
-      setError(err instanceof Error ? err.message : 'Upload failed.');
+      const message = err instanceof Error ? err.message : 'Upload failed.';
+      setError(message);
+      toast.error(message);
     } finally {
       setUploading(false);
     }
@@ -173,13 +182,13 @@ export function UploadPage() {
           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 file:mr-3 file:rounded-md file:border-0 file:bg-slate-900 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-white hover:file:bg-slate-800"
           disabled={uploading}
         />
-        <button
+        <Button
           type="submit"
-          className="w-fit rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-65"
+          className="w-fit"
           disabled={uploading || !selectedFile}
         >
           {uploading ? 'Parsing statement...' : 'Upload PDF'}
-        </button>
+        </Button>
         {error ? <p className="text-sm font-medium text-red-700">{error}</p> : null}
       </form>
 

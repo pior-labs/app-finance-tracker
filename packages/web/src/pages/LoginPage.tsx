@@ -1,6 +1,8 @@
 import { FormEvent, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { useAuth } from '../lib/auth';
+import { Button } from '@/components/ui/button';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -23,10 +25,13 @@ export function LoginPage() {
       const result = await login(email.trim(), password);
 
       if (!result.ok) {
-        setError(result.error ?? 'Unable to log in.');
+        const message = result.error ?? 'Unable to log in.';
+        setError(message);
+        toast.error(message);
         return;
       }
 
+      toast.success('Welcome back.');
       navigate('/', { replace: true });
     } finally {
       setSubmitting(false);
@@ -70,13 +75,13 @@ export function LoginPage() {
 
         {error ? <p className="text-sm font-medium text-red-700">{error}</p> : null}
 
-        <button
+        <Button
           type="submit"
-          className="mt-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-65"
+          className="mt-1"
           disabled={submitting || loading}
         >
           {submitting ? 'Signing in...' : 'Sign in'}
-        </button>
+        </Button>
       </form>
     </section>
   );

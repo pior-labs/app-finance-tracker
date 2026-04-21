@@ -5,7 +5,11 @@ export function ProtectedRoute({ children }: { children: JSX.Element }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="page-shell">Checking your session...</div>;
+    return (
+      <div className="grid min-h-screen place-items-center bg-slate-50 px-4 text-slate-700">
+        Checking your session...
+      </div>
+    );
   }
 
   if (!user) {

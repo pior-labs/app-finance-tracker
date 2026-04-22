@@ -14,7 +14,7 @@ Work through the steps in order. Each step ends with a "Test it" section — don
 
 ## Frontend MVP Scope (Steps 6-9)
 
-The frontend is **4 routes, ~5 components, zero libraries beyond React Router.** Here's the full scope at a glance so you know exactly what you're building — nothing more.
+The frontend is **4 routes, a handful of custom components, and shadcn/ui for the building blocks.** Here's the full scope at a glance so you know exactly what you're building — nothing more.
 
 **Routes:**
 
@@ -25,19 +25,35 @@ The frontend is **4 routes, ~5 components, zero libraries beyond React Router.**
 | `/transactions`  | Transactions  | Table with filters + inline categorization       |
 | `/upload`        | Upload        | PDF upload + list of past uploads                |
 
-**Shared components:**
+**shadcn/ui components to install:**
+
+| Component    | Used for                                                    |
+| ------------ | ----------------------------------------------------------- |
+| `button`     | All buttons (login, upload, navigation)                     |
+| `input`      | Login form fields                                           |
+| `card`       | Stat cards on dashboard, upload area                        |
+| `table`      | Transaction list                                            |
+| `select`     | Category dropdown (inline on each transaction row)          |
+| `badge`      | Status indicators (needs_review, confirmed)                 |
+| `sidebar`    | App shell navigation                                        |
+| `dropdown-menu` | User menu (logout)                                       |
+| `progress`   | Category spending bars on dashboard                         |
+| `separator`  | Visual dividers                                             |
+
+You install these with `npx shadcn@latest add button card table ...` etc. They get copied into `web/src/components/ui/` and you own the code.
+
+**Custom components you build (using shadcn primitives):**
 
 | Component          | Used where        | What it does                                    |
 | ------------------ | ----------------- | ----------------------------------------------- |
-| `AppShell`         | All protected pages | Sidebar nav + header with user name + logout   |
+| `AppShell`         | All protected pages | shadcn Sidebar + header with user name + logout|
 | `ProtectedRoute`   | Router            | Redirects to `/login` if not authenticated      |
-| `StatCard`         | Dashboard         | Big number + label, optionally clickable        |
-| `CategoryBar`      | Dashboard         | Colored horizontal bar with label + amount      |
-| `CategoryDropdown` | Transactions      | Inline dropdown, saves on selection             |
+| `StatCard`         | Dashboard         | shadcn Card with a big number + label           |
+| `CategoryBar`      | Dashboard         | shadcn Progress bar with label + amount         |
 
 **What's shared between users:** Everything. This is a shared household view — both users see all transactions, all uploads, all stats. Auth exists to keep the app private, not to separate data.
 
-**What's NOT in the MVP:** No categories management page (seed via DB). No charts library. No date range comparison. No export. No search. No bulk categorization. No dark mode. No mobile-specific layout (it should be usable on mobile but doesn't need a dedicated design).
+**What's NOT in the MVP:** No categories management page (seed via DB). No charts library. No date range comparison. No export. No transaction search. No bulk categorization. No dark mode. No mobile-specific layout (it should be usable on mobile but doesn't need a dedicated design).
 
 ---
 
@@ -103,6 +119,7 @@ Write meaningful `description` and `keywords` values when seeding — they're fr
 **Why cents?** Floating point math breaks with money. `19.99 + 0.01` doesn't always equal `20.00` in JavaScript. Store `1999` as an integer, divide by 100 only at display time: `(amount / 100).toFixed(2)`. Every serious financial system does this.
 
 **Status flow:**
+
 ```
 Upload → "needs_review" (no category yet)
                 ↓
@@ -147,8 +164,8 @@ You've already scaffolded the repo with Claude Code. Before writing any new code
 **Do this:**
 
 1. Run `pnpm install` at the root
-2. Start the API: `cd packages/api && pnpm dev` — confirm it starts without errors
-3. Start the frontend: `cd packages/web && pnpm dev` — confirm it loads in the browser
+2. Start the API: `cd api && pnpm dev` — confirm it starts without errors
+3. Start the frontend: `cd web && pnpm dev` — confirm it loads in the browser
 4. If using Docker Compose: run `docker compose up` and confirm both services start
 5. Hit the API from the browser or curl — any route, even a 404, just confirm it responds
 
@@ -166,16 +183,16 @@ You've already scaffolded the repo with Claude Code. Before writing any new code
 
 1. Verify the Drizzle schema matches the **Database Schema** section above (all 5 tables, including the Phase 2 columns)
 2. Pay special attention to `transactions.amount` — it must be an integer (cents), not a float
-2. Run the migration so the SQLite database file gets created in `/data`
-3. Create a seed script (`packages/api/src/db/seed.ts`) that:
+3. Run the migration so the SQLite database file gets created in `/data`
+4. Create a seed script (`api/src/db/seed.ts`) that:
    - Creates two user accounts (you and your fiancée) with hashed passwords
    - Inserts the ~15-20 default categories
-4. Run the seed script and verify the data is in the database (use a SQLite viewer like `sqlite3` CLI, DB Browser for SQLite, or the VSCode SQLite extension)
-5. Build the auth endpoints:
+5. Run the seed script and verify the data is in the database (use a SQLite viewer like `sqlite3` CLI, DB Browser for SQLite, or the VSCode SQLite extension)
+6. Build the auth endpoints:
    - `POST /api/auth/login` — accepts email + password, returns a session cookie
    - `POST /api/auth/logout` — clears the session
    - `GET /api/auth/me` — returns the current user or 401
-6. Add auth middleware that protects all `/api/*` routes except login
+7. Add auth middleware that protects all `/api/*` routes except login
 
 **Test it:**
 
@@ -211,7 +228,7 @@ Don't parse the PDF yet. Just get the upload flow working.
    - Create a `statements` row in the database (user_id, filename, upload_date)
    - Return the created statement record
 2. Build a simple listing endpoint: `GET /api/statements`
-   - Returns all household statements (shared between both users)
+   - Returns all statements (household view — not filtered by user)
 
 **Test it:**
 
@@ -301,8 +318,8 @@ Build out the API routes you'll need for the frontend. This is a **shared househ
 # Get all transactions
 curl "http://localhost:3000/api/transactions" -b cookies.txt
 
-# Filter by date
-curl "http://localhost:3000/api/transactions?startDate=2026-03-01&endDate=2026-03-31" -b cookies.txt
+# Filter by month
+curl "http://localhost:3000/api/transactions?month=2026-03" -b cookies.txt
 
 # Categorize a transaction manually
 curl -X PATCH http://localhost:3000/api/transactions/1 \
@@ -333,14 +350,16 @@ Now you start making it real in the browser. The frontend has **4 routes total**
 
 1. Set up React Router with these 4 routes
 2. Build a `<ProtectedRoute>` wrapper that checks auth state and redirects to `/login` if not logged in
-3. Build the login page:
-   - Email + password form
+3. Build the login page using shadcn components:
+   - `Card` wrapping the form
+   - `Input` for email and password
+   - `Button` for submit
    - Calls `POST /api/auth/login`
    - On success, redirect to `/`
    - Store auth state in a React context or a `useAuth()` hook
-4. Build the app shell (wraps all protected routes):
+4. Build the app shell using shadcn's `Sidebar` component:
    - Sidebar with 3 navigation links: Dashboard, Transactions, Upload
-   - Header showing the logged-in user's name + a logout button
+   - Header showing the logged-in user's name + a `DropdownMenu` with logout
    - Main content area where the page renders
 
 **Test it:** Open the browser. You're redirected to `/login`. Log in. You see the sidebar and an empty dashboard. Click each nav link — the URL changes, the page swaps. Click logout — back to login. Log in as your fiancée — same shell, same empty content.
@@ -355,16 +374,15 @@ The dashboard is why you'd open this app. It answers two questions at a glance: 
 
 **Do this:**
 
-1. **Stat cards row** — 2 simple cards at the top:
+1. **Stat cards row** — 2 cards at the top using shadcn `Card`:
    - "Spent this month" — total spending amount, large font
    - "Needs review" — count of uncategorized transactions. Make this clickable — navigates to `/transactions?status=needs_review`
-2. **Spending by category** — horizontal bars below the stats:
+2. **Spending by category** — below the stats:
    - Fetch from `GET /api/transactions/stats` (the category breakdown)
-   - For each category: label, colored bar (width proportional to amount), dollar amount
+   - For each category: label, shadcn `Progress` bar (value proportional to highest category), dollar amount
    - Sort by amount descending
-   - You don't need a charting library — a styled `<div>` with dynamic width works perfectly
    - Only show categories that have spending (skip zero-amount categories)
-3. **Empty state** — if no transactions exist yet, show a message: "No transactions yet. Upload your first statement." with a link to `/upload`
+3. **Empty state** — if no transactions exist yet, show a message: "No transactions yet. Upload your first statement." with a `Button` linking to `/upload`
 
 **Test it:** Upload a statement via curl or the API (from Step 4). Manually categorize a few transactions via curl (from Step 5). Open the dashboard — you should see the total, the uncategorized count, and the category bars reflecting your manual categorizations. Click the "Needs review" card — you should land on the transactions page filtered to uncategorized.
 
@@ -377,14 +395,14 @@ The dashboard is why you'd open this app. It answers two questions at a glance: 
 **Do this:**
 
 1. **Upload section** at the top of the page:
-   - A file input that only accepts PDFs (or a simple dropzone if you want, but a file input is fine)
+   - A file `Input` with `type="file"` that only accepts PDFs (or a simple drag-and-drop area using a `Card`)
    - On file select, call `POST /api/statements/upload` with the file
    - Show a loading state while parsing: "Parsing statement..."
    - On success, show a summary: "Found X transactions from {startDate} to {endDate}"
-   - Include a link: "View transactions →" that navigates to `/transactions`
-2. **Past uploads** below:
-   - List from `GET /api/statements`
-   - Each row shows: filename, who uploaded it, date uploaded, transaction count
+   - Include a `Button`: "View transactions →" that navigates to `/transactions`
+2. **Past uploads** below using shadcn `Table`:
+   - Columns: filename, uploaded by, date uploaded, transaction count
+   - Fetch from `GET /api/statements`
    - Most recent first
 
 **Test it:** Upload a real statement through the UI. See the loading state. See the summary. Click through to transactions. Go back to the upload page — see the statement listed under past uploads.
@@ -400,17 +418,18 @@ This is the core UI of Phase 1 — where you'll spend the most time interacting 
 **Do this:**
 
 1. **Filter bar** at the top:
-   - Month picker (defaults to current month)
-   - Category dropdown (all categories + "All" + "Uncategorized")
-   - Status filter: All, Needs Review, Confirmed
-2. **Transaction table:**
+   - Month picker using `Select` (defaults to current month)
+   - Category filter using `Select` (all categories + "All" + "Uncategorized")
+   - Status filter using `Select`: All, Needs Review, Confirmed
+2. **Transaction table** using shadcn `Table`:
    - Columns: date, description, amount, category, status
-   - Color amounts: red for debits, green for credits
-   - Paginate at 50 rows per page (simple prev/next buttons)
+   - Color amounts: red text for debits, green for credits (Tailwind `text-red-500` / `text-green-500`)
+   - Status column shows a `Badge` — yellow for "needs_review", green for "confirmed"
+   - Paginate at 50 rows per page (simple prev/next `Button`s)
 3. **Inline category assignment** — this is the key interaction:
-   - Each row has a category dropdown in the category column
+   - Each row has a `Select` dropdown in the category column
    - Selecting a category immediately calls `PATCH /api/transactions/:id` with the new category, `status: "confirmed"`, and `categorized_by: "human"`
-   - Visual feedback: the row should visually update (e.g., status changes from a yellow "needs review" badge to a green "confirmed" badge) without a page refresh
+   - The `Badge` updates from yellow "needs review" to green "confirmed" without a page refresh
    - No save button — selection triggers the save
 4. **No bulk actions for MVP.** One at a time is fine. You can add multi-select later if the manual flow feels slow.
 
@@ -463,7 +482,9 @@ When you're done, run through this scenario end to end:
 
 ## Common Pitfalls to Avoid
 
-**Don't over-engineer the frontend.** It's tempting to add charts, animations, and a design system. Resist. Functional and clean is enough for Phase 1. You'll iterate on the UI naturally as you use the app.
+**Don't over-engineer the frontend.** shadcn gives you great-looking components out of the box. Use them as-is. Don't customize themes, add animations, or tweak every border radius. Functional and clean is enough for Phase 1.
+
+**Don't install every shadcn component upfront.** Only install what you need for the page you're currently building. The list in this doc is complete — if it's not listed, you don't need it yet.
 
 **Don't try to support multiple bank formats yet.** Get one format working perfectly. Generalize in a future phase when you or your fiancée switch banks or add a credit card.
 

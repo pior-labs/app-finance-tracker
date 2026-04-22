@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+.vite/
+*.tsbuildinfo
+
+# env
+.env
+.env.local
+
+# runtime data
+data/*
+!data/.gitkeep
+
+# logs
+*.log
+pnpm-debug.log*
+
+# system
+.DS_Store

@@ -1,11 +1,17 @@
 import { randomUUID } from 'node:crypto';
-import { writeFile } from 'node:fs/promises';
+import { readFile, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { desc, eq, inArray, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { db, schema } from '../db/index.js';
 import { ensureDir, env, resolveFromApiDir } from '../lib/env.js';
 import type { AuthVariables } from '../middleware/auth.js';
+import {
+  extractPdfText,
+  parseBankStatementText,
+  parseRbcStatementTable,
+  type ParsedStatementRow
+} from '../services/pdf-parser.js';
 
 export const statementsRouter = new Hono<{ Variables: AuthVariables }>();
 
@@ -43,6 +49,32 @@ function sanitizeFilename(filename: string): string {
     .trim()
     .replace(/\s+/g, '-')
     .replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
+function logExtractedStatementText(logContext: string, filename: string, extractedText: string): void {
+  console.log(`[${logContext}] Extracted ${extractedText.length} characters from ${filename}`);
+  console.log('----- PDF RAW TEXT START -----');
+  console.log(extractedText);
+  console.log('----- PDF RAW TEXT END -----');
+}
+
+function logParsedRows(logContext: string, filename: string, parsedRows: ParsedStatementRow[]): void {
+  console.log(`[${logContext}] Parsed ${parsedRows.length} rows from ${filename}`);
+  console.log('----- PDF PARSED ROWS START -----');
+  console.log(JSON.stringify(parsedRows, null, 2));
+  console.log('----- PDF PARSED ROWS END -----');
+}
+
+function getStatementPeriodFromRows(rows: ParsedStatementRow[]): { periodStart: string | null; periodEnd: string | null } {
+  if (rows.length === 0) {
+    return { periodStart: null, periodEnd: null };
+  }
+
+  const sortedDates = rows.map((row) => row.transactionDate).sort();
+  return {
+    periodStart: sortedDates[0],
+    periodEnd: sortedDates[sortedDates.length - 1]
+  };
 }
 
 statementsRouter.get('/', async (c) => {
@@ -124,24 +156,148 @@ statementsRouter.post('/upload', async (c) => {
   const fileBuffer = Buffer.from(await uploadedFile.arrayBuffer());
   await writeFile(absoluteFilePath, fileBuffer);
 
+  const extractedText = await extractPdfText(fileBuffer);
+  logExtractedStatementText('statements/upload', sanitizedOriginalFilename, extractedText);
+  const parsedRows = parseRbcStatementTable(extractedText);
+  logParsedRows('statements/upload', sanitizedOriginalFilename, parsedRows);
+  const parsedTransactions = parseBankStatementText(extractedText);
+  const { periodStart, periodEnd } = getStatementPeriodFromRows(parsedRows);
+
   const [createdStatement] = await db
     .insert(schema.statements)
     .values({
       uploadedBy: userId,
       filename: storedFilename,
-      originalFilename: sanitizedOriginalFilename
+      originalFilename: sanitizedOriginalFilename,
+      periodStart,
+      periodEnd,
+      rawText: extractedText
     })
     .returning();
 
+  if (parsedTransactions.length > 0) {
+    await db.insert(schema.transactions).values(
+      parsedTransactions.map((transaction) => ({
+        statementId: createdStatement.id,
+        date: transaction.date,
+        description: transaction.description,
+        amount: transaction.amount,
+        type: transaction.type,
+        categoryId: null,
+        confidenceScore: null,
+        status: 'needs_review',
+        categorizedBy: null
+      }))
+    );
+  }
+
   return c.json(
     {
-      data: createdStatement,
+      data: {
+        id: createdStatement.id,
+        uploadedBy: createdStatement.uploadedBy,
+        filename: createdStatement.filename,
+        originalFilename: createdStatement.originalFilename,
+        institution: createdStatement.institution,
+        periodStart: createdStatement.periodStart,
+        periodEnd: createdStatement.periodEnd,
+        rawText: null,
+        createdAt: createdStatement.createdAt
+      },
       meta: {
-        uploadPath: path.relative(resolveFromApiDir('../data'), absoluteFilePath)
+        uploadPath: path.relative(resolveFromApiDir('../data'), absoluteFilePath),
+        parsedRows: parsedRows.length,
+        insertedTransactions: parsedTransactions.length
       }
     },
     201
   );
+});
+
+statementsRouter.post('/:id/log', async (c) => {
+  const statementId = Number(c.req.param('id'));
+  if (Number.isNaN(statementId) || statementId <= 0) {
+    return c.json({ error: 'Invalid statement id' }, 400);
+  }
+
+  const statement = await db.query.statements.findFirst({
+    where: eq(schema.statements.id, statementId)
+  });
+
+  if (!statement) {
+    return c.json({ error: 'Statement not found' }, 404);
+  }
+
+  const uploadRootPath = resolveFromApiDir(env.uploadDir);
+  const safeStoredFilename = path.basename(statement.filename);
+  const statementFilePath = path.join(uploadRootPath, String(statement.uploadedBy), safeStoredFilename);
+
+  let fileBuffer: Buffer;
+  try {
+    fileBuffer = await readFile(statementFilePath);
+  } catch {
+    return c.json({ error: 'Statement file not found on disk' }, 404);
+  }
+
+  const extractedText = await extractPdfText(fileBuffer);
+  logExtractedStatementText('statements/log', statement.originalFilename, extractedText);
+  const parsedRows = parseRbcStatementTable(extractedText);
+  logParsedRows('statements/log', statement.originalFilename, parsedRows);
+
+  return c.json({
+    success: true,
+    statementId,
+    originalFilename: statement.originalFilename,
+    extractedCharacters: extractedText.length,
+    parsedRows: parsedRows.length
+  });
+});
+
+statementsRouter.delete('/:id', async (c) => {
+  const statementId = Number(c.req.param('id'));
+  if (Number.isNaN(statementId) || statementId <= 0) {
+    return c.json({ error: 'Invalid statement id' }, 400);
+  }
+
+  const statement = await db.query.statements.findFirst({
+    where: eq(schema.statements.id, statementId)
+  });
+
+  if (!statement) {
+    return c.json({ error: 'Statement not found' }, 404);
+  }
+
+  const deletedTransactions = await db
+    .delete(schema.transactions)
+    .where(eq(schema.transactions.statementId, statementId))
+    .returning({ id: schema.transactions.id });
+
+  const deletedStatements = await db
+    .delete(schema.statements)
+    .where(eq(schema.statements.id, statementId))
+    .returning({ id: schema.statements.id });
+
+  if (deletedStatements.length === 0) {
+    return c.json({ error: 'Statement not found' }, 404);
+  }
+
+  const uploadRootPath = resolveFromApiDir(env.uploadDir);
+  const safeStoredFilename = path.basename(statement.filename);
+  const statementFilePath = path.join(uploadRootPath, String(statement.uploadedBy), safeStoredFilename);
+
+  let fileDeleted = true;
+  try {
+    await unlink(statementFilePath);
+  } catch {
+    fileDeleted = false;
+  }
+
+  return c.json({
+    success: true,
+    statementId,
+    deletedTransactions: deletedTransactions.length,
+    fileDeleted
+  });
 });
 
 statementsRouter.get('/:id/transactions', async (c) => {

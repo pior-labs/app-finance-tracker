@@ -32,12 +32,31 @@ interface UploadResponse {
     id: number;
     originalFilename: string;
   };
+  meta?: {
+    insertedTransactions?: number;
+  };
+}
+
+interface LogStatementResponse {
+  success: boolean;
+  statementId: number;
+  originalFilename: string;
+  extractedCharacters: number;
+}
+
+interface DeleteStatementResponse {
+  success: boolean;
+  statementId: number;
+  deletedTransactions: number;
+  fileDeleted: boolean;
 }
 
 export function UploadPage() {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [loggingStatementId, setLoggingStatementId] = useState<number | null>(null);
+  const [deletingStatementId, setDeletingStatementId] = useState<number | null>(null);
   const [loadingStatements, setLoadingStatements] = useState(true);
   const [statements, setStatements] = useState<StatementListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -103,14 +122,93 @@ export function UploadPage() {
 
       const payload = (await response.json()) as UploadResponse;
       const uploadedStatement = payload.data;
+      const insertedTransactions = payload.meta?.insertedTransactions;
 
       setSelectedFile(null);
-      setSuccessMessage(`Uploaded ${uploadedStatement.originalFilename} successfully.`);
+      if (typeof insertedTransactions === 'number') {
+        setSuccessMessage(
+          `Uploaded ${uploadedStatement.originalFilename} successfully. Inserted ${insertedTransactions} transactions.`
+        );
+      } else {
+        setSuccessMessage(`Uploaded ${uploadedStatement.originalFilename} successfully.`);
+      }
       await fetchStatements();
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : 'Upload failed');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const onLogStatement = async (statement: StatementListItem) => {
+    setError(null);
+    setSuccessMessage(null);
+    setLoggingStatementId(statement.id);
+
+    try {
+      const response = await fetch(`/api/statements/${statement.id}/log`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message = (payload as { error?: string }).error ?? `Log failed (${response.status})`;
+        throw new Error(message);
+      }
+
+      const payload = (await response.json()) as LogStatementResponse;
+      setSuccessMessage(
+        `Logged ${payload.originalFilename} (${payload.extractedCharacters} chars). Check API console output.`
+      );
+    } catch (logError) {
+      setError(logError instanceof Error ? logError.message : 'Failed to log statement text');
+    } finally {
+      setLoggingStatementId(null);
+    }
+  };
+
+  const onDeleteStatement = async (statement: StatementListItem) => {
+    const confirmed = window.confirm(
+      `Delete "${statement.originalFilename}" and its ${statement.transactionCount} transaction(s)? This cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setError(null);
+    setSuccessMessage(null);
+    setDeletingStatementId(statement.id);
+
+    try {
+      const response = await fetch(`/api/statements/${statement.id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message = (payload as { error?: string }).error ?? `Delete failed (${response.status})`;
+        throw new Error(message);
+      }
+
+      const payload = (await response.json()) as DeleteStatementResponse;
+      if (payload.fileDeleted) {
+        setSuccessMessage(
+          `Deleted ${statement.originalFilename} and ${payload.deletedTransactions} transaction(s).`
+        );
+      } else {
+        setSuccessMessage(
+          `Deleted DB records for ${statement.originalFilename} (${payload.deletedTransactions} transaction(s)); file was already missing on disk.`
+        );
+      }
+
+      await fetchStatements();
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete statement');
+    } finally {
+      setDeletingStatementId(null);
     }
   };
 
@@ -170,18 +268,19 @@ export function UploadPage() {
                 <TableHead>Uploaded by</TableHead>
                 <TableHead>Date uploaded</TableHead>
                 <TableHead>Transaction count</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loadingStatements ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-[var(--muted-foreground)]">
+                  <TableCell colSpan={5} className="text-center text-[var(--muted-foreground)]">
                     Loading uploads...
                   </TableCell>
                 </TableRow>
               ) : sortedStatements.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-[var(--muted-foreground)]">
+                  <TableCell colSpan={5} className="text-center text-[var(--muted-foreground)]">
                     No uploads yet.
                   </TableCell>
                 </TableRow>
@@ -192,6 +291,29 @@ export function UploadPage() {
                     <TableCell>{statement.uploadedByUser?.name ?? `User ${statement.uploadedBy}`}</TableCell>
                     <TableCell>{formatDateTime(statement.createdAt)}</TableCell>
                     <TableCell>{statement.transactionCount}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                          disabled={deletingStatementId === statement.id || loggingStatementId === statement.id}
+                          onClick={() => void onDeleteStatement(statement)}
+                        >
+                          {deletingStatementId === statement.id ? 'Deleting...' : 'Delete'}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={loggingStatementId === statement.id || deletingStatementId === statement.id}
+                          onClick={() => void onLogStatement(statement)}
+                        >
+                          {loggingStatementId === statement.id ? 'Logging...' : 'Log'}
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               )}

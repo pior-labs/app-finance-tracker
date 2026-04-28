@@ -1,14 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface StatCardProps {
   label: string;
   value: string;
   hint?: string;
+  className?: string;
 }
 
-export function StatCard({ label, value, hint }: StatCardProps) {
+export function StatCard({ label, value, hint, className }: StatCardProps) {
   return (
-    <Card>
+    <Card className={cn(className)}>
       <CardHeader>
         <CardDescription>{label}</CardDescription>
         <CardTitle className="text-3xl">{value}</CardTitle>

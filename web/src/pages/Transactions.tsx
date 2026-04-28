@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select } from '@/components/ui/select';
@@ -53,14 +54,55 @@ const statusOptions = [
   { value: 'auto_categorized', label: 'Auto categorized' }
 ];
 
+function getInitialFilterValue(rawValue: string | null, validValues: string[]): string {
+  if (!rawValue) {
+    return 'all';
+  }
+
+  return validValues.includes(rawValue) ? rawValue : 'all';
+}
+
 export function TransactionsPage() {
-  const [month, setMonth] = useState('all');
-  const [category, setCategory] = useState('all');
-  const [status, setStatus] = useState('all');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [month, setMonth] = useState(() =>
+    getInitialFilterValue(
+      searchParams.get('month'),
+      monthOptions.map((option) => option.value)
+    )
+  );
+  const [category, setCategory] = useState(() =>
+    getInitialFilterValue(
+      searchParams.get('category'),
+      categoryOptions.map((option) => option.value)
+    )
+  );
+  const [status, setStatus] = useState(() =>
+    getInitialFilterValue(
+      searchParams.get('status'),
+      statusOptions.map((option) => option.value)
+    )
+  );
   const [transactions, setTransactions] = useState<TransactionListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (month !== 'all') {
+      params.set('month', month);
+    }
+    if (category !== 'all') {
+      params.set('category', category);
+    }
+    if (status !== 'all') {
+      params.set('status', status);
+    }
+
+    if (params.toString() !== searchParams.toString()) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [month, category, status, searchParams, setSearchParams]);
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams();

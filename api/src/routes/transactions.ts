@@ -12,6 +12,10 @@ const querySchema = z.object({
   offset: z.coerce.number().int().nonnegative().optional()
 });
 
+const statsQuerySchema = z.object({
+  month: z.string().optional()
+});
+
 const patchSchema = z.object({
   category_id: z.number().int().positive().nullable().optional(),
   status: z.enum(['needs_review', 'auto_categorized', 'confirmed']).optional(),
@@ -41,12 +45,19 @@ function computeMonthBounds(month: string): { start: string; endExclusive: strin
 }
 
 transactionsRouter.get('/stats', async (c) => {
+  const query = statsQuerySchema.safeParse(c.req.query());
+
+  if (!query.success) {
+    return c.json({ error: 'Invalid query params', details: query.error.flatten() }, 400);
+  }
+
   const now = new Date();
-  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const month = query.data.month ?? currentMonth;
   const bounds = computeMonthBounds(month);
 
   if (!bounds) {
-    return c.json({ error: 'Failed to compute current month bounds' }, 500);
+    return c.json({ error: 'Invalid month filter. Expected format YYYY-MM.' }, 400);
   }
 
   const [spendingRow] = await db
@@ -60,7 +71,24 @@ transactionsRouter.get('/stats', async (c) => {
   const [uncategorizedRow] = await db
     .select({ uncategorizedCount: sql<number>`count(*)` })
     .from(schema.transactions)
-    .where(isNull(schema.transactions.categoryId));
+    .where(and(isNull(schema.transactions.categoryId), gte(schema.transactions.date, bounds.start), lt(schema.transactions.date, bounds.endExclusive)));
+
+  const [monthTransactionCountRow] = await db
+    .select({ monthTransactionCount: sql<number>`count(*)` })
+    .from(schema.transactions)
+    .where(and(gte(schema.transactions.date, bounds.start), lt(schema.transactions.date, bounds.endExclusive)));
+
+  const [transactionCountRow] = await db
+    .select({ totalTransactionCount: sql<number>`count(*)` })
+    .from(schema.transactions);
+
+  const availableMonthRows = await db
+    .select({
+      month: sql<string>`substr(${schema.transactions.date}, 1, 7)`
+    })
+    .from(schema.transactions)
+    .groupBy(sql`substr(${schema.transactions.date}, 1, 7)`)
+    .orderBy(desc(sql`substr(${schema.transactions.date}, 1, 7)`));
 
   const byCategoryRows = await db
     .select({
@@ -78,13 +106,18 @@ transactionsRouter.get('/stats', async (c) => {
     data: {
       totalSpentCents: Number(spendingRow?.totalSpentCents ?? 0),
       uncategorizedCount: Number(uncategorizedRow?.uncategorizedCount ?? 0),
+      monthTransactionCount: Number(monthTransactionCountRow?.monthTransactionCount ?? 0),
+      totalTransactionCount: Number(transactionCountRow?.totalTransactionCount ?? 0),
       byCategory: byCategoryRows.map((row) => ({
         category: row.category,
         totalCents: Number(row.totalCents ?? 0)
       }))
     },
     meta: {
-      month
+      month,
+      availableMonths: availableMonthRows
+        .map((row) => row.month)
+        .filter((availableMonth) => availableMonth.length === 7)
     }
   });
 });

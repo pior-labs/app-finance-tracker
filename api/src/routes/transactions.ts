@@ -40,16 +40,51 @@ function computeMonthBounds(month: string): { start: string; endExclusive: strin
   return { start, endExclusive };
 }
 
-transactionsRouter.get('/stats', (c) => {
+transactionsRouter.get('/stats', async (c) => {
+  const now = new Date();
+  const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const bounds = computeMonthBounds(month);
+
+  if (!bounds) {
+    return c.json({ error: 'Failed to compute current month bounds' }, 500);
+  }
+
+  const [spendingRow] = await db
+    .select({
+      totalSpentCents:
+        sql<number>`coalesce(sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end), 0)`
+    })
+    .from(schema.transactions)
+    .where(and(gte(schema.transactions.date, bounds.start), lt(schema.transactions.date, bounds.endExclusive)));
+
+  const [uncategorizedRow] = await db
+    .select({ uncategorizedCount: sql<number>`count(*)` })
+    .from(schema.transactions)
+    .where(isNull(schema.transactions.categoryId));
+
+  const byCategoryRows = await db
+    .select({
+      category: schema.categories.name,
+      totalCents:
+        sql<number>`coalesce(sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end), 0)`
+    })
+    .from(schema.transactions)
+    .innerJoin(schema.categories, eq(schema.transactions.categoryId, schema.categories.id))
+    .where(and(gte(schema.transactions.date, bounds.start), lt(schema.transactions.date, bounds.endExclusive)))
+    .groupBy(schema.categories.id, schema.categories.name)
+    .orderBy(desc(sql`sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end)`));
+
   return c.json({
     data: {
-      totalSpentCents: 0,
-      uncategorizedCount: 0,
-      byCategory: [] as Array<{ category: string; totalCents: number }>
+      totalSpentCents: Number(spendingRow?.totalSpentCents ?? 0),
+      uncategorizedCount: Number(uncategorizedRow?.uncategorizedCount ?? 0),
+      byCategory: byCategoryRows.map((row) => ({
+        category: row.category,
+        totalCents: Number(row.totalCents ?? 0)
+      }))
     },
     meta: {
-      placeholder: true,
-      message: 'TODO: implement transactions stats query in Phase 1 functional pass.'
+      month
     }
   });
 });
@@ -183,13 +218,71 @@ transactionsRouter.patch('/:id', async (c) => {
     return c.json({ error: 'Invalid payload', details: payload.error.flatten() }, 400);
   }
 
-  return c.json(
-    {
-      error: 'Not implemented',
-      transactionId,
-      payload: payload.data,
-      message: 'TODO: implement transaction patch update in Phase 1 functional pass.'
-    },
-    501
-  );
+  if (Object.keys(payload.data).length === 0) {
+    return c.json({ error: 'Empty payload. Provide at least one updatable field.' }, 400);
+  }
+
+  if (payload.data.category_id !== undefined && payload.data.category_id !== null) {
+    const category = await db.query.categories.findFirst({
+      where: eq(schema.categories.id, payload.data.category_id)
+    });
+
+    if (!category) {
+      return c.json({ error: 'Category not found' }, 404);
+    }
+  }
+
+  const updateData: Partial<typeof schema.transactions.$inferInsert> = {};
+  if (payload.data.category_id !== undefined) {
+    updateData.categoryId = payload.data.category_id;
+  }
+  if (payload.data.status !== undefined) {
+    updateData.status = payload.data.status;
+  }
+  if (payload.data.categorized_by !== undefined) {
+    updateData.categorizedBy = payload.data.categorized_by;
+  }
+
+  const updatedRows = await db
+    .update(schema.transactions)
+    .set(updateData)
+    .where(eq(schema.transactions.id, transactionId))
+    .returning({ id: schema.transactions.id });
+
+  if (updatedRows.length === 0) {
+    return c.json({ error: 'Transaction not found' }, 404);
+  }
+
+  const updatedTransaction = await db.query.transactions.findFirst({
+    where: eq(schema.transactions.id, transactionId),
+    with: {
+      category: {
+        columns: {
+          id: true,
+          name: true
+        }
+      }
+    }
+  });
+
+  if (!updatedTransaction) {
+    return c.json({ error: 'Transaction not found' }, 404);
+  }
+
+  return c.json({
+    data: {
+      id: updatedTransaction.id,
+      statementId: updatedTransaction.statementId,
+      date: updatedTransaction.date,
+      description: updatedTransaction.description,
+      amount: updatedTransaction.amount,
+      type: updatedTransaction.type,
+      categoryId: updatedTransaction.categoryId,
+      categoryName: updatedTransaction.category?.name ?? null,
+      confidenceScore: updatedTransaction.confidenceScore,
+      status: updatedTransaction.status,
+      categorizedBy: updatedTransaction.categorizedBy,
+      createdAt: updatedTransaction.createdAt
+    }
+  });
 });

@@ -253,6 +253,39 @@ statementsRouter.post('/:id/log', async (c) => {
   });
 });
 
+statementsRouter.get('/:id/file', async (c) => {
+  const statementId = Number(c.req.param('id'));
+  if (Number.isNaN(statementId) || statementId <= 0) {
+    return c.json({ error: 'Invalid statement id' }, 400);
+  }
+
+  const statement = await db.query.statements.findFirst({
+    where: eq(schema.statements.id, statementId)
+  });
+
+  if (!statement) {
+    return c.json({ error: 'Statement not found' }, 404);
+  }
+
+  const uploadRootPath = resolveFromApiDir(env.uploadDir);
+  const safeStoredFilename = path.basename(statement.filename);
+  const statementFilePath = path.join(uploadRootPath, String(statement.uploadedBy), safeStoredFilename);
+
+  let fileBuffer: Buffer;
+  try {
+    fileBuffer = await readFile(statementFilePath);
+  } catch {
+    return c.json({ error: 'Statement file not found on disk' }, 404);
+  }
+
+  const responseBytes = Uint8Array.from(fileBuffer);
+
+  return c.newResponse(responseBytes, 200, {
+    'Content-Type': 'application/pdf',
+    'Content-Disposition': `inline; filename="${statement.originalFilename}"`
+  });
+});
+
 statementsRouter.delete('/:id', async (c) => {
   const statementId = Number(c.req.param('id'));
   if (Number.isNaN(statementId) || statementId <= 0) {

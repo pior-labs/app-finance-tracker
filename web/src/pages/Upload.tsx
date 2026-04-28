@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface StatementListItem {
@@ -13,7 +13,6 @@ interface StatementListItem {
   institution: string | null;
   periodStart: string | null;
   periodEnd: string | null;
-  rawText: string | null;
   createdAt: string;
   uploadedByUser: {
     id: number;
@@ -31,36 +30,63 @@ interface UploadResponse {
   data: {
     id: number;
     originalFilename: string;
+    periodStart: string | null;
+    periodEnd: string | null;
   };
   meta?: {
     insertedTransactions?: number;
   };
 }
 
-interface LogStatementResponse {
-  success: boolean;
-  statementId: number;
-  originalFilename: string;
-  extractedCharacters: number;
+interface UploadSummary {
+  filename: string;
+  transactionCount: number;
+  periodStart: string | null;
+  periodEnd: string | null;
 }
 
-interface DeleteStatementResponse {
-  success: boolean;
-  statementId: number;
-  deletedTransactions: number;
-  fileDeleted: boolean;
+function formatDateLabel(value: string | null): string {
+  if (!value) {
+    return 'Unknown date';
+  }
+
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit'
+  });
+}
+
+function formatDateTime(value: string): string {
+  const normalized = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`;
+  const parsed = new Date(normalized);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleString([], {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 export function UploadPage() {
-  const navigate = useNavigate();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [loggingStatementId, setLoggingStatementId] = useState<number | null>(null);
   const [deletingStatementId, setDeletingStatementId] = useState<number | null>(null);
   const [loadingStatements, setLoadingStatements] = useState(true);
   const [statements, setStatements] = useState<StatementListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [uploadSummary, setUploadSummary] = useState<UploadSummary | null>(null);
 
   const sortedStatements = useMemo(
     () => [...statements].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
@@ -94,18 +120,13 @@ export function UploadPage() {
     void fetchStatements();
   }, []);
 
-  const onUpload = async () => {
-    if (!selectedFile) {
-      setError('Choose a PDF before uploading.');
-      return;
-    }
-
+  const uploadFile = async (file: File) => {
     setError(null);
-    setSuccessMessage(null);
+    setUploadSummary(null);
     setUploading(true);
 
     const formData = new FormData();
-    formData.append('file', selectedFile);
+    formData.append('file', file);
 
     try {
       const response = await fetch('/api/statements/upload', {
@@ -121,51 +142,32 @@ export function UploadPage() {
       }
 
       const payload = (await response.json()) as UploadResponse;
-      const uploadedStatement = payload.data;
-      const insertedTransactions = payload.meta?.insertedTransactions;
 
-      setSelectedFile(null);
-      if (typeof insertedTransactions === 'number') {
-        setSuccessMessage(
-          `Uploaded ${uploadedStatement.originalFilename} successfully. Inserted ${insertedTransactions} transactions.`
-        );
-      } else {
-        setSuccessMessage(`Uploaded ${uploadedStatement.originalFilename} successfully.`);
-      }
+      setUploadSummary({
+        filename: payload.data.originalFilename,
+        transactionCount: payload.meta?.insertedTransactions ?? 0,
+        periodStart: payload.data.periodStart,
+        periodEnd: payload.data.periodEnd
+      });
+
       await fetchStatements();
     } catch (uploadError) {
       setError(uploadError instanceof Error ? uploadError.message : 'Upload failed');
     } finally {
       setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
-  const onLogStatement = async (statement: StatementListItem) => {
-    setError(null);
-    setSuccessMessage(null);
-    setLoggingStatementId(statement.id);
-
-    try {
-      const response = await fetch(`/api/statements/${statement.id}/log`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        const message = (payload as { error?: string }).error ?? `Log failed (${response.status})`;
-        throw new Error(message);
-      }
-
-      const payload = (await response.json()) as LogStatementResponse;
-      setSuccessMessage(
-        `Logged ${payload.originalFilename} (${payload.extractedCharacters} chars). Check API console output.`
-      );
-    } catch (logError) {
-      setError(logError instanceof Error ? logError.message : 'Failed to log statement text');
-    } finally {
-      setLoggingStatementId(null);
+  const onFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
     }
+
+    await uploadFile(file);
   };
 
   const onDeleteStatement = async (statement: StatementListItem) => {
@@ -178,7 +180,6 @@ export function UploadPage() {
     }
 
     setError(null);
-    setSuccessMessage(null);
     setDeletingStatementId(statement.id);
 
     try {
@@ -193,40 +194,12 @@ export function UploadPage() {
         throw new Error(message);
       }
 
-      const payload = (await response.json()) as DeleteStatementResponse;
-      if (payload.fileDeleted) {
-        setSuccessMessage(
-          `Deleted ${statement.originalFilename} and ${payload.deletedTransactions} transaction(s).`
-        );
-      } else {
-        setSuccessMessage(
-          `Deleted DB records for ${statement.originalFilename} (${payload.deletedTransactions} transaction(s)); file was already missing on disk.`
-        );
-      }
-
       await fetchStatements();
     } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete statement');
+      setError(deleteError instanceof Error ? deleteError.message : 'Delete failed');
     } finally {
       setDeletingStatementId(null);
     }
-  };
-
-  const formatDateTime = (value: string) => {
-    const normalized = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`;
-    const parsed = new Date(normalized);
-
-    if (Number.isNaN(parsed.getTime())) {
-      return value;
-    }
-
-    return parsed.toLocaleString([], {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   return (
@@ -234,24 +207,34 @@ export function UploadPage() {
       <Card>
         <CardHeader>
           <CardTitle>Upload statement</CardTitle>
-          <CardDescription>Upload a PDF statement to save it for shared household review.</CardDescription>
+          <CardDescription>Select a PDF statement to parse and add to your shared transactions.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4">
           <Input
+            ref={fileInputRef}
             type="file"
             accept="application/pdf"
-            onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
+            disabled={uploading}
+            onChange={(event) => void onFileChange(event)}
           />
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="button" onClick={onUpload} disabled={uploading || !selectedFile}>
-              {uploading ? 'Uploading...' : 'Upload PDF'}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => navigate('/transactions')}>
-              View transactions
-            </Button>
-          </div>
-          {selectedFile ? <p className="text-sm text-[var(--muted-foreground)]">Selected: {selectedFile.name}</p> : null}
-          {successMessage ? <p className="text-sm text-green-600">{successMessage}</p> : null}
+
+          {uploading ? <p className="text-sm text-[var(--muted-foreground)]">Parsing statement...</p> : null}
+
+          {uploadSummary ? (
+            <div className="rounded-md border border-[var(--border)] bg-[var(--muted)]/40 p-4">
+              <p className="text-sm font-medium">
+                Found {uploadSummary.transactionCount} transactions from {formatDateLabel(uploadSummary.periodStart)} to{' '}
+                {formatDateLabel(uploadSummary.periodEnd)}.
+              </p>
+              <p className="mt-1 text-xs text-[var(--muted-foreground)]">{uploadSummary.filename}</p>
+              <div className="mt-3">
+                <Button asChild>
+                  <Link to="/transactions">View transactions →</Link>
+                </Button>
+              </div>
+            </div>
+          ) : null}
+
           {error ? <p className="text-sm text-[var(--destructive)]">{error}</p> : null}
         </CardContent>
       </Card>
@@ -259,6 +242,7 @@ export function UploadPage() {
       <Card>
         <CardHeader>
           <CardTitle>Past uploads</CardTitle>
+          <CardDescription>Most recent uploads first.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -293,24 +277,20 @@ export function UploadPage() {
                     <TableCell>{statement.transactionCount}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="border-red-300 text-red-700 hover:bg-red-50"
-                          disabled={deletingStatementId === statement.id || loggingStatementId === statement.id}
-                          onClick={() => void onDeleteStatement(statement)}
-                        >
-                          {deletingStatementId === statement.id ? 'Deleting...' : 'Delete'}
+                        <Button type="button" size="sm" variant="outline" asChild>
+                          <a href={`/api/statements/${statement.id}/file`} target="_blank" rel="noreferrer">
+                            View
+                          </a>
                         </Button>
                         <Button
                           type="button"
                           size="sm"
                           variant="outline"
-                          disabled={loggingStatementId === statement.id || deletingStatementId === statement.id}
-                          onClick={() => void onLogStatement(statement)}
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                          disabled={deletingStatementId === statement.id}
+                          onClick={() => void onDeleteStatement(statement)}
                         >
-                          {loggingStatementId === statement.id ? 'Logging...' : 'Log'}
+                          {deletingStatementId === statement.id ? 'Deleting...' : 'Delete'}
                         </Button>
                       </div>
                     </TableCell>

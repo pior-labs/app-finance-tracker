@@ -253,6 +253,97 @@ statementsRouter.post('/:id/log', async (c) => {
   });
 });
 
+statementsRouter.post('/:id/reprocess', async (c) => {
+  const statementId = Number(c.req.param('id'));
+  if (Number.isNaN(statementId) || statementId <= 0) {
+    return c.json({ error: 'Invalid statement id' }, 400);
+  }
+
+  const statement = await db.query.statements.findFirst({
+    where: eq(schema.statements.id, statementId)
+  });
+
+  if (!statement) {
+    return c.json({ error: 'Statement not found' }, 404);
+  }
+
+  const forceReplace = c.req.query('force') === 'true';
+
+  const [existingCountRow] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.transactions)
+    .where(eq(schema.transactions.statementId, statementId));
+  const existingTransactions = Number(existingCountRow?.count ?? 0);
+
+  if (existingTransactions > 0 && !forceReplace) {
+    return c.json(
+      {
+        error: 'Statement already has transactions. Reprocess with ?force=true to replace existing rows.',
+        statementId,
+        existingTransactions
+      },
+      409
+    );
+  }
+
+  const uploadRootPath = resolveFromApiDir(env.uploadDir);
+  const safeStoredFilename = path.basename(statement.filename);
+  const statementFilePath = path.join(uploadRootPath, String(statement.uploadedBy), safeStoredFilename);
+
+  let fileBuffer: Buffer;
+  try {
+    fileBuffer = await readFile(statementFilePath);
+  } catch {
+    return c.json({ error: 'Statement file not found on disk' }, 404);
+  }
+
+  const extractedText = await extractPdfText(fileBuffer);
+  const parsedRows = parseRbcStatementTable(extractedText);
+  const parsedTransactions = parseBankStatementText(extractedText);
+  const { periodStart, periodEnd } = getStatementPeriodFromRows(parsedRows);
+
+  await db.transaction(async (tx) => {
+    await tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId));
+
+    await tx
+      .update(schema.statements)
+      .set({
+        periodStart,
+        periodEnd,
+        rawText: extractedText
+      })
+      .where(eq(schema.statements.id, statementId));
+
+    if (parsedTransactions.length > 0) {
+      await tx.insert(schema.transactions).values(
+        parsedTransactions.map((transaction) => ({
+          statementId,
+          date: transaction.date,
+          description: transaction.description,
+          amount: transaction.amount,
+          type: transaction.type,
+          categoryId: null,
+          confidenceScore: null,
+          status: 'needs_review',
+          categorizedBy: null
+        }))
+      );
+    }
+  });
+
+  return c.json({
+    success: true,
+    statementId,
+    originalFilename: statement.originalFilename,
+    forceReplaced: forceReplace,
+    parsedRows: parsedRows.length,
+    insertedTransactions: parsedTransactions.length,
+    deletedTransactions: existingTransactions,
+    periodStart,
+    periodEnd
+  });
+});
+
 statementsRouter.get('/:id/file', async (c) => {
   const statementId = Number(c.req.param('id'));
   if (Number.isNaN(statementId) || statementId <= 0) {

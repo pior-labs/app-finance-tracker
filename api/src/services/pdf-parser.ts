@@ -30,7 +30,8 @@ const MONTH_INDEX_BY_ABBREV: Record<string, number> = {
   DEC: 12
 };
 
-const TABLE_HEADER = 'TRANSACTION POSTING ACTIVITY DESCRIPTION AMOUNT ($)';
+const LEGACY_TABLE_HEADER = 'TRANSACTION POSTING ACTIVITY DESCRIPTION AMOUNT ($)';
+const CURRENT_TABLE_HEADER = 'DATE ACTIVITY DESCRIPTION AMOUNT ($)';
 const ROW_START_REGEX =
   /^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s+(\d{1,2})\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s+(\d{1,2})\s+(.+)$/;
 const AMOUNT_REGEX = /^-?\$\d{1,3}(?:,\d{3})*\.\d{2}$/;
@@ -54,18 +55,18 @@ type PendingRow = {
 
 function parseStatementPeriod(rawText: string): StatementPeriod | null {
   const periodMatch = rawText.match(
-    /STATEMENT FROM\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s+(\d{1,2})\s+TO\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s+(\d{1,2}),\s+(\d{4})/
+    /STATEMENT FROM\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s+(\d{1,2})(?:,\s*(\d{4}))?\s+TO\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s+(\d{1,2}),\s*(\d{4})/
   );
 
   if (!periodMatch) {
     return null;
   }
 
-  const [, startMonthAbbrev, , endMonthAbbrev, , endYearRaw] = periodMatch;
+  const [, startMonthAbbrev, , startYearRaw, endMonthAbbrev, , endYearRaw] = periodMatch;
   const startMonth = MONTH_INDEX_BY_ABBREV[startMonthAbbrev];
   const endMonth = MONTH_INDEX_BY_ABBREV[endMonthAbbrev];
   const endYear = Number(endYearRaw);
-  const startYear = startMonth > endMonth ? endYear - 1 : endYear;
+  const startYear = startYearRaw ? Number(startYearRaw) : startMonth > endMonth ? endYear - 1 : endYear;
 
   return {
     startMonth,
@@ -115,7 +116,14 @@ function shouldIgnoreDetailLine(line: string): boolean {
     return true;
   }
 
-  if (line === TABLE_HEADER || line.replace(/\s+/g, ' ').trim() === 'DATE DATE') {
+  if (
+    line === LEGACY_TABLE_HEADER ||
+    line === CURRENT_TABLE_HEADER ||
+    line === 'TRANSACTION' ||
+    line === 'POSTING' ||
+    line === 'DATE' ||
+    line.replace(/\s+/g, ' ').trim() === 'DATE DATE'
+  ) {
     return true;
   }
 
@@ -129,6 +137,10 @@ function shouldIgnoreDetailLine(line: string): boolean {
   }
 
   return false;
+}
+
+function isTableHeaderLine(line: string): boolean {
+  return line === LEGACY_TABLE_HEADER || line === CURRENT_TABLE_HEADER;
 }
 
 function isReferenceNumberLine(line: string): boolean {
@@ -154,7 +166,7 @@ export function parseRbcStatementTable(rawText: string): ParsedStatementRow[] {
       continue;
     }
 
-    if (compact === TABLE_HEADER) {
+    if (isTableHeaderLine(compact)) {
       inTable = true;
       continue;
     }

@@ -45,6 +45,14 @@ interface UploadSummary {
   periodEnd: string | null;
 }
 
+interface ReprocessResponse {
+  success: boolean;
+  statementId: number;
+  insertedTransactions: number;
+  periodStart: string | null;
+  periodEnd: string | null;
+}
+
 function formatDateLabel(value: string | null): string {
   if (!value) {
     return 'Unknown date';
@@ -83,6 +91,7 @@ export function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
   const [deletingStatementId, setDeletingStatementId] = useState<number | null>(null);
+  const [reprocessingStatementId, setReprocessingStatementId] = useState<number | null>(null);
   const [loadingStatements, setLoadingStatements] = useState(true);
   const [statements, setStatements] = useState<StatementListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -202,6 +211,40 @@ export function UploadPage() {
     }
   };
 
+  const onReprocessStatement = async (statement: StatementListItem) => {
+    setError(null);
+    setUploadSummary(null);
+    setReprocessingStatementId(statement.id);
+
+    try {
+      const response = await fetch(`/api/statements/${statement.id}/reprocess`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        const message =
+          (payload as { error?: string }).error ?? `Reprocess failed (${response.status})`;
+        throw new Error(message);
+      }
+
+      const payload = (await response.json()) as ReprocessResponse;
+      setUploadSummary({
+        filename: statement.originalFilename,
+        transactionCount: payload.insertedTransactions,
+        periodStart: payload.periodStart,
+        periodEnd: payload.periodEnd
+      });
+
+      await fetchStatements();
+    } catch (reprocessError) {
+      setError(reprocessError instanceof Error ? reprocessError.message : 'Reprocess failed');
+    } finally {
+      setReprocessingStatementId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -282,6 +325,17 @@ export function UploadPage() {
                             View
                           </a>
                         </Button>
+                        {statement.transactionCount === 0 ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={reprocessingStatementId === statement.id}
+                            onClick={() => void onReprocessStatement(statement)}
+                          >
+                            {reprocessingStatementId === statement.id ? 'Reprocessing...' : 'Reprocess'}
+                          </Button>
+                        ) : null}
                         <Button
                           type="button"
                           size="sm"

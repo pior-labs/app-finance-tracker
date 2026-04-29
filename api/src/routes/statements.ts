@@ -302,32 +302,36 @@ statementsRouter.post('/:id/reprocess', async (c) => {
   const parsedTransactions = parseBankStatementText(extractedText);
   const { periodStart, periodEnd } = getStatementPeriodFromRows(parsedRows);
 
-  await db.transaction(async (tx) => {
-    await tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId));
+  db.transaction((tx) => {
+    tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId)).run();
 
-    await tx
+    tx
       .update(schema.statements)
       .set({
         periodStart,
         periodEnd,
         rawText: extractedText
       })
-      .where(eq(schema.statements.id, statementId));
+      .where(eq(schema.statements.id, statementId))
+      .run();
 
     if (parsedTransactions.length > 0) {
-      await tx.insert(schema.transactions).values(
-        parsedTransactions.map((transaction) => ({
-          statementId,
-          date: transaction.date,
-          description: transaction.description,
-          amount: transaction.amount,
-          type: transaction.type,
-          categoryId: null,
-          confidenceScore: null,
-          status: 'needs_review',
-          categorizedBy: null
-        }))
-      );
+      tx
+        .insert(schema.transactions)
+        .values(
+          parsedTransactions.map((transaction) => ({
+            statementId,
+            date: transaction.date,
+            description: transaction.description,
+            amount: transaction.amount,
+            type: transaction.type,
+            categoryId: null,
+            confidenceScore: null,
+            status: 'needs_review',
+            categorizedBy: null
+          }))
+        )
+        .run();
     }
   });
 

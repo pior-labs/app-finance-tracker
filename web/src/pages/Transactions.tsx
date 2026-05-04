@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, type SelectOption } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -20,12 +20,12 @@ interface TransactionListItem {
   statementId: number;
   date: string;
   description: string;
+  merchant: string | null;
   amount: number;
   type: 'debit' | 'credit';
   categoryId: number | null;
   categoryName: string | null;
-  status: 'needs_review' | 'auto_categorized' | 'confirmed';
-  categorizedBy: 'human' | 'ai' | null;
+  status: 'needs_review' | 'confirmed';
 }
 
 interface TransactionsResponse {
@@ -41,16 +41,6 @@ interface StatsResponse {
   meta: {
     month: string;
     availableMonths: string[];
-  };
-}
-
-interface PatchTransactionResponse {
-  data: {
-    id: number;
-    categoryId: number | null;
-    categoryName: string | null;
-    status: 'needs_review' | 'auto_categorized' | 'confirmed';
-    categorizedBy: 'human' | 'ai' | null;
   };
 }
 
@@ -92,13 +82,7 @@ function formatAmount(cents: number): string {
 }
 
 function formatStatus(status: TransactionListItem['status']): string {
-  if (status === 'needs_review') {
-    return 'Needs review';
-  }
-  if (status === 'confirmed') {
-    return 'Confirmed';
-  }
-  return 'Auto categorized';
+  return status === 'needs_review' ? 'Needs review' : 'Confirmed';
 }
 
 export function TransactionsPage() {
@@ -263,12 +247,16 @@ export function TransactionsPage() {
   };
 
   const onCategoryAssign = async (transaction: TransactionListItem, selectedValue: string) => {
-    if (selectedValue === 'uncategorized') {
+    const selectedCategoryId = selectedValue === 'uncategorized' ? null : Number(selectedValue);
+
+    if (
+      selectedValue !== 'uncategorized' &&
+      (!Number.isFinite(selectedCategoryId) || (selectedCategoryId as number) <= 0)
+    ) {
       return;
     }
 
-    const selectedCategoryId = Number(selectedValue);
-    if (!Number.isFinite(selectedCategoryId) || selectedCategoryId <= 0 || selectedCategoryId === transaction.categoryId) {
+    if (selectedCategoryId === transaction.categoryId && transaction.status === 'confirmed') {
       return;
     }
 
@@ -284,8 +272,7 @@ export function TransactionsPage() {
         },
         body: JSON.stringify({
           category_id: selectedCategoryId,
-          status: 'confirmed',
-          categorized_by: 'human'
+          status: selectedCategoryId === null ? 'needs_review' : 'confirmed'
         })
       });
 
@@ -295,30 +282,31 @@ export function TransactionsPage() {
         throw new Error(message);
       }
 
-      const payload = (await response.json()) as PatchTransactionResponse;
+      const payload = (await response.json()) as {
+        data: {
+          id: number;
+          categoryId: number | null;
+          categoryName: string | null;
+          status: 'needs_review' | 'confirmed';
+        };
+      };
 
       setTransactions((previous) =>
-        previous.map((row) =>
-          row.id === transaction.id
+        previous.map((item) =>
+          item.id === transaction.id
             ? {
-                ...row,
+                ...item,
                 categoryId: payload.data.categoryId,
                 categoryName: payload.data.categoryName,
-                status: payload.data.status,
-                categorizedBy: payload.data.categorizedBy
+                status: payload.data.status
               }
-            : row
+            : item
         )
       );
-
-      if (category === 'uncategorized' || status === 'needs_review') {
-        setTransactions((previous) => previous.filter((row) => row.id !== transaction.id));
-        setTotal((previous) => Math.max(0, previous - 1));
-      }
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : 'Failed to update transaction');
     } finally {
-      setUpdatingTransactionIds((prev) => prev.filter((id) => id !== transaction.id));
+      setUpdatingTransactionIds((previous) => previous.filter((id) => id !== transaction.id));
     }
   };
 
@@ -326,28 +314,44 @@ export function TransactionsPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Transactions</CardTitle>
-          <CardDescription>
-            {total} transaction(s) in current filter. Page {pageNumber} of {totalPages}.
-          </CardDescription>
+          <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-3">
-          <Select options={monthOptions} value={month} onChange={(event) => onFilterChange('month', event.target.value)} />
+          <Select
+            options={monthOptions}
+            value={month}
+            onChange={(event) => onFilterChange('month', event.target.value)}
+            aria-label="Filter by month"
+          />
+
           <Select
             options={categoryFilterOptions}
             value={category}
             onChange={(event) => onFilterChange('category', event.target.value)}
+            aria-label="Filter by category"
           />
-          <Select options={statusOptions} value={status} onChange={(event) => onFilterChange('status', event.target.value)} />
+
+          <Select
+            options={statusOptions}
+            value={status}
+            onChange={(event) => onFilterChange('status', event.target.value)}
+            aria-label="Filter by status"
+          />
         </CardContent>
       </Card>
 
       <Card>
-        <CardContent className="space-y-4 pt-6">
+        <CardHeader>
+          <CardTitle>Transactions</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {error ? <p className="text-sm text-[var(--destructive)]">{error}</p> : null}
+
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
+                <TableHead>Merchant</TableHead>
                 <TableHead>Description</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Category</TableHead>
@@ -357,43 +361,45 @@ export function TransactionsPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-[var(--muted-foreground)]">
+                  <TableCell colSpan={6} className="text-center text-[var(--muted-foreground)]">
                     Loading transactions...
-                  </TableCell>
-                </TableRow>
-              ) : error ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-[var(--destructive)]">
-                    {error}
                   </TableCell>
                 </TableRow>
               ) : transactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-[var(--muted-foreground)]">
-                    No transactions found for the selected filters.
+                  <TableCell colSpan={6} className="text-center text-[var(--muted-foreground)]">
+                    No transactions found for these filters.
                   </TableCell>
                 </TableRow>
               ) : (
                 transactions.map((transaction) => {
-                  const isUpdating = updatingTransactionIds.includes(transaction.id);
+                  const rowIsUpdating = updatingTransactionIds.includes(transaction.id);
 
                   return (
                     <TableRow key={transaction.id}>
                       <TableCell>{transaction.date}</TableCell>
-                      <TableCell>{transaction.description}</TableCell>
-                      <TableCell className={transaction.type === 'debit' ? 'text-red-500' : 'text-green-500'}>
+                      <TableCell className="font-medium">{transaction.merchant ?? transaction.description}</TableCell>
+                      <TableCell className="max-w-[24rem] truncate" title={transaction.description}>
+                        {transaction.description}
+                      </TableCell>
+                      <TableCell
+                        className={transaction.type === 'debit' ? 'text-red-500 font-medium' : 'text-green-600 font-medium'}
+                      >
                         {formatAmount(transaction.amount)}
                       </TableCell>
                       <TableCell>
                         <Select
+                          value={transaction.categoryId === null ? 'uncategorized' : String(transaction.categoryId)}
                           options={rowCategoryOptions}
-                          value={transaction.categoryId ? String(transaction.categoryId) : 'uncategorized'}
-                          onChange={(event) => void onCategoryAssign(transaction, event.target.value)}
-                          disabled={isUpdating}
+                          disabled={rowIsUpdating}
+                          onChange={(event) => {
+                            void onCategoryAssign(transaction, event.target.value);
+                          }}
+                          aria-label={`Set category for transaction ${transaction.id}`}
                         />
                       </TableCell>
                       <TableCell>
-                        <Badge variant={transaction.status === 'confirmed' ? 'success' : 'warning'}>
+                        <Badge variant={transaction.status === 'needs_review' ? 'warning' : 'success'}>
                           {formatStatus(transaction.status)}
                         </Badge>
                       </TableCell>
@@ -404,13 +410,28 @@ export function TransactionsPage() {
             </TableBody>
           </Table>
 
-          <div className="flex items-center justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOffset((value) => Math.max(0, value - PAGE_SIZE))} disabled={!canGoPrevious || loading}>
-              Previous
-            </Button>
-            <Button type="button" variant="outline" onClick={() => setOffset((value) => value + PAGE_SIZE)} disabled={!canGoNext || loading}>
-              Next
-            </Button>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-[var(--muted-foreground)]">
+              Page {pageNumber} of {totalPages} ({total} total)
+            </p>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!canGoPrevious}
+                onClick={() => setOffset((previous) => Math.max(0, previous - PAGE_SIZE))}
+              >
+                Previous
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!canGoNext}
+                onClick={() => setOffset((previous) => previous + PAGE_SIZE)}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -18,7 +18,6 @@ export function AppShell() {
         <nav className="space-y-2">
           <SidebarNavItem to="/" label="Dashboard" />
           <SidebarNavItem to="/transactions" label="Transactions" />
-          <SidebarNavItem to="/categories" label="Categories" />
           <SidebarNavItem to="/upload" label="Upload" />
         </nav>
       </Sidebar>

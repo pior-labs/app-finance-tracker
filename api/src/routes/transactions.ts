@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { and, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, like, lt, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, schema } from '../db/index.js';
 import type { AuthVariables } from '../middleware/auth.js';
@@ -8,6 +8,7 @@ const querySchema = z.object({
   month: z.string().optional(),
   category: z.string().optional(),
   status: z.string().optional(),
+  merchant: z.string().optional(),
   limit: z.coerce.number().int().positive().max(200).optional(),
   offset: z.coerce.number().int().nonnegative().optional()
 });
@@ -18,8 +19,7 @@ const statsQuerySchema = z.object({
 
 const patchSchema = z.object({
   category_id: z.number().int().positive().nullable().optional(),
-  status: z.enum(['needs_review', 'auto_categorized', 'confirmed']).optional(),
-  categorized_by: z.enum(['human', 'ai']).nullable().optional()
+  status: z.enum(['needs_review', 'confirmed']).optional()
 });
 
 export const transactionsRouter = new Hono<{ Variables: AuthVariables }>();
@@ -71,7 +71,13 @@ transactionsRouter.get('/stats', async (c) => {
   const [uncategorizedRow] = await db
     .select({ uncategorizedCount: sql<number>`count(*)` })
     .from(schema.transactions)
-    .where(and(isNull(schema.transactions.categoryId), gte(schema.transactions.date, bounds.start), lt(schema.transactions.date, bounds.endExclusive)));
+    .where(
+      and(
+        eq(schema.transactions.status, 'needs_review'),
+        gte(schema.transactions.date, bounds.start),
+        lt(schema.transactions.date, bounds.endExclusive)
+      )
+    );
 
   const [monthTransactionCountRow] = await db
     .select({ monthTransactionCount: sql<number>`count(*)` })
@@ -83,9 +89,7 @@ transactionsRouter.get('/stats', async (c) => {
     .from(schema.transactions);
 
   const availableMonthRows = await db
-    .select({
-      month: sql<string>`substr(${schema.transactions.date}, 1, 7)`
-    })
+    .select({ month: sql<string>`substr(${schema.transactions.date}, 1, 7)` })
     .from(schema.transactions)
     .groupBy(sql`substr(${schema.transactions.date}, 1, 7)`)
     .orderBy(desc(sql`substr(${schema.transactions.date}, 1, 7)`));
@@ -102,6 +106,24 @@ transactionsRouter.get('/stats', async (c) => {
     .groupBy(schema.categories.id, schema.categories.name)
     .orderBy(desc(sql`sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end)`));
 
+  const byMerchantRows = await db
+    .select({
+      merchant: schema.transactions.merchant,
+      totalCents:
+        sql<number>`coalesce(sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end), 0)`
+    })
+    .from(schema.transactions)
+    .where(
+      and(
+        gte(schema.transactions.date, bounds.start),
+        lt(schema.transactions.date, bounds.endExclusive),
+        sql`${schema.transactions.merchant} is not null`
+      )
+    )
+    .groupBy(schema.transactions.merchant)
+    .orderBy(desc(sql`sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end)`))
+    .limit(10);
+
   return c.json({
     data: {
       totalSpentCents: Number(spendingRow?.totalSpentCents ?? 0),
@@ -111,13 +133,17 @@ transactionsRouter.get('/stats', async (c) => {
       byCategory: byCategoryRows.map((row) => ({
         category: row.category,
         totalCents: Number(row.totalCents ?? 0)
-      }))
+      })),
+      byMerchant: byMerchantRows
+        .filter((row) => row.merchant)
+        .map((row) => ({
+          merchant: row.merchant as string,
+          totalCents: Number(row.totalCents ?? 0)
+        }))
     },
     meta: {
       month,
-      availableMonths: availableMonthRows
-        .map((row) => row.month)
-        .filter((availableMonth) => availableMonth.length === 7)
+      availableMonths: availableMonthRows.map((row) => row.month).filter((availableMonth) => availableMonth.length === 7)
     }
   });
 });
@@ -133,6 +159,7 @@ transactionsRouter.get('/', async (c) => {
   const categoryFilter = query.data.category;
   const statusFilter = query.data.status;
   const monthFilter = query.data.month;
+  const merchantFilter = query.data.merchant;
 
   if (monthFilter && monthFilter !== 'all') {
     const bounds = computeMonthBounds(monthFilter);
@@ -149,7 +176,7 @@ transactionsRouter.get('/', async (c) => {
       filters.push(isNull(schema.transactions.categoryId));
     } else {
       const parsedCategoryId = Number(categoryFilter);
-      if (Number.isNaN(parsedCategoryId) || parsedCategoryId <= 0) {
+      if (!Number.isFinite(parsedCategoryId) || parsedCategoryId <= 0) {
         return c.json({ error: 'Invalid category filter.' }, 400);
       }
       filters.push(eq(schema.transactions.categoryId, parsedCategoryId));
@@ -157,10 +184,15 @@ transactionsRouter.get('/', async (c) => {
   }
 
   if (statusFilter && statusFilter !== 'all') {
-    if (!['needs_review', 'auto_categorized', 'confirmed'].includes(statusFilter)) {
+    if (!['needs_review', 'confirmed'].includes(statusFilter)) {
       return c.json({ error: 'Invalid status filter.' }, 400);
     }
+
     filters.push(eq(schema.transactions.status, statusFilter));
+  }
+
+  if (merchantFilter && merchantFilter !== 'all') {
+    filters.push(like(sql`lower(${schema.transactions.merchant})`, `%${merchantFilter.toLowerCase()}%`));
   }
 
   const whereClause = filters.length > 0 ? and(...filters) : undefined;
@@ -211,13 +243,12 @@ transactionsRouter.get('/', async (c) => {
       statementId: transaction.statementId,
       date: transaction.date,
       description: transaction.description,
+      merchant: transaction.merchant,
       amount: transaction.amount,
       type: transaction.type,
       categoryId: transaction.categoryId,
       categoryName: transaction.category?.name ?? null,
-      confidenceScore: transaction.confidenceScore,
       status: transaction.status,
-      categorizedBy: transaction.categorizedBy,
       createdAt: transaction.createdAt,
       statement: {
         id: transaction.statement.id,
@@ -234,14 +265,15 @@ transactionsRouter.get('/', async (c) => {
     filters: {
       month: monthFilter ?? null,
       category: categoryFilter ?? null,
-      status: statusFilter ?? null
+      status: statusFilter ?? null,
+      merchant: merchantFilter ?? null
     }
   });
 });
 
 transactionsRouter.patch('/:id', async (c) => {
   const transactionId = Number(c.req.param('id'));
-  if (Number.isNaN(transactionId) || transactionId <= 0) {
+  if (!Number.isFinite(transactionId) || transactionId <= 0) {
     return c.json({ error: 'Invalid transaction id' }, 400);
   }
 
@@ -271,9 +303,6 @@ transactionsRouter.patch('/:id', async (c) => {
   }
   if (payload.data.status !== undefined) {
     updateData.status = payload.data.status;
-  }
-  if (payload.data.categorized_by !== undefined) {
-    updateData.categorizedBy = payload.data.categorized_by;
   }
 
   const updatedRows = await db
@@ -308,13 +337,12 @@ transactionsRouter.patch('/:id', async (c) => {
       statementId: updatedTransaction.statementId,
       date: updatedTransaction.date,
       description: updatedTransaction.description,
+      merchant: updatedTransaction.merchant,
       amount: updatedTransaction.amount,
       type: updatedTransaction.type,
       categoryId: updatedTransaction.categoryId,
       categoryName: updatedTransaction.category?.name ?? null,
-      confidenceScore: updatedTransaction.confidenceScore,
       status: updatedTransaction.status,
-      categorizedBy: updatedTransaction.categorizedBy,
       createdAt: updatedTransaction.createdAt
     }
   });

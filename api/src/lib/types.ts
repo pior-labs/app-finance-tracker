@@ -1,12 +1,11 @@
 export type TransactionType = 'debit' | 'credit';
-export type TransactionStatus = 'needs_review' | 'auto_categorized' | 'confirmed';
-export type CategorizedBy = 'human' | 'ai';
+export type TransactionStatus = 'needs_review' | 'confirmed';
 
 export interface User {
   id: number;
   name: string;
   email: string;
-  createdAt: string;
+  createdAt: number;
 }
 
 export interface Category {
@@ -15,7 +14,7 @@ export interface Category {
   description: string;
   keywords: string;
   isDefault: boolean;
-  createdAt: string;
+  createdAt: number;
 }
 
 export interface Statement {
@@ -27,7 +26,7 @@ export interface Statement {
   periodStart: string | null;
   periodEnd: string | null;
   rawText: string | null;
-  createdAt: string;
+  createdAt: number;
 }
 
 export interface Transaction {
@@ -35,20 +34,10 @@ export interface Transaction {
   statementId: number;
   date: string;
   description: string;
+  merchant: string | null;
   amount: number;
   type: TransactionType;
   categoryId: number | null;
-  confidenceScore: number | null;
   status: TransactionStatus;
-  categorizedBy: CategorizedBy | null;
-  createdAt: string;
-}
-
-export interface AuthLoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  user: User;
+  createdAt: number;
 }

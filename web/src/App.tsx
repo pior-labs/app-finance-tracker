@@ -3,7 +3,6 @@ import { AppShell } from '@/components/AppShell';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AuthProvider } from '@/hooks/useAuth';
 import { DashboardPage } from '@/pages/Dashboard';
-import { CategoriesPage } from '@/pages/Categories';
 import { LoginPage } from '@/pages/Login';
 import { TransactionsPage } from '@/pages/Transactions';
 import { UploadPage } from '@/pages/Upload';
@@ -23,7 +22,6 @@ export function App() {
           >
             <Route path="/" element={<DashboardPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
-            <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/upload" element={<UploadPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -45,14 +45,6 @@ interface UploadSummary {
   periodEnd: string | null;
 }
 
-interface ReprocessResponse {
-  success: boolean;
-  statementId: number;
-  insertedTransactions: number;
-  periodStart: string | null;
-  periodEnd: string | null;
-}
-
 function formatDateLabel(value: string | null): string {
   if (!value) {
     return 'Unknown date';
@@ -71,11 +63,10 @@ function formatDateLabel(value: string | null): string {
 }
 
 function formatDateTime(value: string): string {
-  const normalized = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`;
-  const parsed = new Date(normalized);
+  const parsed = new Date(value);
 
   if (Number.isNaN(parsed.getTime())) {
-    return value;
+    return String(value);
   }
 
   return parsed.toLocaleString([], {
@@ -90,8 +81,6 @@ function formatDateTime(value: string): string {
 export function UploadPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [deletingStatementId, setDeletingStatementId] = useState<number | null>(null);
-  const [reprocessingStatementId, setReprocessingStatementId] = useState<number | null>(null);
   const [loadingStatements, setLoadingStatements] = useState(true);
   const [statements, setStatements] = useState<StatementListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -179,72 +168,6 @@ export function UploadPage() {
     await uploadFile(file);
   };
 
-  const onDeleteStatement = async (statement: StatementListItem) => {
-    const confirmed = window.confirm(
-      `Delete "${statement.originalFilename}" and its ${statement.transactionCount} transaction(s)? This cannot be undone.`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    setError(null);
-    setDeletingStatementId(statement.id);
-
-    try {
-      const response = await fetch(`/api/statements/${statement.id}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        const message = (payload as { error?: string }).error ?? `Delete failed (${response.status})`;
-        throw new Error(message);
-      }
-
-      await fetchStatements();
-    } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : 'Delete failed');
-    } finally {
-      setDeletingStatementId(null);
-    }
-  };
-
-  const onReprocessStatement = async (statement: StatementListItem) => {
-    setError(null);
-    setUploadSummary(null);
-    setReprocessingStatementId(statement.id);
-
-    try {
-      const response = await fetch(`/api/statements/${statement.id}/reprocess`, {
-        method: 'POST',
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        const message =
-          (payload as { error?: string }).error ?? `Reprocess failed (${response.status})`;
-        throw new Error(message);
-      }
-
-      const payload = (await response.json()) as ReprocessResponse;
-      setUploadSummary({
-        filename: statement.originalFilename,
-        transactionCount: payload.insertedTransactions,
-        periodStart: payload.periodStart,
-        periodEnd: payload.periodEnd
-      });
-
-      await fetchStatements();
-    } catch (reprocessError) {
-      setError(reprocessError instanceof Error ? reprocessError.message : 'Reprocess failed');
-    } finally {
-      setReprocessingStatementId(null);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <Card>
@@ -295,19 +218,18 @@ export function UploadPage() {
                 <TableHead>Uploaded by</TableHead>
                 <TableHead>Date uploaded</TableHead>
                 <TableHead>Transaction count</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loadingStatements ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-[var(--muted-foreground)]">
+                  <TableCell colSpan={4} className="text-center text-[var(--muted-foreground)]">
                     Loading uploads...
                   </TableCell>
                 </TableRow>
               ) : sortedStatements.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-[var(--muted-foreground)]">
+                  <TableCell colSpan={4} className="text-center text-[var(--muted-foreground)]">
                     No uploads yet.
                   </TableCell>
                 </TableRow>
@@ -318,36 +240,6 @@ export function UploadPage() {
                     <TableCell>{statement.uploadedByUser?.name ?? `User ${statement.uploadedBy}`}</TableCell>
                     <TableCell>{formatDateTime(statement.createdAt)}</TableCell>
                     <TableCell>{statement.transactionCount}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button type="button" size="sm" variant="outline" asChild>
-                          <a href={`/api/statements/${statement.id}/file`} target="_blank" rel="noreferrer">
-                            View
-                          </a>
-                        </Button>
-                        {statement.transactionCount === 0 ? (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={reprocessingStatementId === statement.id}
-                            onClick={() => void onReprocessStatement(statement)}
-                          >
-                            {reprocessingStatementId === statement.id ? 'Reprocessing...' : 'Reprocess'}
-                          </Button>
-                        ) : null}
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="border-red-300 text-red-700 hover:bg-red-50"
-                          disabled={deletingStatementId === statement.id}
-                          onClick={() => void onDeleteStatement(statement)}
-                        >
-                          {deletingStatementId === statement.id ? 'Deleting...' : 'Delete'}
-                        </Button>
-                      </div>
-                    </TableCell>
                   </TableRow>
                 ))
               )}

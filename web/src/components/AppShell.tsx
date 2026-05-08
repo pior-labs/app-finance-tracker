@@ -136,27 +136,38 @@ export function AppShell() {
         )}
       >
         {/* Logo + collapse toggle */}
-        <div
-          className={cn(
-            'mb-4 flex px-1',
-            collapsed ? 'flex-col items-center gap-2' : 'items-center justify-between'
-          )}
-        >
-          <Link to="/" className="flex items-center gap-2">
-            {/* Sketchy logo glyph */}
-            <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)]">
-              <span className="absolute inset-[5px] rounded-full border-[1.5px] border-[var(--border)] bg-[var(--card)]" />
-            </span>
-            {!collapsed && <span className="font-hand text-2xl tracking-wide">FinLens</span>}
-          </Link>
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="flex h-6 w-6 items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm hover:bg-[var(--primary-soft)]"
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {collapsed ? '»' : '«'}
-          </button>
-        </div>
+        {collapsed ? (
+          <div className="group relative mb-4 flex justify-center px-1">
+            <Link to="/" className="flex items-center" title="Home">
+              <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)]">
+                <span className="absolute inset-[5px] rounded-full border-[1.5px] border-[var(--border)] bg-[var(--card)]" />
+              </span>
+            </Link>
+            <button
+              onClick={() => setCollapsed(false)}
+              className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 flex -translate-y-1/2 items-center gap-1.5 whitespace-nowrap rounded-[8px] border-[1.3px] border-[var(--border)] bg-[var(--card)] px-2.5 py-1.5 font-hand text-sm opacity-0 shadow-[1px_1.5px_0_0_var(--border)] transition-opacity duration-150 hover:bg-[var(--primary-soft)] group-hover:pointer-events-auto group-hover:opacity-100"
+            >
+              <span>»</span>
+              <span>Open sidebar</span>
+            </button>
+          </div>
+        ) : (
+          <div className="mb-4 flex items-center justify-between px-1">
+            <Link to="/" className="flex items-center gap-2">
+              <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)]">
+                <span className="absolute inset-[5px] rounded-full border-[1.5px] border-[var(--border)] bg-[var(--card)]" />
+              </span>
+              <span className="font-hand text-2xl tracking-wide">FinLens</span>
+            </Link>
+            <button
+              onClick={() => setCollapsed(true)}
+              className="flex h-6 w-6 items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm hover:bg-[var(--primary-soft)]"
+              title="Collapse sidebar"
+            >
+              «
+            </button>
+          </div>
+        )}
 
         {/* Main nav */}
         <nav className="space-y-1">

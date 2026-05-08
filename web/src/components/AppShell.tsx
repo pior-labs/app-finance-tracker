@@ -1,7 +1,23 @@
-import { useState } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
+
+function getCurrentMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function isValidMonth(value: string | null): value is string {
+  return value !== null && /^\d{4}-\d{2}$/.test(value);
+}
+
+function formatMonthLabel(month: string): string {
+  const [year, monthNumber] = month.split('-');
+  const parsed = new Date(Number(year), Number(monthNumber) - 1, 1);
+  if (Number.isNaN(parsed.getTime())) return month;
+  return parsed.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
 
 const mainNav = [
   { name: 'Dashboard', path: '/', icon: 'D' },
@@ -57,6 +73,49 @@ export function AppShell() {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const monthFromUrl = searchParams.get('month');
+  const selectedMonth = isValidMonth(monthFromUrl) ? monthFromUrl : getCurrentMonth();
+  const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/transactions/stats', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`stats ${res.status}`))))
+      .then((payload: { meta?: { availableMonths?: string[] } }) => {
+        if (cancelled) return;
+        const months = new Set<string>([getCurrentMonth(), ...(payload.meta?.availableMonths ?? [])]);
+        setAvailableMonths(Array.from(months).sort((a, b) => b.localeCompare(a)));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [pickerOpen]);
+
+  const onPickMonth = (m: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (m === getCurrentMonth()) {
+      next.delete('month');
+    } else {
+      next.set('month', m);
+    }
+    setSearchParams(next, { replace: true });
+    setPickerOpen(false);
+  };
 
   const pageTitle = (() => {
     if (location.pathname === '/') return 'Hey there 👋';
@@ -77,7 +136,12 @@ export function AppShell() {
         )}
       >
         {/* Logo + collapse toggle */}
-        <div className="mb-4 flex items-center justify-between px-1">
+        <div
+          className={cn(
+            'mb-4 flex px-1',
+            collapsed ? 'flex-col items-center gap-2' : 'items-center justify-between'
+          )}
+        >
           <Link to="/" className="flex items-center gap-2">
             {/* Sketchy logo glyph */}
             <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)]">
@@ -108,12 +172,13 @@ export function AppShell() {
         </nav>
 
         {/* Admin section */}
-        {!collapsed && (
+        {!collapsed ? (
           <div className="mt-4 px-2.5 text-[11px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">
             Admin
           </div>
+        ) : (
+          <div className="mx-2 my-3 border-t-[1.3px] border-dashed border-[var(--muted-foreground)]" />
         )}
-        {collapsed && <div className="mt-4" />}
         <nav className="mt-1 space-y-1">
           {adminNav.map((item) => (
             <NavItem
@@ -153,12 +218,52 @@ export function AppShell() {
         <header className="flex items-center justify-between border-b-[1.3px] border-dashed border-[var(--muted-foreground)] px-5 py-3">
           <h1 className="font-hand text-2xl">{pageTitle}</h1>
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full border-[1.3px] border-dashed border-[var(--muted-foreground)] bg-transparent px-2.5 py-0.5 text-[13px] text-[var(--muted-foreground)]">
-              {new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })} ▾
-            </span>
-            <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.3px] border-[var(--border)] bg-[var(--primary-soft)] font-hand text-[13px]">
-              {user?.name?.[0]?.toUpperCase() ?? '?'}
-            </span>
+            <div ref={pickerRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setPickerOpen((v) => !v)}
+                className="inline-flex items-center gap-1.5 rounded-full border-[1.3px] border-dashed border-[var(--muted-foreground)] bg-transparent px-2.5 py-0.5 text-[13px] text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+                aria-haspopup="listbox"
+                aria-expanded={pickerOpen}
+              >
+                {formatMonthLabel(selectedMonth)} ▾
+              </button>
+              {pickerOpen && (
+                <div
+                  role="listbox"
+                  className="absolute right-0 top-full z-20 mt-1.5 min-w-[200px] rounded-[var(--radius-sm)] border-[1.3px] border-[var(--border)] bg-[var(--card)] p-1.5 shadow-[var(--shadow-sketch-sm)]"
+                >
+                  {availableMonths.length === 0 ? (
+                    <div className="px-2.5 py-1.5 text-[13px] text-[var(--muted-foreground)]">No months yet</div>
+                  ) : (
+                    availableMonths.map((m) => {
+                      const isSelected = m === selectedMonth;
+                      const isCurrent = m === getCurrentMonth();
+                      return (
+                        <button
+                          key={m}
+                          type="button"
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => onPickMonth(m)}
+                          className={cn(
+                            'flex w-full items-center justify-between rounded-[6px] px-2.5 py-1.5 text-left text-[13px]',
+                            isSelected
+                              ? 'bg-[var(--primary-soft)] font-bold text-[var(--foreground)]'
+                              : 'hover:bg-[var(--muted)]'
+                          )}
+                        >
+                          <span>{formatMonthLabel(m)}</span>
+                          {isCurrent && (
+                            <span className="ml-3 text-[11px] text-[var(--muted-foreground)]">current</span>
+                          )}
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </header>
         <main className="flex-1 overflow-auto p-5">

@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -48,20 +48,48 @@ function formatMoney(cents: number): string {
   return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+function getCurrentMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function isValidMonth(value: string | null): value is string {
+  return value !== null && /^\d{4}-\d{2}$/.test(value);
+}
+
+function formatMonthLabel(month: string): string {
+  const [year, monthNumber] = month.split('-');
+  const parsed = new Date(Number(year), Number(monthNumber) - 1, 1);
+  if (Number.isNaN(parsed.getTime())) return month;
+  return parsed.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
+
 export function DashboardPage() {
+  const [searchParams] = useSearchParams();
+  const monthFromUrl = searchParams.get('month');
+  const month = isValidMonth(monthFromUrl) ? monthFromUrl : getCurrentMonth();
+  const isCurrentMonth = month === getCurrentMonth();
+
   const [stats, setStats] = useState<DashboardStatsResponse | null>(null);
   const [recentUncategorized, setRecentUncategorized] = useState<RecentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
 
-  const fetchDashboard = async () => {
+  const fetchDashboard = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
+      const statsParams = new URLSearchParams();
+      statsParams.set('month', month);
+      const txParams = new URLSearchParams();
+      txParams.set('status', 'needs_review');
+      txParams.set('limit', '3');
+      txParams.set('month', month);
+
       const [statsRes, txRes] = await Promise.all([
-        fetch('/api/transactions/stats', { credentials: 'include' }),
-        fetch('/api/transactions?status=needs_review&limit=3', { credentials: 'include' }),
+        fetch(`/api/transactions/stats?${statsParams.toString()}`, { credentials: 'include' }),
+        fetch(`/api/transactions?${txParams.toString()}`, { credentials: 'include' }),
       ]);
       if (!statsRes.ok) {
         const payload = await statsRes.json().catch(() => ({}));
@@ -78,11 +106,11 @@ export function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [month]);
 
   useEffect(() => {
     void fetchDashboard();
-  }, []);
+  }, [fetchDashboard]);
 
   const categoryRows = useMemo(() => {
     const rows = stats?.data.byCategory ?? [];
@@ -202,7 +230,9 @@ export function DashboardPage() {
         {/* Spent */}
         <Card>
           <CardContent className="space-y-1 p-5">
-            <div className="text-sm font-bold text-[var(--muted-foreground)]">Spent this month</div>
+            <div className="text-sm font-bold text-[var(--muted-foreground)]">
+              {isCurrentMonth ? 'Spent this month' : `Spent in ${formatMonthLabel(month)}`}
+            </div>
             <div className="font-hand text-4xl">{totalSpent}</div>
             <div className="text-[13px] text-[var(--muted-foreground)]">{totalTx} transactions</div>
           </CardContent>
@@ -221,32 +251,37 @@ export function DashboardPage() {
 
         {/* Latest statement */}
         <Card>
-          <CardContent className="flex items-center gap-3 p-5">
-            <div className="flex h-12 w-10 shrink-0 items-center justify-center rounded-[6px] border-[1.3px] border-dashed border-[var(--muted-foreground)] thumb-hatch text-[10px] font-bold text-[var(--muted-foreground)]">
-              PDF
-            </div>
-            <div className="min-w-0 flex-1">
-              {latestStatement ? (
-                <>
+          <CardContent className="space-y-3 p-5">
+            <h3 className="font-hand text-xl">Latest statement</h3>
+            {latestStatement ? (
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-10 shrink-0 items-center justify-center rounded-[6px] border-[1.3px] border-dashed border-[var(--muted-foreground)] thumb-hatch text-[10px] font-bold text-[var(--muted-foreground)]">
+                  PDF
+                </div>
+                <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="truncate font-bold">
                     {latestStatement.periodStart && latestStatement.periodEnd
                       ? `${latestStatement.periodStart} – ${latestStatement.periodEnd}`
                       : 'Latest statement'}
                   </div>
                   <p className="text-xs text-[var(--muted-foreground)]">
-                    {latestStatement.transactionCount} tx · uploaded by {latestStatement.uploadedByName}
+                    {latestStatement.transactionCount} transactions imported
                   </p>
-                </>
-              ) : (
-                <div className="text-sm text-[var(--muted-foreground)]">No statements yet</div>
-              )}
-              <button
-                onClick={() => setUploadOpen(true)}
-                className="mt-1 text-xs font-bold text-[var(--primary)] hover:underline"
-              >
-                Upload next →
-              </button>
-            </div>
+                  <p className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
+                    <span>Uploaded by</span>
+                    <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-[1.3px] border-[var(--border)] bg-[var(--primary-soft)] font-hand text-[11px]">
+                      {latestStatement.uploadedByName?.[0]?.toUpperCase() ?? '?'}
+                    </span>
+                    <span>{latestStatement.uploadedByName}</span>
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-[var(--muted-foreground)]">No statements yet</div>
+            )}
+            <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)}>
+              Upload next →
+            </Button>
           </CardContent>
         </Card>
       </div>

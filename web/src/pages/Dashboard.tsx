@@ -146,7 +146,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-5">
       {/* ACTION CARD — full-width, warm accent background */}
-      {uncategorizedCount > 0 && (
+      {uncategorizedCount > 0 ? (
         <Card className="bg-[var(--primary-soft)]">
           <CardContent className="flex items-center gap-5 p-5">
             <div className="flex-1 space-y-2">
@@ -177,6 +177,22 @@ export function DashboardPage() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="bg-[var(--good-soft)]">
+          <CardContent className="flex items-center gap-5 p-5">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--card)]">
+              <span className="font-hand text-3xl text-[var(--good)]">:)</span>
+            </div>
+            <div className="flex-1 space-y-1">
+              <p className="text-[13px] uppercase tracking-widest text-[var(--muted-foreground)]">All caught up</p>
+              <div className="font-hand text-4xl text-[var(--good)]">Nothing to categorize</div>
+              <p className="text-[15px]">This month's picture is complete — nice work.</p>
+            </div>
+            <Button asChild variant="ghost">
+              <Link to="/transactions">View transactions →</Link>
+            </Button>
           </CardContent>
         </Card>
       )}

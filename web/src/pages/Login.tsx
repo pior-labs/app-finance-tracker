@@ -35,7 +35,10 @@ export function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
       <Card className="w-full max-w-md">
-        <CardHeader>
+        <CardHeader className="items-center text-center">
+          <span className="relative mb-2 flex h-[40px] w-[40px] items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)]">
+            <span className="absolute inset-[7px] rounded-full border-[1.5px] border-[var(--border)] bg-[var(--card)]" />
+          </span>
           <CardTitle>Welcome back</CardTitle>
           <CardDescription>Sign in to access the shared household view.</CardDescription>
         </CardHeader>

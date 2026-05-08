@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, type SelectOption } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -49,7 +49,7 @@ const PAGE_SIZE = 50;
 const statusOptions: SelectOption[] = [
   { value: 'all', label: 'All statuses' },
   { value: 'needs_review', label: 'Needs review' },
-  { value: 'confirmed', label: 'Confirmed' }
+  { value: 'confirmed', label: 'Confirmed' },
 ];
 
 function getCurrentMonth(): string {
@@ -64,25 +64,14 @@ function isValidMonth(value: string | null): value is string {
 function formatMonthLabel(month: string): string {
   const [year, monthNumber] = month.split('-');
   const parsed = new Date(Number(year), Number(monthNumber) - 1, 1);
-  if (Number.isNaN(parsed.getTime())) {
-    return month;
-  }
-
+  if (Number.isNaN(parsed.getTime())) return month;
   return parsed.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 }
 
 function formatAmount(cents: number): string {
   const value = Math.abs(cents) / 100;
-  const formatted = value.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-
+  const formatted = value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return cents < 0 ? `-$${formatted}` : `$${formatted}`;
-}
-
-function formatStatus(status: TransactionListItem['status']): string {
-  return status === 'needs_review' ? 'Needs review' : 'Confirmed';
 }
 
 export function TransactionsPage() {
@@ -112,73 +101,48 @@ export function TransactionsPage() {
       try {
         const [categoriesResponse, statsResponse] = await Promise.all([
           fetch('/api/categories', { credentials: 'include' }),
-          fetch('/api/transactions/stats', { credentials: 'include' })
+          fetch('/api/transactions/stats', { credentials: 'include' }),
         ]);
-
-        if (!categoriesResponse.ok) {
-          throw new Error(`Failed to load categories (${categoriesResponse.status})`);
-        }
-        if (!statsResponse.ok) {
-          throw new Error(`Failed to load months (${statsResponse.status})`);
-        }
+        if (!categoriesResponse.ok) throw new Error(`Failed to load categories (${categoriesResponse.status})`);
+        if (!statsResponse.ok) throw new Error(`Failed to load months (${statsResponse.status})`);
 
         const categoriesPayload = (await categoriesResponse.json()) as CategoryResponse;
         const statsPayload = (await statsResponse.json()) as StatsResponse;
-
         setCategories(categoriesPayload.data);
-
         const monthSet = new Set<string>([statsPayload.meta.month, ...statsPayload.meta.availableMonths, getCurrentMonth()]);
         setAvailableMonths(Array.from(monthSet).sort((a, b) => b.localeCompare(a)));
       } catch (fetchError) {
         setError(fetchError instanceof Error ? fetchError.message : 'Failed to load filters');
       }
     };
-
     void fetchFilterData();
   }, []);
 
   useEffect(() => {
     const params = new URLSearchParams();
     params.set('month', month);
-    if (category !== 'all') {
-      params.set('category', category);
-    }
-    if (status !== 'all') {
-      params.set('status', status);
-    }
-
-    if (params.toString() !== searchParams.toString()) {
-      setSearchParams(params, { replace: true });
-    }
+    if (category !== 'all') params.set('category', category);
+    if (status !== 'all') params.set('status', status);
+    if (params.toString() !== searchParams.toString()) setSearchParams(params, { replace: true });
   }, [month, category, status, searchParams, setSearchParams]);
 
   useEffect(() => {
     const fetchTransactions = async () => {
       setLoading(true);
       setError(null);
-
       try {
         const params = new URLSearchParams();
         params.set('limit', String(PAGE_SIZE));
         params.set('offset', String(offset));
         params.set('month', month);
-        if (category !== 'all') {
-          params.set('category', category);
-        }
-        if (status !== 'all') {
-          params.set('status', status);
-        }
+        if (category !== 'all') params.set('category', category);
+        if (status !== 'all') params.set('status', status);
 
-        const response = await fetch(`/api/transactions?${params.toString()}`, {
-          credentials: 'include'
-        });
-
+        const response = await fetch(`/api/transactions?${params.toString()}`, { credentials: 'include' });
         if (!response.ok) {
           const payload = await response.json().catch(() => ({}));
-          const message = (payload as { error?: string }).error ?? `Failed to load transactions (${response.status})`;
-          throw new Error(message);
+          throw new Error((payload as { error?: string }).error ?? `Failed to load transactions (${response.status})`);
         }
-
         const payload = (await response.json()) as TransactionsResponse;
         setTransactions(payload.data);
         setTotal(payload.pagination.total);
@@ -188,33 +152,24 @@ export function TransactionsPage() {
         setLoading(false);
       }
     };
-
     void fetchTransactions();
   }, [month, category, status, offset]);
 
   const categoryFilterOptions = useMemo<SelectOption[]>(() => {
     const options: SelectOption[] = [
       { value: 'all', label: 'All categories' },
-      { value: 'uncategorized', label: 'Uncategorized' }
+      { value: 'uncategorized', label: 'Uncategorized' },
     ];
-
-    for (const categoryOption of categories) {
-      options.push({
-        value: String(categoryOption.id),
-        label: categoryOption.name
-      });
+    for (const cat of categories) {
+      options.push({ value: String(cat.id), label: cat.name });
     }
-
     return options;
   }, [categories]);
 
   const rowCategoryOptions = useMemo<SelectOption[]>(
     () => [
       { value: 'uncategorized', label: 'Uncategorized' },
-      ...categories.map((categoryOption) => ({
-        value: String(categoryOption.id),
-        label: categoryOption.name
-      }))
+      ...categories.map((cat) => ({ value: String(cat.id), label: cat.name })),
     ],
     [categories]
   );
@@ -223,10 +178,7 @@ export function TransactionsPage() {
     const monthSet = new Set<string>([month, ...availableMonths]);
     return Array.from(monthSet)
       .sort((a, b) => b.localeCompare(a))
-      .map((monthValue) => ({
-        value: monthValue,
-        label: formatMonthLabel(monthValue)
-      }));
+      .map((v) => ({ value: v, label: formatMonthLabel(v) }));
   }, [month, availableMonths]);
 
   const pageNumber = Math.floor(offset / PAGE_SIZE) + 1;
@@ -235,30 +187,16 @@ export function TransactionsPage() {
   const canGoNext = offset + PAGE_SIZE < total;
 
   const onFilterChange = (type: 'month' | 'category' | 'status', value: string) => {
-    if (type === 'month') {
-      setMonth(value);
-    } else if (type === 'category') {
-      setCategory(value);
-    } else {
-      setStatus(value);
-    }
-
+    if (type === 'month') setMonth(value);
+    else if (type === 'category') setCategory(value);
+    else setStatus(value);
     setOffset(0);
   };
 
   const onCategoryAssign = async (transaction: TransactionListItem, selectedValue: string) => {
     const selectedCategoryId = selectedValue === 'uncategorized' ? null : Number(selectedValue);
-
-    if (
-      selectedValue !== 'uncategorized' &&
-      (!Number.isFinite(selectedCategoryId) || (selectedCategoryId as number) <= 0)
-    ) {
-      return;
-    }
-
-    if (selectedCategoryId === transaction.categoryId && transaction.status === 'confirmed') {
-      return;
-    }
+    if (selectedValue !== 'uncategorized' && (!Number.isFinite(selectedCategoryId) || (selectedCategoryId as number) <= 0)) return;
+    if (selectedCategoryId === transaction.categoryId && transaction.status === 'confirmed') return;
 
     setUpdatingTransactionIds((prev) => [...prev, transaction.id]);
     setError(null);
@@ -267,141 +205,122 @@ export function TransactionsPage() {
       const response = await fetch(`/api/transactions/${transaction.id}`, {
         method: 'PATCH',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          category_id: selectedCategoryId,
-          status: selectedCategoryId === null ? 'needs_review' : 'confirmed'
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category_id: selectedCategoryId, status: selectedCategoryId === null ? 'needs_review' : 'confirmed' }),
       });
-
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
-        const message = (payload as { error?: string }).error ?? `Failed to update transaction (${response.status})`;
-        throw new Error(message);
+        throw new Error((payload as { error?: string }).error ?? `Failed to update transaction (${response.status})`);
       }
-
       const payload = (await response.json()) as {
-        data: {
-          id: number;
-          categoryId: number | null;
-          categoryName: string | null;
-          status: 'needs_review' | 'confirmed';
-        };
+        data: { id: number; categoryId: number | null; categoryName: string | null; status: 'needs_review' | 'confirmed' };
       };
-
-      setTransactions((previous) =>
-        previous.map((item) =>
+      setTransactions((prev) =>
+        prev.map((item) =>
           item.id === transaction.id
-            ? {
-                ...item,
-                categoryId: payload.data.categoryId,
-                categoryName: payload.data.categoryName,
-                status: payload.data.status
-              }
+            ? { ...item, categoryId: payload.data.categoryId, categoryName: payload.data.categoryName, status: payload.data.status }
             : item
         )
       );
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : 'Failed to update transaction');
     } finally {
-      setUpdatingTransactionIds((previous) => previous.filter((id) => id !== transaction.id));
+      setUpdatingTransactionIds((prev) => prev.filter((id) => id !== transaction.id));
     }
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
-          <Select
-            options={monthOptions}
-            value={month}
-            onChange={(event) => onFilterChange('month', event.target.value)}
-            aria-label="Filter by month"
-          />
+    <div className="space-y-5">
+      {/* Filters + summary */}
+      <div className="flex flex-wrap items-center gap-3">
+        <Select options={monthOptions} value={month} onChange={(e) => onFilterChange('month', e.target.value)} aria-label="Filter by month" variant="dashed" className="w-auto" />
+        <Select options={categoryFilterOptions} value={category} onChange={(e) => onFilterChange('category', e.target.value)} aria-label="Filter by category" variant="dashed" className="w-auto" />
+        <Select options={statusOptions} value={status} onChange={(e) => onFilterChange('status', e.target.value)} aria-label="Filter by status" variant="dashed" className="w-auto" />
+        <div className="flex-1" />
+        <Badge variant="warning">
+          {transactions.filter((t) => t.status === 'needs_review').length} needs review
+        </Badge>
+        <Badge variant="success">
+          ✓ {Math.round((transactions.filter((t) => t.status === 'confirmed').length / Math.max(transactions.length, 1)) * 100)}% complete
+        </Badge>
+      </div>
 
-          <Select
-            options={categoryFilterOptions}
-            value={category}
-            onChange={(event) => onFilterChange('category', event.target.value)}
-            aria-label="Filter by category"
-          />
+      {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
 
-          <Select
-            options={statusOptions}
-            value={status}
-            onChange={(event) => onFilterChange('status', event.target.value)}
-            aria-label="Filter by status"
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Transactions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error ? <p className="text-sm text-[var(--destructive)]">{error}</p> : null}
-
+      {/* Table */}
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Merchant</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead>Amount</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-[var(--muted-foreground)]">
-                    Loading transactions...
-                  </TableCell>
+                  <TableCell colSpan={7} className="text-center text-[var(--muted-foreground)]">Loading transactions...</TableCell>
                 </TableRow>
               ) : transactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-[var(--muted-foreground)]">
-                    No transactions found for these filters.
-                  </TableCell>
+                  <TableCell colSpan={7} className="text-center text-[var(--muted-foreground)]">No transactions found.</TableCell>
                 </TableRow>
               ) : (
-                transactions.map((transaction) => {
-                  const rowIsUpdating = updatingTransactionIds.includes(transaction.id);
-
+                transactions.map((tx) => {
+                  const isUpdating = updatingTransactionIds.includes(tx.id);
                   return (
-                    <TableRow key={transaction.id}>
-                      <TableCell>{transaction.date}</TableCell>
-                      <TableCell className="font-medium">{transaction.merchant ?? transaction.description}</TableCell>
-                      <TableCell className="max-w-[24rem] truncate" title={transaction.description}>
-                        {transaction.description}
+                    <TableRow key={tx.id}>
+                      <TableCell className="text-xs text-[var(--muted-foreground)]">{tx.date}</TableCell>
+                      <TableCell>
+                        <span className="font-hand text-lg leading-none">{tx.merchant ?? tx.description}</span>
                       </TableCell>
-                      <TableCell
-                        className={transaction.type === 'debit' ? 'text-red-500 font-medium' : 'text-green-600 font-medium'}
-                      >
-                        {formatAmount(transaction.amount)}
+                      <TableCell className="max-w-[20rem] truncate text-[11px] text-[var(--muted-foreground)]" title={tx.description}>
+                        {tx.description}
+                      </TableCell>
+                      <TableCell className="text-right font-bold">
+                        <span className={tx.type === 'credit' ? 'text-[var(--good)]' : ''}>
+                          {formatAmount(tx.amount)}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <Select
-                          value={transaction.categoryId === null ? 'uncategorized' : String(transaction.categoryId)}
+                          value={tx.categoryId === null ? 'uncategorized' : String(tx.categoryId)}
                           options={rowCategoryOptions}
-                          disabled={rowIsUpdating}
-                          onChange={(event) => {
-                            void onCategoryAssign(transaction, event.target.value);
-                          }}
-                          aria-label={`Set category for transaction ${transaction.id}`}
+                          disabled={isUpdating}
+                          variant={tx.categoryId === null ? 'dashed' : 'default'}
+                          onChange={(e) => void onCategoryAssign(tx, e.target.value)}
+                          aria-label={`Set category for transaction ${tx.id}`}
+                          className="w-[130px]"
                         />
                       </TableCell>
                       <TableCell>
-                        <Badge variant={transaction.status === 'needs_review' ? 'warning' : 'success'}>
-                          {formatStatus(transaction.status)}
-                        </Badge>
+                        {tx.status === 'confirmed' ? (
+                          <Badge variant="success">✓ confirmed</Badge>
+                        ) : (
+                          <Badge variant="warning">needs review</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-1">
+                          <button
+                            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm hover:bg-[var(--muted)]"
+                            title="Edit"
+                          >
+                            ✎
+                          </button>
+                          <button
+                            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm text-[var(--primary)] hover:bg-[var(--primary-soft)]"
+                            title="Delete"
+                          >
+                            ✕
+                          </button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -409,32 +328,27 @@ export function TransactionsPage() {
               )}
             </TableBody>
           </Table>
-
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-[var(--muted-foreground)]">
-              Page {pageNumber} of {totalPages} ({total} total)
-            </p>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={!canGoPrevious}
-                onClick={() => setOffset((previous) => Math.max(0, previous - PAGE_SIZE))}
-              >
-                Previous
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={!canGoNext}
-                onClick={() => setOffset((previous) => previous + PAGE_SIZE)}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm">☐ select all</Button>
+          <Button variant="ghost" size="sm">↩ undo</Button>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" disabled={!canGoPrevious} onClick={() => setOffset((p) => Math.max(0, p - PAGE_SIZE))}>
+            ← prev
+          </Button>
+          <span className="text-[13px] text-[var(--muted-foreground)]">
+            {pageNumber} of {totalPages}
+          </span>
+          <Button variant="outline" size="sm" disabled={!canGoNext} onClick={() => setOffset((p) => p + PAGE_SIZE)}>
+            next →
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -45,7 +45,8 @@ function NavItem({ to, label, icon, collapsed, badge }: NavItemProps) {
       end={to === '/'}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-2.5 rounded-[8px] border-[1.3px] px-2.5 py-2 text-sm transition-colors',
+          'flex items-center gap-2.5 rounded-[8px] border-[1.3px] py-2 text-sm transition-colors',
+          collapsed ? 'justify-center px-0' : 'px-2.5',
           isActive
             ? 'border-[var(--border)] bg-[var(--primary-soft)] shadow-[1px_1.5px_0_0_var(--border)]'
             : 'border-transparent hover:bg-[var(--card)]'

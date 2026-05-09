@@ -79,6 +79,8 @@ export function AppShell() {
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +107,17 @@ export function AppShell() {
     document.addEventListener('mousedown', onDocClick);
     return () => document.removeEventListener('mousedown', onDocClick);
   }, [pickerOpen]);
+
+  useEffect(() => {
+    if (!profileMenuOpen) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [profileMenuOpen]);
 
   const onPickMonth = (m: string) => {
     const next = new URLSearchParams(searchParams);
@@ -138,18 +151,24 @@ export function AppShell() {
         {/* Logo + collapse toggle */}
         {collapsed ? (
           <div className="group relative mb-4 flex justify-center px-1">
-            <Link to="/" className="flex items-center" title="Home">
-              <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)]">
-                <span className="absolute inset-[5px] rounded-full border-[1.5px] border-[var(--border)] bg-[var(--card)]" />
-              </span>
-            </Link>
             <button
+              type="button"
               onClick={() => setCollapsed(false)}
-              className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 flex -translate-y-1/2 items-center gap-1.5 whitespace-nowrap rounded-[8px] border-[1.3px] border-[var(--border)] bg-[var(--card)] px-2.5 py-1.5 font-hand text-sm opacity-0 shadow-[1px_1.5px_0_0_var(--border)] transition-opacity duration-150 hover:bg-[var(--primary-soft)] group-hover:pointer-events-auto group-hover:opacity-100"
+              className="flex items-center"
+              title="Open sidebar"
+              aria-label="Open sidebar"
+            >
+              <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)] transition-colors group-hover:bg-[var(--card)]">
+                <span className="absolute inset-[5px] rounded-full border-[1.5px] border-[var(--border)] bg-[var(--card)] transition-colors group-hover:bg-[var(--primary-soft)]" />
+              </span>
+            </button>
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 flex -translate-y-1/2 items-center gap-1.5 whitespace-nowrap rounded-[8px] border-[1.3px] border-[var(--border)] bg-[var(--card)] px-2.5 py-1.5 font-hand text-sm opacity-0 shadow-[1px_1.5px_0_0_var(--border)] transition-opacity duration-150 group-hover:opacity-100"
             >
               <span>»</span>
               <span>Open sidebar</span>
-            </button>
+            </span>
           </div>
         ) : (
           <div className="mb-4 flex items-center justify-between px-1">
@@ -206,16 +225,49 @@ export function AppShell() {
         <div className="flex-1" />
 
         {/* User profile */}
-        <div className="mt-4 flex items-center gap-2.5 border-t-[1.3px] border-dashed border-[var(--muted-foreground)] pt-3">
-          <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border-[1.3px] border-[var(--border)] bg-[var(--primary-soft)] font-hand text-[13px]">
-            {user?.name?.[0]?.toUpperCase() ?? '?'}
-          </span>
-          {!collapsed && (
-            <div className="min-w-0 flex-1" style={{ lineHeight: 1.1 }}>
-              <div className="font-hand text-base">{user?.name ?? 'Account'}</div>
+        <div
+          ref={profileMenuRef}
+          className="relative mt-4 border-t-[1.3px] border-dashed border-[var(--muted-foreground)] pt-3"
+        >
+          <button
+            type="button"
+            onClick={() => setProfileMenuOpen((v) => !v)}
+            aria-haspopup="menu"
+            aria-expanded={profileMenuOpen}
+            className={cn(
+              'flex w-full items-center gap-2.5 rounded-[8px] border-[1.3px] px-1.5 py-1 text-left transition-colors',
+              profileMenuOpen
+                ? 'border-[var(--border)] bg-[var(--primary-soft)] shadow-[1px_1.5px_0_0_var(--border)]'
+                : 'border-transparent hover:bg-[var(--card)]',
+              collapsed && 'justify-center px-0'
+            )}
+          >
+            <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-[1.3px] border-[var(--border)] bg-[var(--primary-soft)] font-hand text-base">
+              {user?.name?.[0]?.toUpperCase() ?? '?'}
+            </span>
+            {!collapsed && (
+              <div className="min-w-0 flex-1" style={{ lineHeight: 1.1 }}>
+                <div className="truncate font-hand text-base">{user?.name ?? 'Account'}</div>
+                <div className="text-[11px] text-[var(--muted-foreground)]">Account ▾</div>
+              </div>
+            )}
+          </button>
+          {profileMenuOpen && (
+            <div
+              role="menu"
+              className={cn(
+                'absolute z-20 min-w-[160px] rounded-[var(--radius-sm)] border-[1.3px] border-[var(--border)] bg-[var(--card)] p-1.5 shadow-[var(--shadow-sketch-sm)]',
+                collapsed ? 'bottom-0 left-full ml-2' : 'bottom-full left-0 right-0 mb-1.5'
+              )}
+            >
               <button
-                onClick={() => void logout()}
-                className="text-[11px] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setProfileMenuOpen(false);
+                  void logout();
+                }}
+                className="flex w-full items-center rounded-[6px] px-2.5 py-1.5 text-left text-[13px] hover:bg-[var(--muted)]"
               >
                 Sign out
               </button>

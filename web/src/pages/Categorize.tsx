@@ -263,7 +263,7 @@ export function CategorizePage() {
                               : 'bg-card'
                           }`}
                         >
-                          <kbd className="rounded border-[1.2px] border-border bg-muted px-1.25 font-hand text-sm leading-none">
+                          <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border-[1.2px] border-border bg-muted px-1 font-hand text-sm leading-none">
                             {i === 9 ? 0 : i + 1}
                           </kbd>
                           {cat.name}
@@ -376,8 +376,8 @@ export function CategorizePage() {
 function KbdChip({ keys, label }: { keys: string; label: string }) {
   return (
     <span className="flex items-center gap-1.5 rounded-lg border-[1.3px] border-border bg-card px-2.5 py-1 text-[13px] shadow-sketch-xs">
-      <kbd className="rounded border-[1.2px] border-border bg-muted px-1.25 font-hand text-sm leading-none">
-        {keys}
+      <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border-[1.2px] border-border bg-muted px-1 font-hand text-sm leading-none">
+          {keys}
       </kbd>
       {label}
     </span>

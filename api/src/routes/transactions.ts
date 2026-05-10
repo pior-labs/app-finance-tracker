@@ -167,7 +167,7 @@ transactionsRouter.get('/stats', async (c) => {
         category: row.category,
         totalCents: Number(row.totalCents ?? 0)
       })),
-      byMerchant: byMerchantRows
+      topMerchants: byMerchantRows
         .filter((row) => row.merchant)
         .map((row) => ({
           merchant: row.merchant as string,

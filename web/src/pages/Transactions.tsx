@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Select, type SelectOption } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
@@ -44,7 +45,7 @@ interface StatsResponse {
   };
 }
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 25;
 
 const statusOptions: SelectOption[] = [
   { value: 'all', label: 'All statuses' },
@@ -79,13 +80,15 @@ export function TransactionsPage() {
 
   const [month, setMonth] = useState(() => {
     const fromQuery = searchParams.get('month');
-    return isValidMonth(fromQuery) ? fromQuery : getCurrentMonth();
+    if (fromQuery === 'all') return 'all';
+    return isValidMonth(fromQuery) ? fromQuery : 'all';
   });
   const [category, setCategory] = useState(() => searchParams.get('category') ?? 'all');
   const [status, setStatus] = useState(() => {
     const raw = searchParams.get('status');
     return raw && ['all', 'needs_review', 'confirmed'].includes(raw) ? raw : 'all';
   });
+  const [merchant, setMerchant] = useState(() => searchParams.get('merchant') ?? '');
   const [offset, setOffset] = useState(0);
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -120,11 +123,12 @@ export function TransactionsPage() {
 
   useEffect(() => {
     const params = new URLSearchParams();
-    params.set('month', month);
+    if (month !== 'all') params.set('month', month);
     if (category !== 'all') params.set('category', category);
     if (status !== 'all') params.set('status', status);
+    if (merchant.trim()) params.set('merchant', merchant.trim());
     if (params.toString() !== searchParams.toString()) setSearchParams(params, { replace: true });
-  }, [month, category, status, searchParams, setSearchParams]);
+  }, [month, category, status, merchant, searchParams, setSearchParams]);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -134,9 +138,10 @@ export function TransactionsPage() {
         const params = new URLSearchParams();
         params.set('limit', String(PAGE_SIZE));
         params.set('offset', String(offset));
-        params.set('month', month);
+        if (month !== 'all') params.set('month', month);
         if (category !== 'all') params.set('category', category);
         if (status !== 'all') params.set('status', status);
+        if (merchant.trim()) params.set('merchant', merchant.trim());
 
         const response = await fetch(`/api/transactions?${params.toString()}`, { credentials: 'include' });
         if (!response.ok) {
@@ -153,7 +158,7 @@ export function TransactionsPage() {
       }
     };
     void fetchTransactions();
-  }, [month, category, status, offset]);
+  }, [month, category, status, merchant, offset]);
 
   const categoryFilterOptions = useMemo<SelectOption[]>(() => {
     const options: SelectOption[] = [
@@ -175,10 +180,11 @@ export function TransactionsPage() {
   );
 
   const monthOptions = useMemo<SelectOption[]>(() => {
-    const monthSet = new Set<string>([month, ...availableMonths]);
-    return Array.from(monthSet)
+    const monthSet = new Set<string>(availableMonths);
+    const options = Array.from(monthSet)
       .sort((a, b) => b.localeCompare(a))
       .map((v) => ({ value: v, label: formatMonthLabel(v) }));
+    return [{ value: 'all', label: 'All transactions' }, ...options];
   }, [month, availableMonths]);
 
   const pageNumber = Math.floor(offset / PAGE_SIZE) + 1;
@@ -233,6 +239,34 @@ export function TransactionsPage() {
     <div className="space-y-5">
       {/* Filters + summary */}
       <div className="flex flex-wrap items-center gap-3">
+        <div className="relative">
+          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </span>
+          <Input
+            value={merchant}
+            onChange={(e) => {
+              setMerchant(e.target.value);
+              setOffset(0);
+            }}
+            placeholder="Search merchant"
+            aria-label="Search by merchant"
+            className="h-10 w-48 bg-card pl-8"
+          />
+        </div>
         <Select options={monthOptions} value={month} onChange={(e) => onFilterChange('month', e.target.value)} aria-label="Filter by month" variant="dashed" className="w-auto" />
         <Select options={categoryFilterOptions} value={category} onChange={(e) => onFilterChange('category', e.target.value)} aria-label="Filter by category" variant="dashed" className="w-auto" />
         <Select options={statusOptions} value={status} onChange={(e) => onFilterChange('status', e.target.value)} aria-label="Filter by status" variant="dashed" className="w-auto" />
@@ -332,11 +366,7 @@ export function TransactionsPage() {
       </Card>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm">☐ select all</Button>
-          <Button variant="ghost" size="sm">↩ undo</Button>
-        </div>
+      <div className="flex items-center justify-end">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" disabled={!canGoPrevious} onClick={() => setOffset((p) => Math.max(0, p - PAGE_SIZE))}>
             ← prev

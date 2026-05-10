@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 interface Category {
   id: number;
   name: string;
+  isFavorite?: boolean;
 }
 
 interface Transaction {
@@ -44,7 +45,9 @@ export function CategorizePage() {
   const remaining = Math.max(0, totalUncategorized - confirmedList.length);
   const progressPct = totalTransactions > 0 ? Math.round((categorizedCount / totalTransactions) * 100) : 0;
   const current = queue[0] ?? null;
-  const favoriteCategories = useMemo(() => categories.slice(0, 6), [categories]);
+  const favoriteCategories = useMemo(() => {
+    return categories.filter((category) => category.isFavorite).slice(0, 10);
+  }, [categories]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -122,6 +125,14 @@ export function CategorizePage() {
     setQueue((prev) => [...prev.slice(1), prev[0]]);
   };
 
+  const goBack = () => {
+    setQueue((prev) => {
+      if (prev.length <= 1) return prev;
+      const last = prev[prev.length - 1];
+      return [last, ...prev.slice(0, -1)];
+    });
+  };
+
   const undo = async () => {
     if (!lastAction) return;
     try {
@@ -142,12 +153,13 @@ export function CategorizePage() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
-      const num = parseInt(e.key, 10);
-      if (num >= 1 && num <= favoriteCategories.length && current) {
-        void assignCategory(favoriteCategories[num - 1].id);
+      const keyToIndex = e.key === '0' ? 9 : parseInt(e.key, 10) - 1;
+      if (keyToIndex >= 0 && keyToIndex < favoriteCategories.length && current) {
+        void assignCategory(favoriteCategories[keyToIndex].id);
         return;
       }
-      if (e.key === 'ArrowLeft' && current) skip();
+      if (e.key === 'ArrowLeft' && current) goBack();
+      if (e.key === 'ArrowRight' && current) skip();
       if ((e.key === 'u' || e.key === 'U') && lastAction) void undo();
     };
     window.addEventListener('keydown', handler);
@@ -222,7 +234,7 @@ export function CategorizePage() {
               )}
               {/* Top card */}
               <Card className="relative" style={{ transform: 'rotate(-0.5deg)' }}>
-                <CardContent className="flex h-full flex-col justify-between p-5">
+                <CardContent className="flex h-full flex-col justify-between p-5 space-y-6">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <span className="inline-flex items-center gap-1.5 rounded-full border-[1.3px] border-dashed border-[var(--muted-foreground)] bg-transparent px-2.5 py-0.5 text-xs text-[var(--muted-foreground)]">
@@ -239,8 +251,7 @@ export function CategorizePage() {
                     </div>
                   </div>
 
-                  <div className="space-y-3">
-                    <p className="text-[13px] text-[var(--muted-foreground)]">Tap or press a number — feels like Tinder for receipts.</p>
+                  <div className="space-y-6">
                     <div className="flex flex-wrap gap-2">
                       {favoriteCategories.map((cat, i) => (
                         <button
@@ -253,7 +264,7 @@ export function CategorizePage() {
                           }`}
                         >
                           <kbd className="rounded-[4px] border-[1.2px] border-[var(--border)] bg-[var(--muted)] px-[5px] font-hand text-sm leading-none">
-                            {i + 1}
+                            {i === 9 ? 0 : i + 1}
                           </kbd>
                           {cat.name}
                         </button>
@@ -295,21 +306,11 @@ export function CategorizePage() {
 
                   {/* Swipe hints */}
                   <div className="flex items-center justify-between pt-2 font-hand text-lg text-[var(--muted-foreground)]">
-                    <button onClick={skip} className="cursor-pointer hover:text-[var(--foreground)]">← skip</button>
-                    <span>confirm →</span>
+                    <button onClick={goBack} className="cursor-pointer hover:text-[var(--foreground)]">← back</button>
+                    <button onClick={skip} className="cursor-pointer hover:text-[var(--foreground)]">forward →</button>
                   </div>
                 </CardContent>
               </Card>
-            </div>
-
-            {/* Bottom controls */}
-            <div className="mt-4 flex items-center justify-between">
-              <Button variant="ghost" size="sm" disabled={!lastAction} onClick={() => void undo()}>
-                ↩ undo last
-              </Button>
-              <span className="text-[13px] text-[var(--muted-foreground)]">
-                {confirmedList.length + 1} of {totalUncategorized}
-              </span>
             </div>
           </div>
         )}
@@ -361,9 +362,9 @@ export function CategorizePage() {
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-widest text-[var(--muted-foreground)]">Shortcuts</p>
           <div className="flex flex-wrap gap-1.5">
-            <KbdChip keys="1-6" label="favorites" />
-            <KbdChip keys="←" label="skip" />
-            <KbdChip keys="→" label="confirm" />
+            <KbdChip keys="Num keys" label="favorites" />
+            <KbdChip keys="←" label="back" />
+            <KbdChip keys="→" label="forward" />
             <KbdChip keys="U" label="undo" />
           </div>
         </div>

@@ -72,6 +72,7 @@ export const categories = sqliteTable('categories', {
   description: text('description').notNull(),
   keywords: text('keywords').notNull().default(''),
   isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(true),
+  isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs)
 });
 

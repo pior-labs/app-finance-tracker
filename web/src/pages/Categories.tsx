@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 interface Category {
   id: number;
   name: string;
+  isFavorite?: boolean;
   transactionCount?: number;
   totalCents?: number;
 }
@@ -105,6 +106,25 @@ export function CategoriesPage() {
     }
   };
 
+  const toggleFavorite = async (category: Category) => {
+    setError(null);
+    try {
+      const res = await fetch(`/api/categories/${category.id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isFavorite: !category.isFavorite }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Failed to update favorite (${res.status})`);
+      }
+      await fetchCategories();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update favorite');
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -191,6 +211,15 @@ export function CategoriesPage() {
                   </div>
                   {editingId !== cat.id && (
                     <div className="flex gap-1">
+                      <button
+                        onClick={() => void toggleFavorite(cat)}
+                        className={`flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] font-hand text-sm hover:bg-[var(--muted)] ${
+                          cat.isFavorite ? 'bg-[var(--primary-soft)] text-[var(--primary)]' : 'bg-[var(--card)]'
+                        }`}
+                        title={cat.isFavorite ? 'Unfavorite' : 'Favorite'}
+                      >
+                        ★
+                      </button>
                       <button
                         onClick={() => { setEditingId(cat.id); setEditName(cat.name); }}
                         className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm hover:bg-[var(--muted)]"

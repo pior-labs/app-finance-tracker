@@ -153,12 +153,12 @@ export function CategorizePage() {
 
   if (loading) {
     return (
-      <div className="flex gap-5">
-        <div className="flex-1">
-          <div className="h-96 animate-pulse rounded-[var(--radius)] bg-[var(--muted)]" />
+      <div className="flex h-full">
+        <div className="flex-1 p-5">
+          <div className="h-full min-h-96 animate-pulse rounded-[var(--radius)] bg-[var(--muted)]" />
         </div>
-        <div className="w-72">
-          <div className="h-96 animate-pulse rounded-[var(--radius)] bg-[var(--muted)]" />
+        <div className="w-72 p-5">
+          <div className="h-full min-h-96 animate-pulse rounded-[var(--radius)] bg-[var(--muted)]" />
         </div>
       </div>
     );
@@ -186,13 +186,13 @@ export function CategorizePage() {
   }
 
   return (
-    <div className="flex gap-5">
+    <div className="flex h-full">
       {/* Main stage — card stack */}
-      <div className="flex flex-1 flex-col items-center justify-center">
+      <div className="flex min-w-0 flex-1 flex-col items-center justify-center p-5">
         {current && (
-          <div className="w-full max-w-lg">
+          <div className="flex h-full w-full max-w-lg flex-col">
             {/* Card stack */}
-            <div className="relative" style={{ height: 420 }}>
+            <div className="relative min-h-[420px] flex-1">
               {/* Background cards for depth */}
               {queue.length > 2 && (
                 <div
@@ -273,7 +273,7 @@ export function CategorizePage() {
       </div>
 
       {/* Side rail */}
-      <div className="hidden w-[280px] flex-col gap-4 border-l-[1.3px] border-dashed border-[var(--muted-foreground)] pl-4 lg:flex" style={{ background: '#fffdf8' }}>
+      <div className="hidden w-[300px] flex-col gap-4 border-l-[1.3px] border-dashed border-[var(--muted-foreground)] p-5 lg:flex bg-[var(--muted)]" >
         {/* Progress */}
         <div className="space-y-1">
           <p className="text-xs uppercase tracking-widest text-[var(--muted-foreground)]">Progress</p>

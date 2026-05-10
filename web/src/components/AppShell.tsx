@@ -279,7 +279,7 @@ export function AppShell() {
 
       {/* Main content */}
       <div className="flex min-h-screen flex-1 flex-col">
-        <header className="flex items-center justify-between border-b-[1.3px] border-dashed border-[var(--muted-foreground)] px-5 py-3">
+        <header className="flex items-center justify-between border-b-[1.3px] border-dashed border-[var(--muted-foreground)] bg-[var(--muted)] px-5 py-3">
           <h1 className="font-hand text-2xl">{pageTitle}</h1>
           <div className="flex items-center gap-3">
             <div ref={pickerRef} className="relative">
@@ -330,7 +330,12 @@ export function AppShell() {
             </div>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-5">
+        <main
+          className={cn(
+            'flex-1 overflow-auto',
+            location.pathname === '/categorize' ? '' : 'p-5'
+          )}
+        >
           <Outlet />
         </main>
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,7 @@ interface StatsResponse {
   };
 }
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 15;
 
 const statusOptions: SelectOption[] = [
   { value: 'all', label: 'All statuses' },
@@ -98,6 +98,8 @@ export function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingTransactionIds, setUpdatingTransactionIds] = useState<number[]>([]);
+  const [rowHeightPx, setRowHeightPx] = useState<number | null>(null);
+  const tableViewportRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const fetchFilterData = async () => {
@@ -159,6 +161,39 @@ export function TransactionsPage() {
     };
     void fetchTransactions();
   }, [month, category, status, merchant, offset]);
+
+  useEffect(() => {
+    const updateRowHeight = () => {
+      if (!tableViewportRef.current) return;
+      if (transactions.length === 0) {
+        setRowHeightPx(null);
+        return;
+      }
+
+      const headerElement = tableViewportRef.current.querySelector('thead');
+      if (!headerElement) return;
+
+      const viewportHeight = tableViewportRef.current.clientHeight;
+      const headerHeight = headerElement.getBoundingClientRect().height;
+      const availableBodyHeight = Math.max(0, viewportHeight - headerHeight);
+      const visibleRows = Math.min(PAGE_SIZE, transactions.length);
+      const nextRowHeight = Math.max(40, Math.floor(availableBodyHeight / Math.max(visibleRows, 1)));
+
+      setRowHeightPx((prev) => (prev === nextRowHeight ? prev : nextRowHeight));
+    };
+
+    updateRowHeight();
+
+    const observer = new ResizeObserver(() => {
+      updateRowHeight();
+    });
+
+    if (tableViewportRef.current) observer.observe(tableViewportRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [transactions.length]);
 
   const categoryFilterOptions = useMemo<SelectOption[]>(() => {
     const options: SelectOption[] = [
@@ -236,7 +271,7 @@ export function TransactionsPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="flex h-full min-h-0 flex-col gap-4">
       {/* Filters + summary */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative">
@@ -282,21 +317,22 @@ export function TransactionsPage() {
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Table */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <Card className="min-h-0 flex-1 overflow-hidden">
+        <div ref={tableViewportRef} className="h-full overflow-hidden">
+          <CardContent className="h-full p-0">
+            <Table>
+              <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Merchant</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="h-9 px-2.5">Date</TableHead>
+                <TableHead className="h-9 px-2.5">Merchant</TableHead>
+                <TableHead className="h-9 px-2.5">Description</TableHead>
+                <TableHead className="h-9 px-2.5 text-right">Amount</TableHead>
+                <TableHead className="h-9 px-2.5">Category</TableHead>
+                <TableHead className="h-9 px-2.5">Status</TableHead>
+                <TableHead className="h-9 px-2.5 text-right">Actions</TableHead>
               </TableRow>
-            </TableHeader>
-            <TableBody>
+              </TableHeader>
+              <TableBody>
               {loading ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-muted-foreground">Loading transactions...</TableCell>
@@ -309,20 +345,20 @@ export function TransactionsPage() {
                 transactions.map((tx) => {
                   const isUpdating = updatingTransactionIds.includes(tx.id);
                   return (
-                    <TableRow key={tx.id}>
-                      <TableCell className="text-xs text-muted-foreground">{tx.date}</TableCell>
-                      <TableCell>
-                        <span className="font-hand text-lg leading-none">{tx.merchant ?? tx.description}</span>
+                    <TableRow key={tx.id} style={rowHeightPx ? { height: `${rowHeightPx}px` } : undefined}>
+                      <TableCell className="px-2.5 py-1.5 text-[11px] text-muted-foreground">{tx.date}</TableCell>
+                      <TableCell className="px-2.5 py-1.5">
+                        <span className="font-hand text-base leading-none">{tx.merchant ?? tx.description}</span>
                       </TableCell>
-                      <TableCell className="max-w-80 truncate text-[11px] text-muted-foreground" title={tx.description}>
+                      <TableCell className="max-w-80 truncate px-2.5 py-1.5 text-[10px] text-muted-foreground" title={tx.description}>
                         {tx.description}
                       </TableCell>
-                      <TableCell className="text-right font-bold">
+                      <TableCell className="px-2.5 py-1.5 text-right font-bold">
                         <span className={tx.type === 'credit' ? 'text-good' : ''}>
                           {formatAmount(tx.amount)}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-2.5 py-1.5">
                         <Select
                           value={tx.categoryId === null ? 'uncategorized' : String(tx.categoryId)}
                           options={rowCategoryOptions}
@@ -330,26 +366,26 @@ export function TransactionsPage() {
                           variant={tx.categoryId === null ? 'dashed' : 'default'}
                           onChange={(e) => void onCategoryAssign(tx, e.target.value)}
                           aria-label={`Set category for transaction ${tx.id}`}
-                          className="w-32.5"
+                          className="h-8 w-31 text-xs"
                         />
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-2.5 py-1.5">
                         {tx.status === 'confirmed' ? (
-                          <Badge variant="success">✓ confirmed</Badge>
+                          <Badge variant="success" className="px-2 py-0 text-[11px]">✓ confirmed</Badge>
                         ) : (
-                          <Badge variant="warning">needs review</Badge>
+                          <Badge variant="warning" className="px-2 py-0 text-[11px]">needs review</Badge>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="px-2.5 py-1.5">
                         <div className="flex justify-end gap-1">
                           <button
-                            className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
+                            className="flex h-5 w-5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-xs hover:bg-muted"
                             title="Edit"
                           >
                             ✎
                           </button>
                           <button
-                            className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm text-primary hover:bg-primary-soft"
+                            className="flex h-5 w-5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-xs text-primary hover:bg-primary-soft"
                             title="Delete"
                           >
                             ✕
@@ -360,23 +396,28 @@ export function TransactionsPage() {
                   );
                 })
               )}
-            </TableBody>
-          </Table>
-        </CardContent>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </div>
       </Card>
 
       {/* Pagination */}
       <div className="flex items-center justify-end">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" disabled={!canGoPrevious} onClick={() => setOffset((p) => Math.max(0, p - PAGE_SIZE))}>
-            ← prev
-          </Button>
+          {canGoPrevious && (
+            <Button variant="ghost" size="sm" onClick={() => setOffset((p) => Math.max(0, p - PAGE_SIZE))}>
+              ← prev
+            </Button>
+          )}
           <span className="text-[13px] text-muted-foreground">
             {pageNumber} of {totalPages}
           </span>
-          <Button variant="outline" size="sm" disabled={!canGoNext} onClick={() => setOffset((p) => p + PAGE_SIZE)}>
-            next →
-          </Button>
+          {canGoNext && (
+            <Button variant="outline" size="sm" onClick={() => setOffset((p) => p + PAGE_SIZE)}>
+              next →
+            </Button>
+          )}
         </div>
       </div>
     </div>

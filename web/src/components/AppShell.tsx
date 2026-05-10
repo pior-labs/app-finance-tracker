@@ -281,54 +281,56 @@ export function AppShell() {
       <div className="flex min-h-screen flex-1 flex-col">
         <header className="flex items-center justify-between border-b-[1.3px] border-dashed border-[var(--muted-foreground)] bg-[var(--muted)] px-5 py-3">
           <h1 className="font-hand text-2xl">{pageTitle}</h1>
-          <div className="flex items-center gap-3">
-            <div ref={pickerRef} className="relative">
-              <button
-                type="button"
-                onClick={() => setPickerOpen((v) => !v)}
-                className="inline-flex items-center gap-1.5 rounded-full border-[1.3px] border-dashed border-[var(--muted-foreground)] bg-transparent px-2.5 py-0.5 text-[13px] text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
-                aria-haspopup="listbox"
-                aria-expanded={pickerOpen}
-              >
-                {formatMonthLabel(selectedMonth)} ▾
-              </button>
-              {pickerOpen && (
-                <div
-                  role="listbox"
-                  className="absolute right-0 top-full z-20 mt-1.5 min-w-[200px] rounded-[var(--radius-sm)] border-[1.3px] border-[var(--border)] bg-[var(--card)] p-1.5 shadow-[var(--shadow-sketch-sm)]"
+          {location.pathname === '/' && (
+            <div className="flex items-center gap-3">
+              <div ref={pickerRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen((v) => !v)}
+                  className="inline-flex items-center gap-1.5 rounded-full border-[1.3px] border-dashed border-[var(--muted-foreground)] bg-transparent px-2.5 py-0.5 text-[13px] text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+                  aria-haspopup="listbox"
+                  aria-expanded={pickerOpen}
                 >
-                  {availableMonths.length === 0 ? (
-                    <div className="px-2.5 py-1.5 text-[13px] text-[var(--muted-foreground)]">No months yet</div>
-                  ) : (
-                    availableMonths.map((m) => {
-                      const isSelected = m === selectedMonth;
-                      const isCurrent = m === getCurrentMonth();
-                      return (
-                        <button
-                          key={m}
-                          type="button"
-                          role="option"
-                          aria-selected={isSelected}
-                          onClick={() => onPickMonth(m)}
-                          className={cn(
-                            'flex w-full items-center justify-between rounded-[6px] px-2.5 py-1.5 text-left text-[13px]',
-                            isSelected
-                              ? 'bg-[var(--primary-soft)] font-bold text-[var(--foreground)]'
-                              : 'hover:bg-[var(--muted)]'
-                          )}
-                        >
-                          <span>{formatMonthLabel(m)}</span>
-                          {isCurrent && (
-                            <span className="ml-3 text-[11px] text-[var(--muted-foreground)]">current</span>
-                          )}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              )}
+                  {formatMonthLabel(selectedMonth)} ▾
+                </button>
+                {pickerOpen && (
+                  <div
+                    role="listbox"
+                    className="absolute right-0 top-full z-20 mt-1.5 min-w-[200px] rounded-[var(--radius-sm)] border-[1.3px] border-[var(--border)] bg-[var(--card)] p-1.5 shadow-[var(--shadow-sketch-sm)]"
+                  >
+                    {availableMonths.length === 0 ? (
+                      <div className="px-2.5 py-1.5 text-[13px] text-[var(--muted-foreground)]">No months yet</div>
+                    ) : (
+                      availableMonths.map((m) => {
+                        const isSelected = m === selectedMonth;
+                        const isCurrent = m === getCurrentMonth();
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            onClick={() => onPickMonth(m)}
+                            className={cn(
+                              'flex w-full items-center justify-between rounded-[6px] px-2.5 py-1.5 text-left text-[13px]',
+                              isSelected
+                                ? 'bg-[var(--primary-soft)] font-bold text-[var(--foreground)]'
+                                : 'hover:bg-[var(--muted)]'
+                            )}
+                          >
+                            <span>{formatMonthLabel(m)}</span>
+                            {isCurrent && (
+                              <span className="ml-3 text-[11px] text-[var(--muted-foreground)]">current</span>
+                            )}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </header>
         <main
           className={cn(

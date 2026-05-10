@@ -64,6 +64,18 @@ function formatMonthLabel(month: string): string {
   return parsed.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 }
 
+function formatStatementPeriod(start: string | null, end: string | null): string {
+  if (!start || !end) return 'Latest statement';
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return `${start} – ${end}`;
+  }
+  const startLabel = startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const endLabel = endDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return `${startLabel} – ${endLabel}`;
+}
+
 export function DashboardPage() {
   const [searchParams] = useSearchParams();
   const monthFromUrl = searchParams.get('month');
@@ -260,9 +272,7 @@ export function DashboardPage() {
                 </div>
                 <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="truncate font-bold">
-                    {latestStatement.periodStart && latestStatement.periodEnd
-                      ? `${latestStatement.periodStart} – ${latestStatement.periodEnd}`
-                      : 'Latest statement'}
+                    {formatStatementPeriod(latestStatement.periodStart, latestStatement.periodEnd)}
                   </div>
                   <p className="text-xs text-[var(--muted-foreground)]">
                     {latestStatement.transactionCount} transactions imported

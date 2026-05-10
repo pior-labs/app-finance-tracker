@@ -124,6 +124,39 @@ transactionsRouter.get('/stats', async (c) => {
     .orderBy(desc(sql`sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end)`))
     .limit(10);
 
+  const [latestStatementRow] = await db
+    .select({
+      id: schema.statements.id,
+      periodStart: schema.statements.periodStart,
+      periodEnd: schema.statements.periodEnd,
+      uploadedByName: schema.users.name
+    })
+    .from(schema.statements)
+    .innerJoin(schema.users, eq(schema.statements.uploadedBy, schema.users.id))
+    .orderBy(desc(schema.statements.createdAt))
+    .limit(1);
+
+  let latestStatement: {
+    periodStart: string | null;
+    periodEnd: string | null;
+    transactionCount: number;
+    uploadedByName: string;
+  } | undefined;
+
+  if (latestStatementRow) {
+    const [statementTxCountRow] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.transactions)
+      .where(eq(schema.transactions.statementId, latestStatementRow.id));
+
+    latestStatement = {
+      periodStart: latestStatementRow.periodStart,
+      periodEnd: latestStatementRow.periodEnd,
+      transactionCount: Number(statementTxCountRow?.count ?? 0),
+      uploadedByName: latestStatementRow.uploadedByName
+    };
+  }
+
   return c.json({
     data: {
       totalSpentCents: Number(spendingRow?.totalSpentCents ?? 0),
@@ -143,7 +176,8 @@ transactionsRouter.get('/stats', async (c) => {
     },
     meta: {
       month,
-      availableMonths: availableMonthRows.map((row) => row.month).filter((availableMonth) => availableMonth.length === 7)
+      availableMonths: availableMonthRows.map((row) => row.month).filter((availableMonth) => availableMonth.length === 7),
+      latestStatement
     }
   });
 });

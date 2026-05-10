@@ -33,6 +33,33 @@
   --font-heading: "Caveat", cursive;
 }
 
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-soft: var(--accent-soft);
+  --color-destructive: var(--destructive);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --radius-sketch: var(--radius);
+  --radius-sketch-sm: var(--radius-sm);
+  --shadow-sketch: 2px 3px 0 0 var(--border);
+  --shadow-sketch-sm: 1.5px 2px 0 0 var(--border);
+  --shadow-sketch-xs: 1px 1.5px 0 0 var(--border);
+}
+
 * {
   box-sizing: border-box;
 }

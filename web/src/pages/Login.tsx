@@ -36,8 +36,8 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center p-6">
       <Card className="w-full max-w-md">
         <CardHeader className="items-center text-center">
-          <span className="relative mb-2 flex h-[40px] w-[40px] items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)]">
-            <span className="absolute inset-[7px] rounded-full border-[1.5px] border-[var(--border)] bg-[var(--card)]" />
+          <span className="relative mb-2 flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] border-border bg-primary-soft">
+            <span className="absolute inset-1.75 rounded-full border-[1.5px] border-border bg-card" />
           </span>
           <CardTitle>Welcome back</CardTitle>
           <CardDescription>Sign in to access the shared household view.</CardDescription>
@@ -70,7 +70,7 @@ export function LoginPage() {
                 required
               />
             </div>
-            {error ? <p className="text-sm text-[var(--destructive)]">{error}</p> : null}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <Button className="w-full" type="submit" disabled={loading}>
               {loading ? 'Signing in...' : 'Sign in'}
             </Button>

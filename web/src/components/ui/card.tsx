@@ -5,7 +5,7 @@ function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        'rounded-[var(--radius)] border-[1.5px] border-[var(--border)] bg-[var(--card)] shadow-[var(--shadow-sketch)]',
+        'rounded-sketch border-[1.5px] border-border bg-card shadow-sketch',
         className
       )}
       {...props}
@@ -22,7 +22,7 @@ function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElem
 }
 
 function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn('text-sm text-[var(--muted-foreground)]', className)} {...props} />;
+  return <p className={cn('text-sm text-muted-foreground', className)} {...props} />;
 }
 
 function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {

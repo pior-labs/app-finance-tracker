@@ -144,7 +144,7 @@ export function DashboardPage() {
   if (error) {
     return (
       <Card>
-        <CardContent className="p-5 text-[var(--destructive)]">{error}</CardContent>
+        <CardContent className="p-5 text-destructive">{error}</CardContent>
       </Card>
     );
   }
@@ -152,11 +152,11 @@ export function DashboardPage() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-40 animate-pulse rounded-[var(--radius)] bg-[var(--muted)]" />
+        <div className="h-40 animate-pulse rounded-sketch bg-muted" />
         <div className="grid grid-cols-3 gap-4">
-          <div className="h-28 animate-pulse rounded-[var(--radius)] bg-[var(--muted)]" />
-          <div className="h-28 animate-pulse rounded-[var(--radius)] bg-[var(--muted)]" />
-          <div className="h-28 animate-pulse rounded-[var(--radius)] bg-[var(--muted)]" />
+          <div className="h-28 animate-pulse rounded-sketch bg-muted" />
+          <div className="h-28 animate-pulse rounded-sketch bg-muted" />
+          <div className="h-28 animate-pulse rounded-sketch bg-muted" />
         </div>
       </div>
     );
@@ -167,11 +167,11 @@ export function DashboardPage() {
     return (
       <div className="flex flex-col items-center gap-5 py-20 text-center">
         {/* Sketchy sun face */}
-        <div className="flex h-20 w-20 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)]">
-          <span className="font-hand text-3xl text-[var(--primary)]">:)</span>
+        <div className="flex h-20 w-20 items-center justify-center rounded-full border-[1.5px] border-border bg-primary-soft">
+          <span className="font-hand text-3xl text-primary">:)</span>
         </div>
         <h2 className="font-hand text-3xl">Nothing here yet — and that's okay.</h2>
-        <p className="max-w-md text-sm text-[var(--muted-foreground)]">
+        <p className="max-w-md text-sm text-muted-foreground">
           Upload your first bank statement and we'll show you a friendly month-at-a-glance picture of your household spending.
         </p>
         <div className="flex gap-3">
@@ -187,11 +187,11 @@ export function DashboardPage() {
     <div className="space-y-5">
       {/* ACTION CARD — full-width, warm accent background */}
       {uncategorizedCount > 0 ? (
-        <Card className="bg-[var(--primary-soft)]">
+        <Card className="bg-primary-soft">
           <CardContent className="flex items-center gap-5 p-5">
             <div className="flex-1 space-y-2">
-              <p className="text-[13px] uppercase tracking-widest text-[var(--muted-foreground)]">Action needed</p>
-              <div className="font-hand text-5xl text-[var(--primary)]">{uncategorizedCount} left</div>
+              <p className="text-[13px] uppercase tracking-widest text-muted-foreground">Action needed</p>
+              <div className="font-hand text-5xl text-primary">{uncategorizedCount} left</div>
               <p className="text-[15px]">Categorize these to complete your monthly picture.</p>
               <div className="mt-2 flex gap-2">
                 <Button asChild>
@@ -201,18 +201,18 @@ export function DashboardPage() {
               </div>
             </div>
             {recentUncategorized.length > 0 && (
-              <div className="hidden w-[340px] flex-col gap-2 md:flex">
+              <div className="hidden w-85 flex-col gap-2 md:flex">
                 {recentUncategorized.map((t) => (
                   <div
                     key={t.id}
-                    className="flex items-center gap-3 rounded-[var(--radius-sm)] border-[1.3px] border-[var(--border)] bg-[var(--card)] px-3 py-2.5 shadow-[var(--shadow-sketch-sm)]"
+                    className="flex items-center gap-3 rounded-sketch-sm border-[1.3px] border-border bg-card px-3 py-2.5 shadow-sketch-sm"
                   >
-                    <span className="w-[50px] text-xs text-[var(--muted-foreground)]">{t.date}</span>
+                    <span className="w-12.5 text-xs text-muted-foreground">{t.date}</span>
                     <span className="flex-1 truncate text-sm font-bold">{t.merchant ?? t.description}</span>
                     <span className="font-bold">−{formatMoney(t.amount)}</span>
                   </div>
                 ))}
-                <div className="text-center text-[13px] text-[var(--muted-foreground)]">
+                <div className="text-center text-[13px] text-muted-foreground">
                   + {Math.max(0, uncategorizedCount - recentUncategorized.length)} more
                 </div>
               </div>
@@ -220,14 +220,14 @@ export function DashboardPage() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="bg-[var(--good-soft)]">
+        <Card className="bg-good-soft">
           <CardContent className="flex items-center gap-5 p-5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--card)]">
-              <span className="font-hand text-3xl text-[var(--good)]">:)</span>
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[1.5px] border-border bg-card">
+              <span className="font-hand text-3xl text-good">:)</span>
             </div>
             <div className="flex-1 space-y-1">
-              <p className="text-[13px] uppercase tracking-widest text-[var(--muted-foreground)]">All caught up</p>
-              <div className="font-hand text-4xl text-[var(--good)]">Nothing to categorize</div>
+              <p className="text-[13px] uppercase tracking-widest text-muted-foreground">All caught up</p>
+              <div className="font-hand text-4xl text-good">Nothing to categorize</div>
               <p className="text-[15px]">This month's picture is complete — nice work.</p>
             </div>
             <Button asChild variant="ghost">
@@ -242,20 +242,20 @@ export function DashboardPage() {
         {/* Spent */}
         <Card>
           <CardContent className="space-y-1 p-5">
-            <div className="text-sm font-bold text-[var(--muted-foreground)]">
+            <div className="text-sm font-bold text-muted-foreground">
               {isCurrentMonth ? 'Spent this month' : `Spent in ${formatMonthLabel(month)}`}
             </div>
             <div className="font-hand text-4xl">{totalSpent}</div>
-            <div className="text-[13px] text-[var(--muted-foreground)]">{totalTx} transactions</div>
+            <div className="text-[13px] text-muted-foreground">{totalTx} transactions</div>
           </CardContent>
         </Card>
 
         {/* Categorized */}
         <Card>
           <CardContent className="space-y-1 p-5">
-            <div className="text-sm font-bold text-[var(--muted-foreground)]">Categorized</div>
+            <div className="text-sm font-bold text-muted-foreground">Categorized</div>
             <div className="font-hand text-4xl">
-              {categorizedPct}<span className="text-lg text-[var(--muted-foreground)]">%</span>
+              {categorizedPct}<span className="text-lg text-muted-foreground">%</span>
             </div>
             <Progress value={categorizedPct} variant="good" className="mt-2" />
           </CardContent>
@@ -267,19 +267,19 @@ export function DashboardPage() {
             <h3 className="font-hand text-xl">Latest statement</h3>
             {latestStatement ? (
               <div className="flex items-start gap-3">
-                <div className="flex h-12 w-10 shrink-0 items-center justify-center rounded-[6px] border-[1.3px] border-dashed border-[var(--muted-foreground)] thumb-hatch text-[10px] font-bold text-[var(--muted-foreground)]">
+                <div className="flex h-12 w-10 shrink-0 items-center justify-center rounded-md border-[1.3px] border-dashed border-muted-foreground thumb-hatch text-[10px] font-bold text-muted-foreground">
                   PDF
                 </div>
                 <div className="min-w-0 flex-1 space-y-0.5">
                   <div className="truncate font-bold">
                     {formatStatementPeriod(latestStatement.periodStart, latestStatement.periodEnd)}
                   </div>
-                  <p className="text-xs text-[var(--muted-foreground)]">
+                  <p className="text-xs text-muted-foreground">
                     {latestStatement.transactionCount} transactions imported
                   </p>
-                  <p className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <span>Uploaded by</span>
-                    <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border-[1.3px] border-[var(--border)] bg-[var(--primary-soft)] font-hand text-[11px]">
+                    <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border-[1.3px] border-border bg-primary-soft font-hand text-[11px]">
                       {latestStatement.uploadedByName?.[0]?.toUpperCase() ?? '?'}
                     </span>
                     <span>{latestStatement.uploadedByName}</span>
@@ -287,7 +287,7 @@ export function DashboardPage() {
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-[var(--muted-foreground)]">No statements yet</div>
+              <div className="text-sm text-muted-foreground">No statements yet</div>
             )}
             <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)}>
               Upload next →
@@ -303,7 +303,7 @@ export function DashboardPage() {
           <CardContent className="p-5">
             <h3 className="scribble mb-4 inline-block font-hand text-xl">Spending by category</h3>
             {categoryRows.length === 0 ? (
-              <p className="text-sm text-[var(--muted-foreground)]">No categorized spending yet.</p>
+              <p className="text-sm text-muted-foreground">No categorized spending yet.</p>
             ) : (
               <div className="space-y-3">
                 {categoryRows.slice(0, 6).map((cat) => (
@@ -325,7 +325,7 @@ export function DashboardPage() {
           <CardContent className="p-5">
             <h3 className="scribble mb-4 inline-block font-hand text-xl">Top merchants</h3>
             {merchantRows.length === 0 ? (
-              <p className="text-sm text-[var(--muted-foreground)]">No merchant data yet.</p>
+              <p className="text-sm text-muted-foreground">No merchant data yet.</p>
             ) : (
               <div className="space-y-3">
                 {merchantRows.slice(0, 5).map((m, i) => (
@@ -334,7 +334,7 @@ export function DashboardPage() {
                     className="flex items-center gap-3"
                     style={{ borderBottom: i < 4 ? '1.2px dashed var(--border-soft)' : 'none', paddingBottom: i < 4 ? 8 : 0 }}
                   >
-                    <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm">
+                    <span className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm">
                       {i + 1}
                     </span>
                     <span className="flex-1 text-[15px] font-bold">{m.merchant}</span>

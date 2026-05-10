@@ -12,7 +12,7 @@ function Progress({ className, value = 0, variant = 'default', ...props }: Progr
   return (
     <div
       className={cn(
-        'relative h-2.5 w-full overflow-hidden rounded-md border-[1.3px] border-[var(--border)] bg-[var(--muted)]',
+        'relative h-2.5 w-full overflow-hidden rounded-md border-[1.3px] border-border bg-muted',
         className
       )}
       {...props}

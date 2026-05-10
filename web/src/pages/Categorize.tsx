@@ -181,10 +181,10 @@ export function CategorizePage() {
     return (
       <div className="flex h-full">
         <div className="flex-1 p-5">
-          <div className="h-full min-h-96 animate-pulse rounded-[var(--radius)] bg-[var(--muted)]" />
+          <div className="h-full min-h-96 animate-pulse rounded-sketch bg-muted" />
         </div>
         <div className="w-72 p-5">
-          <div className="h-full min-h-96 animate-pulse rounded-[var(--radius)] bg-[var(--muted)]" />
+          <div className="h-full min-h-96 animate-pulse rounded-sketch bg-muted" />
         </div>
       </div>
     );
@@ -194,11 +194,11 @@ export function CategorizePage() {
   if (remaining === 0 && queue.length === 0) {
     return (
       <div className="flex flex-col items-center gap-5 py-20 text-center">
-        <div className="flex h-24 w-24 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)]">
-          <span className="font-hand text-4xl text-[var(--primary)]">:)</span>
+        <div className="flex h-24 w-24 items-center justify-center rounded-full border-[1.5px] border-border bg-primary-soft">
+          <span className="font-hand text-4xl text-primary">:)</span>
         </div>
         <h2 className="font-hand text-3xl">Inbox zero!</h2>
-        <p className="max-w-sm text-[15px] text-[var(--muted-foreground)]">
+        <p className="max-w-sm text-[15px] text-muted-foreground">
           All transactions categorized. Treat yourself — or upload the next statement.
         </p>
         <div className="flex gap-3">
@@ -218,17 +218,17 @@ export function CategorizePage() {
         {current && (
           <div className="w-full max-w-lg">
             {/* Card stack */}
-            <div className="relative min-h-[420px]">
+            <div className="relative min-h-105">
               {/* Background cards for depth */}
               {queue.length > 2 && (
                 <div
-                  className="absolute inset-0 rounded-[var(--radius)] border-[1.5px] border-[var(--border)] bg-[var(--muted)]"
+                  className="absolute inset-0 rounded-sketch border-[1.5px] border-border bg-muted"
                   style={{ transform: 'rotate(2deg) translate(8px, 8px)' }}
                 />
               )}
               {queue.length > 1 && (
                 <div
-                  className="absolute inset-0 rounded-[var(--radius)] border-[1.5px] border-[var(--border)] bg-[var(--muted)]"
+                  className="absolute inset-0 rounded-sketch border-[1.5px] border-border bg-muted"
                   style={{ transform: 'rotate(-3deg) translate(-6px, 4px)' }}
                 />
               )}
@@ -237,16 +237,16 @@ export function CategorizePage() {
                 <CardContent className="flex h-full flex-col justify-between p-5 space-y-6">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full border-[1.3px] border-dashed border-[var(--muted-foreground)] bg-transparent px-2.5 py-0.5 text-xs text-[var(--muted-foreground)]">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border-[1.3px] border-dashed border-muted-foreground bg-transparent px-2.5 py-0.5 text-xs text-muted-foreground">
                         {current.date}
                       </span>
-                      <span className="text-xs text-[var(--muted-foreground)]">
+                      <span className="text-xs text-muted-foreground">
                         card • {current.type}
                       </span>
                     </div>
                     <h2 className="font-hand text-4xl leading-none">{current.merchant ?? current.description}</h2>
-                    <p className="text-[13px] text-[var(--muted-foreground)]">{current.description}</p>
-                    <div className="font-hand text-5xl text-[var(--primary)]">
+                    <p className="text-[13px] text-muted-foreground">{current.description}</p>
+                    <div className="font-hand text-5xl text-primary">
                       −{formatMoney(current.amount)}
                     </div>
                   </div>
@@ -257,13 +257,13 @@ export function CategorizePage() {
                         <button
                           key={cat.id}
                           onClick={() => void assignCategory(cat.id)}
-                          className={`flex cursor-pointer items-center gap-1.5 rounded-[8px] border-[1.3px] border-[var(--border)] px-2.5 py-1 text-[13px] shadow-[1px_1.5px_0_0_var(--border)] ${
+                          className={`flex cursor-pointer items-center gap-1.5 rounded-lg border-[1.3px] border-border px-2.5 py-1 text-[13px] shadow-sketch-xs ${
                             i === 0
-                              ? 'bg-[var(--primary-soft)]'
-                              : 'bg-[var(--card)]'
+                              ? 'bg-primary-soft'
+                              : 'bg-card'
                           }`}
                         >
-                          <kbd className="rounded-[4px] border-[1.2px] border-[var(--border)] bg-[var(--muted)] px-[5px] font-hand text-sm leading-none">
+                          <kbd className="rounded border-[1.2px] border-border bg-muted px-1.25 font-hand text-sm leading-none">
                             {i === 9 ? 0 : i + 1}
                           </kbd>
                           {cat.name}
@@ -271,25 +271,25 @@ export function CategorizePage() {
                       ))}
                     </div>
                     <div className="space-y-1.5">
-                      <p className="text-[12px] uppercase tracking-widest text-[var(--muted-foreground)]">All categories</p>
+                      <p className="text-xs uppercase tracking-widest text-muted-foreground">All categories</p>
                       <div className="relative" ref={categoryMenuRef}>
                         <button
                           type="button"
                           aria-haspopup="listbox"
                           aria-expanded={isCategoryMenuOpen}
-                          className="flex h-10 w-full items-center justify-between rounded-[8px] border-[1.3px] border-[var(--border)] bg-[var(--card)] px-3 text-sm shadow-[1px_1.5px_0_0_var(--border)]"
+                          className="flex h-10 w-full items-center justify-between rounded-lg border-[1.3px] border-border bg-card px-3 text-sm shadow-sketch-xs"
                           onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
                         >
-                          <span className="text-[var(--muted-foreground)]">Choose a category...</span>
-                          <span className="text-xs text-[var(--muted-foreground)]">{isCategoryMenuOpen ? '▲' : '▼'}</span>
+                          <span className="text-muted-foreground">Choose a category...</span>
+                          <span className="text-xs text-muted-foreground">{isCategoryMenuOpen ? '▲' : '▼'}</span>
                         </button>
                         {isCategoryMenuOpen && (
-                          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-[8px] border-[1.3px] border-[var(--border)] bg-[var(--card)] p-1 shadow-[var(--shadow-sketch)]">
+                          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-lg border-[1.3px] border-border bg-card p-1 shadow-sketch">
                             {categories.map((cat) => (
                               <button
                                 key={cat.id}
                                 type="button"
-                                className="block w-full rounded-[6px] px-2.5 py-2 text-left text-sm hover:bg-[var(--primary-soft)]"
+                                className="block w-full rounded-md px-2.5 py-2 text-left text-sm hover:bg-primary-soft"
                                 onClick={() => {
                                   void assignCategory(cat.id);
                                   setIsCategoryMenuOpen(false);
@@ -305,9 +305,9 @@ export function CategorizePage() {
                   </div>
 
                   {/* Swipe hints */}
-                  <div className="flex items-center justify-between pt-2 font-hand text-lg text-[var(--muted-foreground)]">
-                    <button onClick={goBack} className="cursor-pointer hover:text-[var(--foreground)]">← back</button>
-                    <button onClick={skip} className="cursor-pointer hover:text-[var(--foreground)]">forward →</button>
+                  <div className="flex items-center justify-between pt-2 font-hand text-lg text-muted-foreground">
+                    <button onClick={goBack} className="cursor-pointer hover:text-foreground">← back</button>
+                    <button onClick={skip} className="cursor-pointer hover:text-foreground">forward →</button>
                   </div>
                 </CardContent>
               </Card>
@@ -317,38 +317,38 @@ export function CategorizePage() {
       </div>
 
       {/* Side rail */}
-      <div className="hidden w-[300px] flex-col gap-4 border-l-[1.3px] border-dashed border-[var(--muted-foreground)] p-5 lg:flex bg-[var(--muted)]" >
+      <div className="hidden w-75 flex-col gap-4 border-l-[1.3px] border-dashed border-muted-foreground p-5 lg:flex bg-muted" >
         {/* Progress */}
         <div className="space-y-1">
-          <p className="text-xs uppercase tracking-widest text-[var(--muted-foreground)]">Progress</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Progress</p>
           <div className="flex items-baseline gap-2">
             <span className="font-hand text-4xl">{remaining}</span>
-            <span className="text-sm text-[var(--muted-foreground)]">left to review</span>
+            <span className="text-sm text-muted-foreground">left to review</span>
           </div>
           <Progress value={progressPct} variant="good" />
-          <p className="text-xs text-[var(--muted-foreground)]">{progressPct}% complete</p>
+          <p className="text-xs text-muted-foreground">{progressPct}% complete</p>
         </div>
 
-        <hr className="border-[var(--border)] opacity-85" />
+        <hr className="border-border opacity-85" />
 
         {/* Recently confirmed */}
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-widest text-[var(--muted-foreground)]">Just confirmed</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Just confirmed</p>
           {confirmedList.length === 0 ? (
-            <p className="text-xs text-[var(--muted-foreground)]">Nothing yet — start categorizing!</p>
+            <p className="text-xs text-muted-foreground">Nothing yet — start categorizing!</p>
           ) : (
             confirmedList.slice(0, 4).map((item, i) => (
-              <Card key={i} className="shadow-[var(--shadow-sketch-sm)]">
+              <Card key={i} className="shadow-sketch-sm">
                 <CardContent className="space-y-1 p-3">
                   <div className="flex items-center justify-between">
                     <span className="truncate text-sm font-bold">{item.merchant}</span>
                     <span className="text-[13px] font-bold">−{formatMoney(item.amount)}</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="inline-flex items-center gap-1 rounded-full border-[1.3px] border-[var(--border)] bg-[var(--good-soft)] px-2 py-0.5 text-[11px] font-bold text-[var(--good)] shadow-none">
+                    <span className="inline-flex items-center gap-1 rounded-full border-[1.3px] border-border bg-good-soft px-2 py-0.5 text-[11px] font-bold text-good shadow-none">
                       ✓ {item.category}
                     </span>
-                    <span className="text-[11px] text-[var(--muted-foreground)]">· just now</span>
+                    <span className="text-[11px] text-muted-foreground">· just now</span>
                   </div>
                 </CardContent>
               </Card>
@@ -356,11 +356,11 @@ export function CategorizePage() {
           )}
         </div>
 
-        <hr className="border-[var(--border)] opacity-85" />
+        <hr className="border-border opacity-85" />
 
         {/* Shortcuts */}
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-widest text-[var(--muted-foreground)]">Shortcuts</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground">Shortcuts</p>
           <div className="flex flex-wrap gap-1.5">
             <KbdChip keys="Num keys" label="favorites" />
             <KbdChip keys="←" label="back" />
@@ -375,8 +375,8 @@ export function CategorizePage() {
 
 function KbdChip({ keys, label }: { keys: string; label: string }) {
   return (
-    <span className="flex items-center gap-1.5 rounded-[8px] border-[1.3px] border-[var(--border)] bg-[var(--card)] px-2.5 py-1 text-[13px] shadow-[1px_1.5px_0_0_var(--border)]">
-      <kbd className="rounded-[4px] border-[1.2px] border-[var(--border)] bg-[var(--muted)] px-[5px] font-hand text-sm leading-none">
+    <span className="flex items-center gap-1.5 rounded-lg border-[1.3px] border-border bg-card px-2.5 py-1 text-[13px] shadow-sketch-xs">
+      <kbd className="rounded border-[1.2px] border-border bg-muted px-1.25 font-hand text-sm leading-none">
         {keys}
       </kbd>
       {label}

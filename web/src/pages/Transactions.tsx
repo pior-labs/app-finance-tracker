@@ -245,7 +245,7 @@ export function TransactionsPage() {
         </Badge>
       </div>
 
-      {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Table */}
       <Card className="overflow-hidden">
@@ -265,26 +265,26 @@ export function TransactionsPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-[var(--muted-foreground)]">Loading transactions...</TableCell>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">Loading transactions...</TableCell>
                 </TableRow>
               ) : transactions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-[var(--muted-foreground)]">No transactions found.</TableCell>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">No transactions found.</TableCell>
                 </TableRow>
               ) : (
                 transactions.map((tx) => {
                   const isUpdating = updatingTransactionIds.includes(tx.id);
                   return (
                     <TableRow key={tx.id}>
-                      <TableCell className="text-xs text-[var(--muted-foreground)]">{tx.date}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{tx.date}</TableCell>
                       <TableCell>
                         <span className="font-hand text-lg leading-none">{tx.merchant ?? tx.description}</span>
                       </TableCell>
-                      <TableCell className="max-w-[20rem] truncate text-[11px] text-[var(--muted-foreground)]" title={tx.description}>
+                      <TableCell className="max-w-80 truncate text-[11px] text-muted-foreground" title={tx.description}>
                         {tx.description}
                       </TableCell>
                       <TableCell className="text-right font-bold">
-                        <span className={tx.type === 'credit' ? 'text-[var(--good)]' : ''}>
+                        <span className={tx.type === 'credit' ? 'text-good' : ''}>
                           {formatAmount(tx.amount)}
                         </span>
                       </TableCell>
@@ -296,7 +296,7 @@ export function TransactionsPage() {
                           variant={tx.categoryId === null ? 'dashed' : 'default'}
                           onChange={(e) => void onCategoryAssign(tx, e.target.value)}
                           aria-label={`Set category for transaction ${tx.id}`}
-                          className="w-[130px]"
+                          className="w-32.5"
                         />
                       </TableCell>
                       <TableCell>
@@ -309,13 +309,13 @@ export function TransactionsPage() {
                       <TableCell>
                         <div className="flex justify-end gap-1">
                           <button
-                            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm hover:bg-[var(--muted)]"
+                            className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
                             title="Edit"
                           >
                             ✎
                           </button>
                           <button
-                            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm text-[var(--primary)] hover:bg-[var(--primary-soft)]"
+                            className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm text-primary hover:bg-primary-soft"
                             title="Delete"
                           >
                             ✕
@@ -341,7 +341,7 @@ export function TransactionsPage() {
           <Button variant="ghost" size="sm" disabled={!canGoPrevious} onClick={() => setOffset((p) => Math.max(0, p - PAGE_SIZE))}>
             ← prev
           </Button>
-          <span className="text-[13px] text-[var(--muted-foreground)]">
+          <span className="text-[13px] text-muted-foreground">
             {pageNumber} of {totalPages}
           </span>
           <Button variant="outline" size="sm" disabled={!canGoNext} onClick={() => setOffset((p) => p + PAGE_SIZE)}>

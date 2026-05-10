@@ -6,7 +6,7 @@ export function ProtectedRoute({ children }: { children: ReactElement }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="p-6 text-sm text-[var(--muted-foreground)]">Checking session...</div>;
+    return <div className="p-6 text-sm text-muted-foreground">Checking session...</div>;
   }
 
   if (!user) {

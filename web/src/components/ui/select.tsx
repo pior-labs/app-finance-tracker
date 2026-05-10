@@ -15,10 +15,10 @@ export function Select({ className, options, variant = 'default', ...props }: Se
   return (
     <select
       className={cn(
-        'h-10 w-full rounded-[8px] bg-[var(--card)] px-3 text-sm outline-none ring-[var(--primary)] focus:ring-2',
+        'h-10 w-full rounded-lg bg-card px-3 text-sm outline-none ring-primary focus:ring-2',
         variant === 'dashed'
-          ? 'border-[1.3px] border-dashed border-[var(--muted-foreground)] text-[var(--muted-foreground)] shadow-none'
-          : 'border-[1.3px] border-[var(--border)] shadow-[1px_1.5px_0_0_var(--border)]',
+          ? 'border-[1.3px] border-dashed border-muted-foreground text-muted-foreground shadow-none'
+          : 'border-[1.3px] border-border shadow-sketch-xs',
         className
       )}
       {...props}

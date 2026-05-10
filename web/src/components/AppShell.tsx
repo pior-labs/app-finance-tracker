@@ -45,22 +45,22 @@ function NavItem({ to, label, icon, collapsed, badge }: NavItemProps) {
       end={to === '/'}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-2.5 rounded-[8px] border-[1.3px] py-2 text-sm transition-colors',
+          'flex items-center gap-2.5 rounded-lg border-[1.3px] py-2 text-sm transition-colors',
           collapsed ? 'justify-center px-0' : 'px-2.5',
           isActive
-            ? 'border-[var(--border)] bg-[var(--primary-soft)] shadow-[1px_1.5px_0_0_var(--border)]'
-            : 'border-transparent hover:bg-[var(--card)]'
+            ? 'border-border bg-primary-soft shadow-sketch-xs'
+            : 'border-transparent hover:bg-card'
         )
       }
     >
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm">
         {icon}
       </span>
       {!collapsed && (
         <>
           <span className="flex-1 font-bold">{label}</span>
           {badge != null && badge > 0 && (
-            <span className="rounded-full border-[1.3px] border-[var(--border)] bg-[var(--warn-soft)] px-2 py-0.5 text-[11px] font-bold text-[var(--warn)] shadow-none">
+            <span className="rounded-full border-[1.3px] border-border bg-warn-soft px-2 py-0.5 text-[11px] font-bold text-warn shadow-none">
               {badge}
             </span>
           )}
@@ -145,8 +145,8 @@ export function AppShell() {
       {/* Sidebar */}
       <aside
         className={cn(
-          'flex flex-col border-r-[1.5px] border-[var(--border)] bg-[var(--muted)] p-3 transition-all duration-200',
-          collapsed ? 'w-[64px]' : 'w-[200px]'
+          'flex flex-col border-r-[1.5px] border-border bg-muted p-3 transition-all duration-200',
+          collapsed ? 'w-16' : 'w-50'
         )}
       >
         {/* Logo + collapse toggle */}
@@ -159,13 +159,13 @@ export function AppShell() {
               title="Open sidebar"
               aria-label="Open sidebar"
             >
-              <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)] transition-colors group-hover:bg-[var(--card)]">
-                <span className="absolute inset-[5px] rounded-full border-[1.5px] border-[var(--border)] bg-[var(--card)] transition-colors group-hover:bg-[var(--primary-soft)]" />
+              <span className="relative flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border-[1.5px] border-border bg-primary-soft transition-colors group-hover:bg-card">
+                <span className="absolute inset-1.25 rounded-full border-[1.5px] border-border bg-card transition-colors group-hover:bg-primary-soft" />
               </span>
             </button>
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 flex -translate-y-1/2 items-center gap-1.5 whitespace-nowrap rounded-[8px] border-[1.3px] border-[var(--border)] bg-[var(--card)] px-2.5 py-1.5 font-hand text-sm opacity-0 shadow-[1px_1.5px_0_0_var(--border)] transition-opacity duration-150 group-hover:opacity-100"
+              className="pointer-events-none absolute left-full top-1/2 z-20 ml-2 flex -translate-y-1/2 items-center gap-1.5 whitespace-nowrap rounded-lg border-[1.3px] border-border bg-card px-2.5 py-1.5 font-hand text-sm opacity-0 shadow-sketch-xs transition-opacity duration-150 group-hover:opacity-100"
             >
               <span>»</span>
               <span>Open sidebar</span>
@@ -174,14 +174,14 @@ export function AppShell() {
         ) : (
           <div className="mb-4 flex items-center justify-between px-1">
             <Link to="/" className="flex items-center gap-2">
-              <span className="relative flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)]">
-                <span className="absolute inset-[5px] rounded-full border-[1.5px] border-[var(--border)] bg-[var(--card)]" />
+              <span className="relative flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border-[1.5px] border-border bg-primary-soft">
+                <span className="absolute inset-1.25 rounded-full border-[1.5px] border-border bg-card" />
               </span>
               <span className="font-hand text-2xl tracking-wide">FinLens</span>
             </Link>
             <button
               onClick={() => setCollapsed(true)}
-              className="flex h-6 w-6 items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm hover:bg-[var(--primary-soft)]"
+              className="flex h-6 w-6 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-primary-soft"
               title="Collapse sidebar"
             >
               «
@@ -204,11 +204,11 @@ export function AppShell() {
 
         {/* Admin section */}
         {!collapsed ? (
-          <div className="mt-4 px-2.5 text-[11px] font-bold uppercase tracking-widest text-[var(--muted-foreground)]">
+          <div className="mt-4 px-2.5 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
             Admin
           </div>
         ) : (
-          <div className="mx-2 my-3 border-t-[1.3px] border-dashed border-[var(--muted-foreground)]" />
+          <div className="mx-2 my-3 border-t-[1.3px] border-dashed border-muted-foreground" />
         )}
         <nav className="mt-1 space-y-1">
           {adminNav.map((item) => (
@@ -228,7 +228,7 @@ export function AppShell() {
         {/* User profile */}
         <div
           ref={profileMenuRef}
-          className="relative mt-4 border-t-[1.3px] border-dashed border-[var(--muted-foreground)] pt-3"
+          className="relative mt-4 border-t-[1.3px] border-dashed border-muted-foreground pt-3"
         >
           <button
             type="button"
@@ -236,20 +236,20 @@ export function AppShell() {
             aria-haspopup="menu"
             aria-expanded={profileMenuOpen}
             className={cn(
-              'flex w-full items-center gap-2.5 rounded-[8px] border-[1.3px] px-1.5 py-1 text-left transition-colors',
+              'flex w-full items-center gap-2.5 rounded-lg border-[1.3px] px-1.5 py-1 text-left transition-colors',
               profileMenuOpen
-                ? 'border-[var(--border)] bg-[var(--primary-soft)] shadow-[1px_1.5px_0_0_var(--border)]'
-                : 'border-transparent hover:bg-[var(--card)]',
+                ? 'border-border bg-primary-soft shadow-sketch-xs'
+                : 'border-transparent hover:bg-card',
               collapsed && 'justify-center px-0'
             )}
           >
-            <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full border-[1.3px] border-[var(--border)] bg-[var(--primary-soft)] font-hand text-base">
+            <span className="flex h-7.5 w-7.5 shrink-0 items-center justify-center rounded-full border-[1.3px] border-border bg-primary-soft font-hand text-base">
               {user?.name?.[0]?.toUpperCase() ?? '?'}
             </span>
             {!collapsed && (
               <div className="min-w-0 flex-1" style={{ lineHeight: 1.1 }}>
                 <div className="truncate font-hand text-base">{user?.name ?? 'Account'}</div>
-                <div className="text-[11px] text-[var(--muted-foreground)]">Account ▾</div>
+                <div className="text-[11px] text-muted-foreground">Account ▾</div>
               </div>
             )}
           </button>
@@ -257,7 +257,7 @@ export function AppShell() {
             <div
               role="menu"
               className={cn(
-                'absolute z-20 min-w-[160px] rounded-[var(--radius-sm)] border-[1.3px] border-[var(--border)] bg-[var(--card)] p-1.5 shadow-[var(--shadow-sketch-sm)]',
+                'absolute z-20 min-w-40 rounded-sketch-sm border-[1.3px] border-border bg-card p-1.5 shadow-sketch-sm',
                 collapsed ? 'bottom-0 left-full ml-2' : 'bottom-full left-0 right-0 mb-1.5'
               )}
             >
@@ -268,7 +268,7 @@ export function AppShell() {
                   setProfileMenuOpen(false);
                   void logout();
                 }}
-                className="flex w-full items-center rounded-[6px] px-2.5 py-1.5 text-left text-[13px] hover:bg-[var(--muted)]"
+                className="flex w-full items-center rounded-md px-2.5 py-1.5 text-left text-[13px] hover:bg-muted"
               >
                 Sign out
               </button>
@@ -279,7 +279,7 @@ export function AppShell() {
 
       {/* Main content */}
       <div className="flex min-h-screen flex-1 flex-col">
-        <header className="flex items-center justify-between border-b-[1.3px] border-dashed border-[var(--muted-foreground)] bg-[var(--muted)] px-5 py-3">
+        <header className="flex items-center justify-between border-b-[1.3px] border-dashed border-muted-foreground bg-muted px-5 py-3">
           <h1 className="font-hand text-2xl">{pageTitle}</h1>
           {location.pathname === '/' && (
             <div className="flex items-center gap-3">
@@ -287,7 +287,7 @@ export function AppShell() {
                 <button
                   type="button"
                   onClick={() => setPickerOpen((v) => !v)}
-                  className="inline-flex items-center gap-1.5 rounded-full border-[1.3px] border-dashed border-[var(--muted-foreground)] bg-transparent px-2.5 py-0.5 text-[13px] text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]"
+                  className="inline-flex items-center gap-1.5 rounded-full border-[1.3px] border-dashed border-muted-foreground bg-transparent px-2.5 py-0.5 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground"
                   aria-haspopup="listbox"
                   aria-expanded={pickerOpen}
                 >
@@ -296,10 +296,10 @@ export function AppShell() {
                 {pickerOpen && (
                   <div
                     role="listbox"
-                    className="absolute right-0 top-full z-20 mt-1.5 min-w-[200px] rounded-[var(--radius-sm)] border-[1.3px] border-[var(--border)] bg-[var(--card)] p-1.5 shadow-[var(--shadow-sketch-sm)]"
+                    className="absolute right-0 top-full z-20 mt-1.5 min-w-50 rounded-sketch-sm border-[1.3px] border-border bg-card p-1.5 shadow-sketch-sm"
                   >
                     {availableMonths.length === 0 ? (
-                      <div className="px-2.5 py-1.5 text-[13px] text-[var(--muted-foreground)]">No months yet</div>
+                      <div className="px-2.5 py-1.5 text-[13px] text-muted-foreground">No months yet</div>
                     ) : (
                       availableMonths.map((m) => {
                         const isSelected = m === selectedMonth;
@@ -312,15 +312,15 @@ export function AppShell() {
                             aria-selected={isSelected}
                             onClick={() => onPickMonth(m)}
                             className={cn(
-                              'flex w-full items-center justify-between rounded-[6px] px-2.5 py-1.5 text-left text-[13px]',
+                              'flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[13px]',
                               isSelected
-                                ? 'bg-[var(--primary-soft)] font-bold text-[var(--foreground)]'
-                                : 'hover:bg-[var(--muted)]'
+                                ? 'bg-primary-soft font-bold text-foreground'
+                                : 'hover:bg-muted'
                             )}
                           >
                             <span>{formatMonthLabel(m)}</span>
                             {isCurrent && (
-                              <span className="ml-3 text-[11px] text-[var(--muted-foreground)]">current</span>
+                              <span className="ml-3 text-[11px] text-muted-foreground">current</span>
                             )}
                           </button>
                         );

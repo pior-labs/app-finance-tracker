@@ -9,7 +9,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<'thead'>) {
   return (
     <thead
       className={cn(
-        'font-hand text-sm [&_tr]:border-b-[1.5px] [&_tr]:border-[var(--border)] [&_tr]:bg-[var(--muted)]',
+        'font-hand text-sm [&_tr]:border-b-[1.5px] [&_tr]:border-border [&_tr]:bg-muted',
         className
       )}
       {...props}
@@ -25,7 +25,7 @@ function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
   return (
     <tr
       className={cn(
-        'border-b border-dashed border-[var(--border-soft)] hover:bg-[var(--muted)]/60',
+        'border-b border-dashed border-border-soft hover:bg-muted/60',
         className
       )}
       {...props}

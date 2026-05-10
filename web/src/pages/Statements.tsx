@@ -91,13 +91,13 @@ export function StatementsPage() {
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <p className="text-[13px] text-[var(--muted-foreground)]">
+        <p className="text-[13px] text-muted-foreground">
           {statements.length} statement{statements.length !== 1 ? 's' : ''} · {totalTx} transactions imported.
         </p>
         <Button onClick={() => setUploadOpen(true)}>+ Upload statement</Button>
       </div>
 
-      {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Statements table */}
       <Card className="overflow-hidden">
@@ -117,35 +117,35 @@ export function StatementsPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-[var(--muted-foreground)]">Loading statements...</TableCell>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">Loading statements...</TableCell>
                 </TableRow>
               ) : sortedStatements.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-[var(--muted-foreground)]">No statements uploaded yet.</TableCell>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">No statements uploaded yet.</TableCell>
                 </TableRow>
               ) : (
                 sortedStatements.map((s) => {
                   const isFailed = s.status === 'failed' || s.transactionCount === 0;
                   return (
-                    <TableRow key={s.id} className={isFailed ? 'bg-[var(--primary-soft)]' : undefined}>
+                    <TableRow key={s.id} className={isFailed ? 'bg-primary-soft' : undefined}>
                       <TableCell className="font-hand text-lg">{formatPeriod(s.periodStart, s.periodEnd)}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <span className="flex h-6 w-5 items-center justify-center rounded border-[1.3px] border-[var(--border)] thumb-hatch text-[8px] font-bold text-[var(--muted-foreground)]">
+                          <span className="flex h-6 w-5 items-center justify-center rounded border-[1.3px] border-border thumb-hatch text-[8px] font-bold text-muted-foreground">
                             PDF
                           </span>
-                          <span className="text-xs text-[var(--muted-foreground)]">{s.originalFilename}</span>
+                          <span className="text-xs text-muted-foreground">{s.originalFilename}</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1.5">
-                          <span className="flex h-[22px] w-[22px] items-center justify-center rounded-full border-[1.3px] border-[var(--border)] bg-[var(--primary-soft)] font-hand text-[13px]">
+                          <span className="flex h-5.5 w-5.5 items-center justify-center rounded-full border-[1.3px] border-border bg-primary-soft font-hand text-[13px]">
                             {s.uploadedByUser?.name?.[0]?.toUpperCase() ?? '?'}
                           </span>
                           <span className="text-[13px]">{s.uploadedByUser?.name ?? `User ${s.uploadedBy}`}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-[var(--muted-foreground)]">{formatDate(s.createdAt)}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatDate(s.createdAt)}</TableCell>
                       <TableCell className="text-right font-bold">{s.transactionCount > 0 ? s.transactionCount : '—'}</TableCell>
                       <TableCell>
                         {isFailed ? (
@@ -157,20 +157,20 @@ export function StatementsPage() {
                       <TableCell>
                         <div className="flex justify-end gap-1">
                           <button
-                            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm hover:bg-[var(--muted)]"
+                            className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
                             title="View transactions"
                           >
                             👁
                           </button>
                           <button
-                            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm hover:bg-[var(--muted)]"
+                            className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
                             title="Re-parse"
                           >
                             ↻
                           </button>
                           <button
                             onClick={() => void deleteStatement(s.id)}
-                            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm text-[var(--primary)] hover:bg-[var(--primary-soft)]"
+                            className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm text-primary hover:bg-primary-soft"
                             title="Delete"
                           >
                             ✕
@@ -187,7 +187,7 @@ export function StatementsPage() {
       </Card>
 
       {/* Warning */}
-      <Card className="bg-[var(--muted)] shadow-[var(--shadow-sketch-sm)]">
+      <Card className="bg-muted shadow-sketch-sm">
         <CardContent className="flex items-center gap-2 p-3 text-[13px]">
           <span>⚠</span>
           <span>

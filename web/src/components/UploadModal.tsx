@@ -91,16 +91,16 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-[rgba(42,37,31,0.45)]" onClick={handleClose} />
+      <div className="absolute inset-0 bg-border/45" onClick={handleClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg rounded-[var(--radius)] border-[1.5px] border-[var(--border)] bg-[var(--card)] p-5 shadow-[var(--shadow-sketch)]">
+      <div className="relative w-full max-w-lg rounded-sketch border-[1.5px] border-border bg-card p-5 shadow-sketch">
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <h2 className="font-hand text-2xl">Upload bank statement</h2>
           <button
             onClick={handleClose}
-            className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm hover:bg-[var(--muted)]"
+            className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
           >
             ✕
           </button>
@@ -114,18 +114,18 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`flex cursor-pointer flex-col items-center gap-3 rounded-[var(--radius-sm)] border-[1.5px] border-dashed p-8 text-center transition-colors ${
+              className={`flex cursor-pointer flex-col items-center gap-3 rounded-sketch-sm border-[1.5px] border-dashed p-8 text-center transition-colors ${
                 dragOver
-                  ? 'border-[var(--primary)] bg-[var(--primary-soft)]'
-                  : 'border-[var(--muted-foreground)] hover:border-[var(--border)] hover:bg-[var(--muted)]'
+                  ? 'border-primary bg-primary-soft'
+                  : 'border-muted-foreground hover:border-border hover:bg-muted'
               }`}
             >
-              <div className="flex h-14 w-12 items-center justify-center rounded-[6px] border-[1.3px] border-dashed border-[var(--muted-foreground)] thumb-hatch text-[13px] font-bold text-[var(--muted-foreground)]">
+              <div className="flex h-14 w-12 items-center justify-center rounded-md border-[1.3px] border-dashed border-muted-foreground thumb-hatch text-[13px] font-bold text-muted-foreground">
                 PDF
               </div>
               <div className="font-hand text-xl">Drop your PDF here</div>
-              <div className="text-[13px] text-[var(--muted-foreground)]">
-                or <span className="text-[var(--primary)] underline">choose a file</span>
+              <div className="text-[13px] text-muted-foreground">
+                or <span className="text-primary underline">choose a file</span>
               </div>
             </div>
             <input
@@ -135,7 +135,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               className="hidden"
               onChange={(e) => onFileSelect(e.target.files?.[0])}
             />
-            <p className="mt-3 text-xs text-[var(--muted-foreground)]">
+            <p className="mt-3 text-xs text-muted-foreground">
               Only PDF statements from the supported bank format are supported for now.
             </p>
             <div className="mt-4 flex justify-end">
@@ -147,15 +147,15 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
         {/* Uploading — progress */}
         {state === 'uploading' && (
           <>
-            <div className="flex flex-col items-center gap-3 rounded-[var(--radius-sm)] border-[1.3px] border-[var(--border)] p-8 text-center">
-              <div className="flex h-14 w-12 items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--primary-soft)] text-[13px] font-bold text-[var(--muted-foreground)]">
+            <div className="flex flex-col items-center gap-3 rounded-sketch-sm border-[1.3px] border-border p-8 text-center">
+              <div className="flex h-14 w-12 items-center justify-center rounded-md border-[1.3px] border-border bg-primary-soft text-[13px] font-bold text-muted-foreground">
                 PDF
               </div>
               <div className="font-hand text-xl">Parsing statement…</div>
-              <div className="h-2.5 w-3/4 overflow-hidden rounded-md border-[1.3px] border-[var(--border)] bg-[var(--muted)]">
+              <div className="h-2.5 w-3/4 overflow-hidden rounded-md border-[1.3px] border-border bg-muted">
                 <div className="bar-fill h-full w-3/5 animate-pulse" />
               </div>
-              <p className="text-xs text-[var(--muted-foreground)]">Reading transactions — this usually takes a few seconds</p>
+              <p className="text-xs text-muted-foreground">Reading transactions — this usually takes a few seconds</p>
             </div>
             <div className="mt-4 flex justify-end">
               <Button variant="ghost" onClick={handleClose}>Cancel</Button>
@@ -166,9 +166,9 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
         {/* Success */}
         {state === 'success' && result && (
           <>
-            <div className="rounded-[var(--radius-sm)] border-[1.3px] border-[var(--border)] bg-[var(--good-soft)] p-4">
+            <div className="rounded-sketch-sm border-[1.3px] border-border bg-good-soft p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-[5px] border-[1.5px] border-[var(--border)] bg-[var(--good-soft)] font-hand text-lg text-[var(--good)]">
+                <div className="flex h-8 w-8 items-center justify-center rounded-[5px] border-[1.5px] border-border bg-good-soft font-hand text-lg text-good">
                   ✓
                 </div>
                 <div>
@@ -192,14 +192,14 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
         {/* Error */}
         {state === 'error' && (
           <>
-            <div className="rounded-[var(--radius-sm)] border-[1.3px] border-[var(--border)] bg-[var(--primary-soft)] p-4">
+            <div className="rounded-sketch-sm border-[1.3px] border-border bg-primary-soft p-4">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-[5px] border-[1.5px] border-[var(--border)] bg-[var(--primary-soft)] font-hand text-lg text-[var(--primary)]">
+                <div className="flex h-8 w-8 items-center justify-center rounded-[5px] border-[1.5px] border-border bg-primary-soft font-hand text-lg text-primary">
                   !
                 </div>
                 <div>
                   <div className="font-hand text-xl">Couldn't parse this statement</div>
-                  <div className="text-xs text-[var(--muted-foreground)]">{errorMessage}</div>
+                  <div className="text-xs text-muted-foreground">{errorMessage}</div>
                 </div>
               </div>
               <p className="mt-2 pl-11 text-[13px]">

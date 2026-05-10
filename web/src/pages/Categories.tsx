@@ -130,18 +130,18 @@ export function CategoriesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-[13px] text-[var(--muted-foreground)]">
+          <p className="text-[13px] text-muted-foreground">
             Manage your categories — changes apply to all transactions.
           </p>
         </div>
         <Button onClick={() => setShowNewForm(true)}>+ New category</Button>
       </div>
 
-      {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* New category form */}
       {showNewForm && (
-        <Card className="bg-[var(--accent-soft)]">
+        <Card className="bg-accent-soft">
           <CardContent className="flex flex-wrap items-center gap-3 p-4">
             <span className="text-[13px] font-bold">New category:</span>
             <Input
@@ -156,7 +156,7 @@ export function CategoriesPage() {
               {PRESET_COLORS.map((color) => (
                 <span
                   key={color}
-                  className="h-[22px] w-[22px] cursor-pointer rounded-full border-[1.5px] border-[var(--border)]"
+                  className="h-5.5 w-5.5 cursor-pointer rounded-full border-[1.5px] border-border"
                   style={{ background: color }}
                 />
               ))}
@@ -172,7 +172,7 @@ export function CategoriesPage() {
       {loading ? (
         <div className="grid grid-cols-2 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-[var(--radius)] bg-[var(--muted)]" />
+            <div key={i} className="h-20 animate-pulse rounded-sketch bg-muted" />
           ))}
         </div>
       ) : (
@@ -180,10 +180,10 @@ export function CategoriesPage() {
           {categories.map((cat) => {
             const color = PRESET_COLORS[cat.id % PRESET_COLORS.length];
             return (
-              <Card key={cat.id} className="shadow-[var(--shadow-sketch-sm)]">
+              <Card key={cat.id} className="shadow-sketch-sm">
                 <CardContent className="flex items-center gap-3 p-4">
                   <span
-                    className="h-7 w-7 shrink-0 rounded-full border-[1.5px] border-[var(--border)]"
+                    className="h-7 w-7 shrink-0 rounded-full border-[1.5px] border-border"
                     style={{ background: color }}
                   />
                   <div className="min-w-0 flex-1">
@@ -202,7 +202,7 @@ export function CategoriesPage() {
                     ) : (
                       <>
                         <div className="font-hand text-lg">{cat.name}</div>
-                        <p className="text-xs text-[var(--muted-foreground)]">
+                        <p className="text-xs text-muted-foreground">
                           {cat.transactionCount ?? '—'} transactions
                           {cat.totalCents != null && ` · $${(cat.totalCents / 100).toFixed(2)} this month`}
                         </p>
@@ -213,8 +213,8 @@ export function CategoriesPage() {
                     <div className="flex gap-1">
                       <button
                         onClick={() => void toggleFavorite(cat)}
-                        className={`flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] font-hand text-sm hover:bg-[var(--muted)] ${
-                          cat.isFavorite ? 'bg-[var(--primary-soft)] text-[var(--primary)]' : 'bg-[var(--card)]'
+                        className={`flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border font-hand text-sm hover:bg-muted ${
+                          cat.isFavorite ? 'bg-primary-soft text-primary' : 'bg-card'
                         }`}
                         title={cat.isFavorite ? 'Unfavorite' : 'Favorite'}
                       >
@@ -222,21 +222,21 @@ export function CategoriesPage() {
                       </button>
                       <button
                         onClick={() => { setEditingId(cat.id); setEditName(cat.name); }}
-                        className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm hover:bg-[var(--muted)]"
+                        className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
                         title="Rename"
                       >
                         ✎
                       </button>
                       <button
                         onClick={() => { setEditingId(cat.id); setEditName(cat.name); }}
-                        className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm hover:bg-[var(--muted)]"
+                        className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
                         title="Merge into…"
                       >
                         ⇆
                       </button>
                       <button
                         onClick={() => void deleteCategory(cat.id)}
-                        className="flex h-[22px] w-[22px] items-center justify-center rounded-[6px] border-[1.3px] border-[var(--border)] bg-[var(--card)] font-hand text-sm text-[var(--primary)] hover:bg-[var(--primary-soft)]"
+                        className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm text-primary hover:bg-primary-soft"
                         title="Delete"
                       >
                         ✕
@@ -251,7 +251,7 @@ export function CategoriesPage() {
       )}
 
       {/* Warning */}
-      <Card className="bg-[var(--muted)] shadow-[var(--shadow-sketch-sm)]">
+      <Card className="bg-muted shadow-sketch-sm">
         <CardContent className="flex items-center gap-2 p-3 text-[13px]">
           <span>⚠</span>
           <span>Deleting a category moves its transactions to <strong>Other</strong>. Merging keeps history.</span>

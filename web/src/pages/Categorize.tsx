@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,11 +37,14 @@ export function CategorizePage() {
   const [loading, setLoading] = useState(true);
   const [confirmedList, setConfirmedList] = useState<ConfirmedItem[]>([]);
   const [lastAction, setLastAction] = useState<{ txId: number; categoryId: number } | null>(null);
+  const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const categoryMenuRef = useRef<HTMLDivElement | null>(null);
 
   const categorizedCount = totalTransactions - totalUncategorized + confirmedList.length;
   const remaining = Math.max(0, totalUncategorized - confirmedList.length);
   const progressPct = totalTransactions > 0 ? Math.round((categorizedCount / totalTransactions) * 100) : 0;
   const current = queue[0] ?? null;
+  const favoriteCategories = useMemo(() => categories.slice(0, 6), [categories]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -138,10 +141,10 @@ export function CategorizePage() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) return;
       const num = parseInt(e.key, 10);
-      if (num >= 1 && num <= categories.length && current) {
-        void assignCategory(categories[num - 1].id);
+      if (num >= 1 && num <= favoriteCategories.length && current) {
+        void assignCategory(favoriteCategories[num - 1].id);
         return;
       }
       if (e.key === 'ArrowLeft' && current) skip();
@@ -149,7 +152,18 @@ export function CategorizePage() {
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [categories, current, lastAction]);
+  }, [current, favoriteCategories, lastAction]);
+
+  useEffect(() => {
+    const onClickOutside = (event: MouseEvent) => {
+      if (!categoryMenuRef.current) return;
+      if (!categoryMenuRef.current.contains(event.target as Node)) {
+        setIsCategoryMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
 
   if (loading) {
     return (
@@ -190,9 +204,9 @@ export function CategorizePage() {
       {/* Main stage — card stack */}
       <div className="flex min-w-0 flex-1 flex-col items-center justify-center p-5">
         {current && (
-          <div className="flex h-full w-full max-w-lg flex-col">
+          <div className="w-full max-w-lg">
             {/* Card stack */}
-            <div className="relative min-h-[420px] flex-1">
+            <div className="relative min-h-[420px]">
               {/* Background cards for depth */}
               {queue.length > 2 && (
                 <div
@@ -207,10 +221,7 @@ export function CategorizePage() {
                 />
               )}
               {/* Top card */}
-              <Card
-                className="absolute inset-0"
-                style={{ transform: 'rotate(-0.5deg)' }}
-              >
+              <Card className="relative" style={{ transform: 'rotate(-0.5deg)' }}>
                 <CardContent className="flex h-full flex-col justify-between p-5">
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
@@ -231,7 +242,7 @@ export function CategorizePage() {
                   <div className="space-y-3">
                     <p className="text-[13px] text-[var(--muted-foreground)]">Tap or press a number — feels like Tinder for receipts.</p>
                     <div className="flex flex-wrap gap-2">
-                      {categories.map((cat, i) => (
+                      {favoriteCategories.map((cat, i) => (
                         <button
                           key={cat.id}
                           onClick={() => void assignCategory(cat.id)}
@@ -247,6 +258,38 @@ export function CategorizePage() {
                           {cat.name}
                         </button>
                       ))}
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="text-[12px] uppercase tracking-widest text-[var(--muted-foreground)]">All categories</p>
+                      <div className="relative" ref={categoryMenuRef}>
+                        <button
+                          type="button"
+                          aria-haspopup="listbox"
+                          aria-expanded={isCategoryMenuOpen}
+                          className="flex h-10 w-full items-center justify-between rounded-[8px] border-[1.3px] border-[var(--border)] bg-[var(--card)] px-3 text-sm shadow-[1px_1.5px_0_0_var(--border)]"
+                          onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
+                        >
+                          <span className="text-[var(--muted-foreground)]">Choose a category...</span>
+                          <span className="text-xs text-[var(--muted-foreground)]">{isCategoryMenuOpen ? '▲' : '▼'}</span>
+                        </button>
+                        {isCategoryMenuOpen && (
+                          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-[8px] border-[1.3px] border-[var(--border)] bg-[var(--card)] p-1 shadow-[var(--shadow-sketch)]">
+                            {categories.map((cat) => (
+                              <button
+                                key={cat.id}
+                                type="button"
+                                className="block w-full rounded-[6px] px-2.5 py-2 text-left text-sm hover:bg-[var(--primary-soft)]"
+                                onClick={() => {
+                                  void assignCategory(cat.id);
+                                  setIsCategoryMenuOpen(false);
+                                }}
+                              >
+                                {cat.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -318,7 +361,7 @@ export function CategorizePage() {
         <div className="space-y-2">
           <p className="text-xs uppercase tracking-widest text-[var(--muted-foreground)]">Shortcuts</p>
           <div className="flex flex-wrap gap-1.5">
-            <KbdChip keys="1-9" label="category" />
+            <KbdChip keys="1-6" label="favorites" />
             <KbdChip keys="←" label="skip" />
             <KbdChip keys="→" label="confirm" />
             <KbdChip keys="U" label="undo" />

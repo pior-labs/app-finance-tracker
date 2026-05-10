@@ -4,10 +4,13 @@ import { z } from 'zod';
 import { db, schema } from '../db/index.js';
 import type { AuthVariables } from '../middleware/auth.js';
 
+const colorSchema = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Color must be a hex value like #6b8db5.');
+
 const createSchema = z.object({
   name: z.string().trim().min(1).max(80),
   description: z.string().trim().max(250).optional(),
   keywords: z.string().trim().max(500).optional(),
+  color: colorSchema.optional(),
   isFavorite: z.boolean().optional()
 });
 
@@ -16,6 +19,7 @@ const updateSchema = z
     name: z.string().trim().min(1).max(80).optional(),
     description: z.string().trim().max(250).optional(),
     keywords: z.string().trim().max(500).optional(),
+    color: colorSchema.optional(),
     isFavorite: z.boolean().optional()
   })
   .refine((payload) => Object.keys(payload).length > 0, {
@@ -35,6 +39,7 @@ categoriesRouter.get('/', async (c) => {
       name: category.name,
       description: category.description,
       keywords: category.keywords,
+      color: category.color,
       isDefault: category.isDefault,
       isFavorite: category.isFavorite,
       createdAt: category.createdAt
@@ -65,6 +70,7 @@ categoriesRouter.post('/', async (c) => {
       name: payload.name,
       description: payload.description ?? '',
       keywords: payload.keywords ?? '',
+      color: payload.color ?? '#6b8db5',
       isDefault: false,
       isFavorite: payload.isFavorite ?? false
     })
@@ -77,6 +83,7 @@ categoriesRouter.post('/', async (c) => {
         name: created.name,
         description: created.description,
         keywords: created.keywords,
+        color: created.color,
         isDefault: created.isDefault,
         isFavorite: created.isFavorite,
         createdAt: created.createdAt
@@ -119,6 +126,7 @@ categoriesRouter.patch('/:id', async (c) => {
       name: parsed.data.name ?? current.name,
       description: parsed.data.description ?? current.description,
       keywords: parsed.data.keywords ?? current.keywords,
+      color: parsed.data.color ?? current.color,
       isFavorite: parsed.data.isFavorite ?? current.isFavorite
     })
     .where(eq(schema.categories.id, id))
@@ -130,6 +138,7 @@ categoriesRouter.patch('/:id', async (c) => {
       name: updated.name,
       description: updated.description,
       keywords: updated.keywords,
+      color: updated.color,
       isDefault: updated.isDefault,
       isFavorite: updated.isFavorite,
       createdAt: updated.createdAt

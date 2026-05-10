@@ -100,6 +100,8 @@ const defaultCategories = [
   }
 ] as const;
 
+const CATEGORY_COLORS = ['#c96442', '#5b8a5a', '#6b8db5', '#a87cc4', '#d4a55a', '#e2738a', '#7ec1c1'] as const;
+
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
@@ -126,13 +128,14 @@ async function upsertAuthUser(name: string, email: string, password: string): Pr
 }
 
 async function seedCategories(): Promise<void> {
-  for (const category of defaultCategories) {
+  for (const [index, category] of defaultCategories.entries()) {
     await db
       .insert(schema.categories)
       .values({
         name: category.name,
         description: category.description,
         keywords: category.keywords,
+        color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
         isDefault: true
       })
       .onConflictDoNothing({ target: schema.categories.name });

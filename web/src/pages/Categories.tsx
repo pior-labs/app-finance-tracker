@@ -6,12 +6,13 @@ import { Input } from '@/components/ui/input';
 interface Category {
   id: number;
   name: string;
+  color: string;
   isFavorite?: boolean;
-  transactionCount?: number;
-  totalCents?: number;
 }
 
 const PRESET_COLORS = ['#c96442', '#5b8a5a', '#6b8db5', '#a87cc4', '#d4a55a', '#e2738a', '#7ec1c1'];
+const DEFAULT_COLOR = PRESET_COLORS[2];
+const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
 
 export function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -22,6 +23,11 @@ export function CategoriesPage() {
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
+  const [colorEditingId, setColorEditingId] = useState<number | null>(null);
+  const [newColor, setNewColor] = useState(DEFAULT_COLOR);
+  const [colorEditValue, setColorEditValue] = useState(DEFAULT_COLOR);
+  const [categoryPendingDelete, setCategoryPendingDelete] = useState<Category | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchCategories = async () => {
     setLoading(true);
@@ -44,6 +50,10 @@ export function CategoriesPage() {
 
   const createCategory = async () => {
     if (!newName.trim()) return;
+    if (!HEX_COLOR_REGEX.test(newColor)) {
+      setError('Color must be a valid hex value like #6b8db5.');
+      return;
+    }
     setCreating(true);
     setError(null);
     try {
@@ -51,13 +61,14 @@ export function CategoriesPage() {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName.trim() }),
+        body: JSON.stringify({ name: newName.trim(), color: newColor }),
       });
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}));
         throw new Error((payload as { error?: string }).error ?? `Failed to create category (${res.status})`);
       }
       setNewName('');
+      setNewColor(DEFAULT_COLOR);
       setShowNewForm(false);
       await fetchCategories();
     } catch (err) {
@@ -89,10 +100,12 @@ export function CategoriesPage() {
     }
   };
 
-  const deleteCategory = async (id: number) => {
+  const deleteCategory = async () => {
+    if (!categoryPendingDelete) return;
+    setDeleting(true);
     setError(null);
     try {
-      const res = await fetch(`/api/categories/${id}`, {
+      const res = await fetch(`/api/categories/${categoryPendingDelete.id}`, {
         method: 'DELETE',
         credentials: 'include',
       });
@@ -100,9 +113,12 @@ export function CategoriesPage() {
         const payload = await res.json().catch(() => ({}));
         throw new Error((payload as { error?: string }).error ?? `Failed to delete category (${res.status})`);
       }
+      setCategoryPendingDelete(null);
       await fetchCategories();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete category');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -122,6 +138,31 @@ export function CategoriesPage() {
       await fetchCategories();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update favorite');
+    }
+  };
+
+  const updateCategoryColor = async (id: number, color: string) => {
+    if (!HEX_COLOR_REGEX.test(color)) {
+      setError('Color must be a valid hex value like #6b8db5.');
+      return;
+    }
+    setError(null);
+    try {
+      const res = await fetch(`/api/categories/${id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ color }),
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Failed to update color (${res.status})`);
+      }
+      setColorEditingId(null);
+      setColorEditValue(DEFAULT_COLOR);
+      await fetchCategories();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update color');
     }
   };
 
@@ -154,15 +195,28 @@ export function CategoriesPage() {
             />
             <div className="flex gap-1.5">
               {PRESET_COLORS.map((color) => (
-                <span
+                <button
                   key={color}
-                  className="h-5.5 w-5.5 cursor-pointer rounded-full border-[1.5px] border-border"
+                  type="button"
+                  onClick={() => setNewColor(color)}
+                  className={`h-5.5 w-5.5 cursor-pointer rounded-full border-[1.5px] border-border ${
+                    newColor === color ? 'ring-2 ring-primary ring-offset-2 ring-offset-background' : ''
+                  }`}
                   style={{ background: color }}
+                  title="Choose color"
                 />
               ))}
             </div>
+            <Input
+              value={newColor}
+              onChange={(e) => setNewColor(e.target.value)}
+              placeholder="#6b8db5"
+              className="w-28 uppercase"
+              maxLength={7}
+              aria-label="Custom category color"
+            />
             <div className="flex-1" />
-            <Button variant="ghost" onClick={() => { setShowNewForm(false); setNewName(''); }}>cancel</Button>
+            <Button variant="ghost" onClick={() => { setShowNewForm(false); setNewName(''); setNewColor(DEFAULT_COLOR); }}>cancel</Button>
             <Button onClick={() => void createCategory()} disabled={creating || !newName.trim()}>add →</Button>
           </CardContent>
         </Card>
@@ -178,7 +232,7 @@ export function CategoriesPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {categories.map((cat) => {
-            const color = PRESET_COLORS[cat.id % PRESET_COLORS.length];
+            const color = cat.color || DEFAULT_COLOR;
             return (
               <Card key={cat.id} className="shadow-sketch-sm">
                 <CardContent className="flex items-center gap-3 p-4">
@@ -202,10 +256,36 @@ export function CategoriesPage() {
                     ) : (
                       <>
                         <div className="font-hand text-lg">{cat.name}</div>
-                        <p className="text-xs text-muted-foreground">
-                          {cat.transactionCount ?? '—'} transactions
-                          {cat.totalCents != null && ` · $${(cat.totalCents / 100).toFixed(2)} this month`}
-                        </p>
+                        {colorEditingId === cat.id && (
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            {PRESET_COLORS.map((swatch) => (
+                              <button
+                                key={swatch}
+                                type="button"
+                                onClick={() => setColorEditValue(swatch)}
+                                className={`h-4.5 w-4.5 rounded-full border-[1.3px] border-border ${
+                                  swatch.toLowerCase() === colorEditValue.toLowerCase()
+                                    ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                                    : ''
+                                }`}
+                                style={{ background: swatch }}
+                                title="Choose color"
+                              />
+                            ))}
+                            <Input
+                              value={colorEditValue}
+                              onChange={(e) => setColorEditValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') void updateCategoryColor(cat.id, colorEditValue);
+                              }}
+                              placeholder="#6b8db5"
+                              className="h-7 w-28 uppercase text-xs"
+                              maxLength={7}
+                              aria-label={`Custom color for ${cat.name}`}
+                            />
+                            <Button size="sm" onClick={() => void updateCategoryColor(cat.id, colorEditValue)}>Save</Button>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -221,11 +301,27 @@ export function CategoriesPage() {
                         ★
                       </button>
                       <button
-                        onClick={() => { setEditingId(cat.id); setEditName(cat.name); }}
+                        onClick={() => { setEditingId(cat.id); setEditName(cat.name); setColorEditingId(null); }}
                         className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
                         title="Rename"
                       >
                         ✎
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (colorEditingId === cat.id) {
+                            setColorEditingId(null);
+                            setColorEditValue(DEFAULT_COLOR);
+                            return;
+                          }
+                          setColorEditingId(cat.id);
+                          setColorEditValue(cat.color ?? DEFAULT_COLOR);
+                          setEditingId(null);
+                        }}
+                        className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
+                        title="Edit color"
+                      >
+                        ●
                       </button>
                       <button
                         onClick={() => { setEditingId(cat.id); setEditName(cat.name); }}
@@ -235,7 +331,7 @@ export function CategoriesPage() {
                         ⇆
                       </button>
                       <button
-                        onClick={() => void deleteCategory(cat.id)}
+                        onClick={() => setCategoryPendingDelete(cat)}
                         className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm text-primary hover:bg-primary-soft"
                         title="Delete"
                       >
@@ -257,6 +353,39 @@ export function CategoriesPage() {
           <span>Deleting a category moves its transactions to <strong>Other</strong>. Merging keeps history.</span>
         </CardContent>
       </Card>
+
+      {categoryPendingDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-border/45" onClick={() => { if (!deleting) setCategoryPendingDelete(null); }} />
+          <div className="relative w-full max-w-md rounded-sketch border-[1.5px] border-border bg-card p-5 shadow-sketch">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="font-hand text-2xl">Delete category?</h2>
+              <button
+                onClick={() => setCategoryPendingDelete(null)}
+                disabled={deleting}
+                className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted disabled:opacity-50"
+                title="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to delete <strong>{categoryPendingDelete.name}</strong>?
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Transactions in this category will be moved to <strong>Other</strong>.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setCategoryPendingDelete(null)} disabled={deleting}>
+                Cancel
+              </Button>
+              <Button onClick={() => void deleteCategory()} disabled={deleting}>
+                {deleting ? 'Deleting…' : 'Yes, delete'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

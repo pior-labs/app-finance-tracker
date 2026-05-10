@@ -13,7 +13,9 @@ export interface Category {
   name: string;
   description: string;
   keywords: string;
+  color: string;
   isDefault: boolean;
+  isFavorite: boolean;
   createdAt: number;
 }
 

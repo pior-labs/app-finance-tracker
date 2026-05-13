@@ -1,13 +1,17 @@
-import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatCard } from '@/components/StatCard';
-import { CategoryBar } from '@/components/CategoryBar';
-import { Select, type SelectOption } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { UploadModal } from '@/components/UploadModal';
 
 interface CategorySpending {
   category: string;
+  totalCents: number;
+}
+
+interface MerchantSpending {
+  merchant: string;
   totalCents: number;
 }
 
@@ -15,213 +19,335 @@ interface DashboardStatsResponse {
   data: {
     totalSpentCents: number;
     uncategorizedCount: number;
-    monthTransactionCount: number;
     totalTransactionCount: number;
+    categorizedPercent: number;
     byCategory: CategorySpending[];
+    topMerchants: MerchantSpending[];
   };
   meta: {
     month: string;
-    availableMonths: string[];
+    latestStatement?: {
+      periodStart: string | null;
+      periodEnd: string | null;
+      transactionCount: number;
+      uploadedByName: string;
+    };
   };
 }
 
+interface RecentTransaction {
+  id: number;
+  date: string;
+  merchant: string | null;
+  description: string;
+  amount: number;
+}
+
 function formatMoney(cents: number): string {
-  const absoluteValue = Math.abs(cents) / 100;
-  const formatted = absoluteValue.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-  return cents < 0 ? `-$${formatted}` : `$${formatted}`;
+  const value = Math.abs(cents) / 100;
+  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function formatMonthLabel(month: string): string {
-  const match = month.match(/^(\d{4})-(\d{2})$/);
-  if (!match) {
-    return month;
-  }
-
-  const year = Number(match[1]);
-  const monthIndex = Number(match[2]) - 1;
-  return new Date(year, monthIndex, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+function getCurrentMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function isMonthValue(value: string | null): value is string {
+function isValidMonth(value: string | null): value is string {
   return value !== null && /^\d{4}-\d{2}$/.test(value);
 }
 
+function formatMonthLabel(month: string): string {
+  const [year, monthNumber] = month.split('-');
+  const parsed = new Date(Number(year), Number(monthNumber) - 1, 1);
+  if (Number.isNaN(parsed.getTime())) return month;
+  return parsed.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+}
+
+function formatStatementPeriod(start: string | null, end: string | null): string {
+  if (!start || !end) return 'Latest statement';
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+    return `${start} – ${end}`;
+  }
+  const startLabel = startDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const endLabel = endDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return `${startLabel} – ${endLabel}`;
+}
+
 export function DashboardPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(() => {
-    const monthParam = searchParams.get('month');
-    return isMonthValue(monthParam) ? monthParam : null;
-  });
+  const [searchParams] = useSearchParams();
+  const monthFromUrl = searchParams.get('month');
+  const month = isValidMonth(monthFromUrl) ? monthFromUrl : getCurrentMonth();
+  const isCurrentMonth = month === getCurrentMonth();
+
   const [stats, setStats] = useState<DashboardStatsResponse | null>(null);
+  const [recentUncategorized, setRecentUncategorized] = useState<RecentTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      setLoading(true);
-      setError(null);
+  const fetchDashboard = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const statsParams = new URLSearchParams();
+      statsParams.set('month', month);
+      const txParams = new URLSearchParams();
+      txParams.set('status', 'needs_review');
+      txParams.set('limit', '3');
+      txParams.set('month', month);
 
-      try {
-        const params = new URLSearchParams();
-        if (selectedMonth) {
-          params.set('month', selectedMonth);
-        }
-
-        const response = await fetch(`/api/transactions/stats${params.toString() ? `?${params.toString()}` : ''}`, {
-          credentials: 'include'
-        });
-
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({}));
-          const message = (payload as { error?: string }).error ?? `Failed to load dashboard (${response.status})`;
-          throw new Error(message);
-        }
-
-        const payload = (await response.json()) as DashboardStatsResponse;
-        setStats(payload);
-      } catch (fetchError) {
-        setError(fetchError instanceof Error ? fetchError.message : 'Failed to load dashboard');
-      } finally {
-        setLoading(false);
+      const [statsRes, txRes] = await Promise.all([
+        fetch(`/api/transactions/stats?${statsParams.toString()}`, { credentials: 'include' }),
+        fetch(`/api/transactions?${txParams.toString()}`, { credentials: 'include' }),
+      ]);
+      if (!statsRes.ok) {
+        const payload = await statsRes.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Failed to load dashboard (${statsRes.status})`);
       }
-    };
-
-    void fetchStats();
-  }, [selectedMonth]);
+      const statsPayload = (await statsRes.json()) as DashboardStatsResponse;
+      setStats(statsPayload);
+      if (txRes.ok) {
+        const txPayload = (await txRes.json()) as { data: RecentTransaction[] };
+        setRecentUncategorized(txPayload.data);
+      }
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : 'Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
+  }, [month]);
 
   useEffect(() => {
-    const params = new URLSearchParams();
-    if (selectedMonth) {
-      params.set('month', selectedMonth);
-    }
-
-    if (params.toString() !== searchParams.toString()) {
-      setSearchParams(params, { replace: true });
-    }
-  }, [selectedMonth, searchParams, setSearchParams]);
+    void fetchDashboard();
+  }, [fetchDashboard]);
 
   const categoryRows = useMemo(() => {
     const rows = stats?.data.byCategory ?? [];
-    return rows.filter((row) => row.totalCents > 0).sort((left, right) => right.totalCents - left.totalCents);
+    return rows.filter((r) => r.totalCents > 0).sort((a, b) => b.totalCents - a.totalCents);
   }, [stats]);
 
-  const monthOptions = useMemo<SelectOption[]>(() => {
-    if (!stats) {
-      return [];
-    }
+  const maxCategoryCents = categoryRows[0]?.totalCents ?? 1;
 
-    const uniqueMonths = [stats.meta.month, ...stats.meta.availableMonths].filter(
-      (value, index, values) => values.indexOf(value) === index
+  const merchantRows = useMemo(() => {
+    return stats?.data.topMerchants ?? [];
+  }, [stats]);
+
+  const uncategorizedCount = stats?.data.uncategorizedCount ?? 0;
+  const totalTx = stats?.data.totalTransactionCount ?? 0;
+  const categorizedPct = totalTx > 0 ? Math.round(((totalTx - uncategorizedCount) / totalTx) * 100) : 0;
+  const totalSpent = stats ? formatMoney(stats.data.totalSpentCents) : '$0.00';
+  const latestStatement = stats?.meta?.latestStatement;
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-5 text-destructive">{error}</CardContent>
+      </Card>
     );
+  }
 
-    return uniqueMonths.map((month) => ({
-      value: month,
-      label: formatMonthLabel(month)
-    }));
-  }, [stats]);
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="h-40 animate-pulse rounded-sketch bg-muted" />
+        <div className="grid grid-cols-3 gap-4">
+          <div className="h-28 animate-pulse rounded-sketch bg-muted" />
+          <div className="h-28 animate-pulse rounded-sketch bg-muted" />
+          <div className="h-28 animate-pulse rounded-sketch bg-muted" />
+        </div>
+      </div>
+    );
+  }
 
-  const maxCategoryCents = categoryRows[0]?.totalCents ?? 0;
-  const spentThisMonth = stats ? formatMoney(stats.data.totalSpentCents) : '$0.00';
-  const uncategorizedCount = stats ? stats.data.uncategorizedCount : 0;
-  const monthLabel = stats ? formatMonthLabel(stats.meta.month) : 'Selected month';
-  const needsReviewLink = stats ? `/transactions?status=needs_review&month=${stats.meta.month}` : '/transactions?status=needs_review';
+  /* Empty state — friendly, not blank */
+  if (totalTx === 0) {
+    return (
+      <div className="flex flex-col items-center gap-5 py-20 text-center">
+        {/* Sketchy sun face */}
+        <div className="flex h-20 w-20 items-center justify-center rounded-full border-[1.5px] border-border bg-primary-soft">
+          <span className="font-hand text-3xl text-primary">:)</span>
+        </div>
+        <h2 className="font-hand text-3xl">Nothing here yet — and that's okay.</h2>
+        <p className="max-w-md text-sm text-muted-foreground">
+          Upload your first bank statement and we'll show you a friendly month-at-a-glance picture of your household spending.
+        </p>
+        <div className="flex gap-3">
+          <Button onClick={() => setUploadOpen(true)}>Upload statement →</Button>
+          <Button variant="ghost">See an example</Button>
+        </div>
+        <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} onUploadComplete={() => void fetchDashboard()} />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <section>
-        <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-base">Month</CardTitle>
-            <CardDescription>Switch dashboard metrics to a different statement month.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select
-              options={monthOptions}
-              value={stats?.meta.month ?? ''}
-              onChange={(event) => setSelectedMonth(event.target.value)}
-              disabled={loading || monthOptions.length === 0}
-              aria-label="Dashboard month"
-              className="max-w-xs"
-            />
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2">
-        <StatCard
-          label="Spent this month"
-          value={loading ? '...' : spentThisMonth}
-          hint={loading ? 'Loading monthly total...' : monthLabel}
-        />
-        <Link to={needsReviewLink} className="block">
-          <StatCard
-            label="Needs review"
-            value={loading ? '...' : String(uncategorizedCount)}
-            hint="View uncategorized transactions"
-            className="h-full transition hover:border-[var(--primary)]"
-          />
-        </Link>
-      </section>
-
-      {error ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Dashboard unavailable</CardTitle>
-            <CardDescription className="text-[var(--destructive)]">{error}</CardDescription>
-          </CardHeader>
-        </Card>
-      ) : loading ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Spending by category</CardTitle>
-            <CardDescription>Loading category breakdown...</CardDescription>
-          </CardHeader>
-        </Card>
-      ) : stats && stats.data.totalTransactionCount === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>No transactions yet</CardTitle>
-            <CardDescription>Upload your first statement.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild>
-              <Link to="/upload">Go to upload</Link>
-            </Button>
+    <div className="space-y-5">
+      {/* ACTION CARD — full-width, warm accent background */}
+      {uncategorizedCount > 0 ? (
+        <Card className="bg-primary-soft">
+          <CardContent className="flex items-center gap-5 p-5">
+            <div className="flex-1 space-y-2">
+              <p className="text-[13px] uppercase tracking-widest text-muted-foreground">Action needed</p>
+              <div className="font-hand text-5xl text-primary">{uncategorizedCount} left</div>
+              <p className="text-[15px]">Categorize these to complete your monthly picture.</p>
+              <div className="mt-2 flex gap-2">
+                <Button asChild>
+                  <Link to="/categorize">Categorize now →</Link>
+                </Button>
+                <Button variant="ghost">Skip for now</Button>
+              </div>
+            </div>
+            {recentUncategorized.length > 0 && (
+              <div className="hidden w-85 flex-col gap-2 md:flex">
+                {recentUncategorized.map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex items-center gap-3 rounded-sketch-sm border-[1.3px] border-border bg-card px-3 py-2.5 shadow-sketch-sm"
+                  >
+                    <span className="w-12.5 text-xs text-muted-foreground">{t.date}</span>
+                    <span className="flex-1 truncate text-sm font-bold">{t.merchant ?? t.description}</span>
+                    <span className="font-bold">−{formatMoney(t.amount)}</span>
+                  </div>
+                ))}
+                <div className="text-center text-[13px] text-muted-foreground">
+                  + {Math.max(0, uncategorizedCount - recentUncategorized.length)} more
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       ) : (
-        <section>
-          <Card>
-            <CardHeader>
-              <CardTitle>Spending by category</CardTitle>
-              <CardDescription>Current month categorized spending.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {stats && stats.data.monthTransactionCount === 0 ? (
-                <p className="text-sm text-[var(--muted-foreground)]">
-                  No transactions found for {monthLabel}.
-                </p>
-              ) : categoryRows.length === 0 ? (
-                <p className="text-sm text-[var(--muted-foreground)]">
-                  No categorized spending for {monthLabel} yet.
-                </p>
-              ) : (
-                categoryRows.map((category) => (
-                  <CategoryBar
-                    key={category.category}
-                    label={category.category}
-                    amount={formatMoney(category.totalCents)}
-                    value={maxCategoryCents > 0 ? (category.totalCents / maxCategoryCents) * 100 : 0}
-                  />
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </section>
+        <Card className="bg-good-soft">
+          <CardContent className="flex items-center gap-5 p-5">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border-[1.5px] border-border bg-card">
+              <span className="font-hand text-3xl text-good">:)</span>
+            </div>
+            <div className="flex-1 space-y-1">
+              <p className="text-[13px] uppercase tracking-widest text-muted-foreground">All caught up</p>
+              <div className="font-hand text-4xl text-good">Nothing to categorize</div>
+              <p className="text-[15px]">This month's picture is complete — nice work.</p>
+            </div>
+            <Button asChild variant="ghost">
+              <Link to="/transactions">View transactions →</Link>
+            </Button>
+          </CardContent>
+        </Card>
       )}
+
+      {/* STATS ROW — three cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Spent */}
+        <Card>
+          <CardContent className="space-y-1 p-5">
+            <div className="text-sm font-bold text-muted-foreground">
+              {isCurrentMonth ? 'Spent this month' : `Spent in ${formatMonthLabel(month)}`}
+            </div>
+            <div className="font-hand text-4xl">{totalSpent}</div>
+            <div className="text-[13px] text-muted-foreground">{totalTx} transactions</div>
+          </CardContent>
+        </Card>
+
+        {/* Categorized */}
+        <Card>
+          <CardContent className="space-y-1 p-5">
+            <div className="text-sm font-bold text-muted-foreground">Categorized</div>
+            <div className="font-hand text-4xl">
+              {categorizedPct}<span className="text-lg text-muted-foreground">%</span>
+            </div>
+            <Progress value={categorizedPct} variant="good" className="mt-2" />
+          </CardContent>
+        </Card>
+
+        {/* Latest statement */}
+        <Card>
+          <CardContent className="space-y-3 p-5">
+            <h3 className="font-hand text-xl">Latest statement</h3>
+            {latestStatement ? (
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-10 shrink-0 items-center justify-center rounded-md border-[1.3px] border-dashed border-muted-foreground thumb-hatch text-[10px] font-bold text-muted-foreground">
+                  PDF
+                </div>
+                <div className="min-w-0 flex-1 space-y-0.5">
+                  <div className="truncate font-bold">
+                    {formatStatementPeriod(latestStatement.periodStart, latestStatement.periodEnd)}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {latestStatement.transactionCount} transactions imported
+                  </p>
+                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span>Uploaded by</span>
+                    <span className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full border-[1.3px] border-border bg-primary-soft font-hand text-[11px]">
+                      {latestStatement.uploadedByName?.[0]?.toUpperCase() ?? '?'}
+                    </span>
+                    <span>{latestStatement.uploadedByName}</span>
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground">No statements yet</div>
+            )}
+            <Button variant="outline" size="sm" onClick={() => setUploadOpen(true)}>
+              Upload next →
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* BOTTOM — spending by category + top merchants */}
+      <div className="grid gap-4 md:grid-cols-2">
+        {/* Spending by category */}
+        <Card>
+          <CardContent className="p-5">
+            <h3 className="scribble mb-4 inline-block font-hand text-xl">Spending by category</h3>
+            {categoryRows.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No categorized spending yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {categoryRows.slice(0, 6).map((cat) => (
+                  <div key={cat.category} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-bold">{cat.category}</span>
+                      <span className="font-bold">{formatMoney(cat.totalCents)}</span>
+                    </div>
+                    <Progress value={(cat.totalCents / maxCategoryCents) * 100} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top merchants */}
+        <Card>
+          <CardContent className="p-5">
+            <h3 className="scribble mb-4 inline-block font-hand text-xl">Top merchants</h3>
+            {merchantRows.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No merchant data yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {merchantRows.slice(0, 5).map((m, i) => (
+                  <div
+                    key={m.merchant}
+                    className="flex items-center gap-3"
+                    style={{ borderBottom: i < 4 ? '1.2px dashed var(--border-soft)' : 'none', paddingBottom: i < 4 ? 8 : 0 }}
+                  >
+                    <span className="flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm">
+                      {i + 1}
+                    </span>
+                    <span className="flex-1 text-[15px] font-bold">{m.merchant}</span>
+                    <span className="font-bold">{formatMoney(m.totalCents)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} onUploadComplete={() => void fetchDashboard()} />
     </div>
   );
 }

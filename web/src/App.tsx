@@ -3,10 +3,11 @@ import { AppShell } from '@/components/AppShell';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AuthProvider } from '@/hooks/useAuth';
 import { DashboardPage } from '@/pages/Dashboard';
-import { CategoriesPage } from '@/pages/Categories';
 import { LoginPage } from '@/pages/Login';
+import { CategorizePage } from '@/pages/Categorize';
 import { TransactionsPage } from '@/pages/Transactions';
-import { UploadPage } from '@/pages/Upload';
+import { CategoriesPage } from '@/pages/Categories';
+import { StatementsPage } from '@/pages/Statements';
 
 export function App() {
   return (
@@ -22,9 +23,10 @@ export function App() {
             }
           >
             <Route path="/" element={<DashboardPage />} />
+            <Route path="/categorize" element={<CategorizePage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
-            <Route path="/upload" element={<UploadPage />} />
+            <Route path="/statements" element={<StatementsPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

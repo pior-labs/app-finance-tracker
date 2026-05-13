@@ -57,9 +57,9 @@ You install these with `npx shadcn@latest add button card table ...` etc. They g
 
 ---
 
-## Database Schema (5 Tables)
+## Database Schema (4 Tables)
 
-Five tables total. Some columns won't be used until Phase 2, but creating them now means you don't touch the schema later. They're marked below.
+Four tables you define, plus Better Auth's managed tables (sessions, accounts). Better Auth handles its own schema through the Drizzle adapter.
 
 ### `users`
 
@@ -68,23 +68,21 @@ Five tables total. Some columns won't be used until Phase 2, but creating them n
 | id            | integer, PK    | Auto-increment           |
 | name          | text           | Display name             |
 | email         | text, unique   | Login identifier         |
-| password_hash | text           | bcrypt hash              |
+| password_hash | text           | Managed by Better Auth   |
 | created_at    | timestamp      | Default now              |
 
 ### `categories`
 
-| Column      | Type           | Notes                                                              |
-| ----------- | -------------- | ------------------------------------------------------------------ |
-| id          | integer, PK    | Auto-increment                                                     |
-| name        | text, unique   | "Groceries", "Dining Out", etc.                                    |
-| description | text           | "Supermarkets, grocery stores, food staples" — becomes RAG context in Phase 2 |
-| keywords    | text           | "Loblaws, Metro, No Frills" — common merchants, used by RAG in Phase 2 |
-| is_default  | boolean        | true for seeded categories, false for user-created                 |
-| created_at  | timestamp      | Default now                                                        |
+| Column      | Type           | Notes                                              |
+| ----------- | -------------- | -------------------------------------------------- |
+| id          | integer, PK    | Auto-increment                                     |
+| name        | text, unique   | "Groceries", "Dining Out", etc.                    |
+| description | text           | "Supermarkets, grocery stores, food staples"       |
+| keywords    | text           | "Loblaws, Metro, No Frills" — common merchants     |
+| is_default  | boolean        | true for seeded categories, false for user-created |
+| created_at  | timestamp      | Default now                                        |
 
 Seed with ~15-20 defaults: Groceries, Dining Out, Transport, Rent/Mortgage, Utilities, Entertainment, Subscriptions, Healthcare, Insurance, Clothing, Personal Care, Home & Garden, Education, Gifts, Travel, Savings, Fees & Charges, Income, Other.
-
-Write meaningful `description` and `keywords` values when seeding — they're free text that costs nothing now and becomes your RAG knowledge base in Phase 2.
 
 ### `statements`
 
@@ -108,50 +106,34 @@ Write meaningful `description` and `keywords` values when seeding — they're fr
 | statement_id     | integer, FK → statements     | Which upload this came from                        |
 | date             | date                         | Transaction date                                   |
 | description      | text                         | Raw text from the bank statement                   |
+| merchant         | text, nullable               | Cleaned merchant name, extracted during parsing    |
 | amount           | integer                      | **Stored in cents** (see below)                    |
 | type             | text                         | "debit" or "credit"                                |
 | category_id      | integer, FK → categories, nullable | Null until categorized                        |
-| confidence_score | real, nullable               | 0.0–1.0, null for manual. Set by AI in Phase 2    |
-| status           | text                         | "needs_review", "auto_categorized", or "confirmed" |
-| categorized_by   | text, nullable               | "human" or "ai", null if uncategorized             |
+| status           | text                         | "needs_review" or "confirmed"                      |
 | created_at       | timestamp                    | Default now                                        |
 
-**Why cents?** Floating point math breaks with money. `19.99 + 0.01` doesn't always equal `20.00` in JavaScript. Store `1999` as an integer, divide by 100 only at display time: `(amount / 100).toFixed(2)`. Every serious financial system does this.
+**Why cents?** Floating point math breaks with money. `19.99 + 0.01` doesn't always equal `20.00` in JavaScript. Store `1999` as an integer, divide by 100 only at display time: `(amount / 100).toFixed(2)`.
+
+**Why a separate merchant column?** The raw `description` from a bank statement is messy — something like "POS PURCHASE - LOBLAWS #4521 TORONTO ON". The `merchant` column stores the cleaned-up name ("Loblaws") extracted during PDF parsing. This enables merchant-level analytics without fuzzy text matching.
 
 **Status flow:**
 
 ```
 Upload → "needs_review" (no category yet)
-                ↓
-Phase 1:  Human picks category → "confirmed"
-                ↓
-Phase 2:  AI categorizes → "auto_categorized" (has confidence score)
-                ↓
-          Human confirms or corrects → "confirmed"
+   ↓
+Human picks category → "confirmed"
 ```
-
-### `category_examples`
-
-Not used in Phase 1 — create the table but don't worry about it. In Phase 2, every time a user confirms or corrects a categorization, a row gets inserted here. These examples get embedded into the vector store and become the feedback loop that improves the RAG pipeline over time.
-
-| Column                  | Type                      | Notes                                                  |
-| ----------------------- | ------------------------- | ------------------------------------------------------ |
-| id                      | integer, PK               | Auto-increment                                         |
-| category_id             | integer, FK → categories  | What category this example belongs to                  |
-| transaction_description | text                      | The transaction text that was categorized              |
-| notes                   | text, nullable            | Optional context ("joint Costco membership")           |
-| source                  | text                      | "seed" for initial examples, "user_correction" for feedback |
-| created_at              | timestamp                 | Default now                                            |
 
 ### What's NOT in the schema (and why)
 
-**No `budgets` table** — that's Phase 4 when the agent needs budget targets. Add it then.
+**No `category_examples` table** — no RAG in this project. The AI Brain handles that.
 
-**No `reports` table** — that's Phase 4-5 when agents generate reports. Add it then.
+**No `confidence_score` or `categorized_by`** — all categorization is manual.
 
-**No `tags` or multi-category support** — one category per transaction. If you need sub-categories later, add a `parent_id` to `categories` without touching anything else.
+**No `budgets` or `reports` tables** — this is a tracker, not an analyst.
 
-**No `settings` or `preferences` table** — two users, hardcode what you need. You're not building a SaaS.
+**No `settings` or `preferences` table** — two users, hardcode what you need.
 
 ---
 
@@ -181,34 +163,36 @@ You've already scaffolded the repo with Claude Code. Before writing any new code
 
 **Do this:**
 
-1. Verify the Drizzle schema matches the **Database Schema** section above (all 5 tables, including the Phase 2 columns)
+1. Verify the Drizzle schema matches the **Database Schema** section above (all 4 tables)
 2. Pay special attention to `transactions.amount` — it must be an integer (cents), not a float
-3. Run the migration so the SQLite database file gets created in `/data`
-4. Create a seed script (`api/src/db/seed.ts`) that:
-   - Creates two user accounts (you and your fiancée) with hashed passwords
+3. Set up Better Auth with the Drizzle adapter:
+   - Install `better-auth` and configure it with your SQLite database
+   - Better Auth will create its own tables (sessions, accounts) through Drizzle
+   - Configure email + password authentication (no OAuth needed)
+4. Run the migration so the SQLite database file gets created in `/data`
+5. Create a seed script (`api/src/db/seed.ts`) that:
+   - Creates two user accounts (you and your fiancée) using Better Auth's API
    - Inserts the ~15-20 default categories
-5. Run the seed script and verify the data is in the database (use a SQLite viewer like `sqlite3` CLI, DB Browser for SQLite, or the VSCode SQLite extension)
-6. Build the auth endpoints:
-   - `POST /api/auth/login` — accepts email + password, returns a session cookie
-   - `POST /api/auth/logout` — clears the session
-   - `GET /api/auth/me` — returns the current user or 401
-7. Add auth middleware that protects all `/api/*` routes except login
+6. Run the seed script and verify the data is in the database
+7. Add Better Auth's middleware to protect all `/api/*` routes except auth endpoints
+
+Better Auth gives you secure session handling, CSRF protection, and proper cookie settings out of the box — you don't need to implement any of that yourself.
 
 **Test it:**
 
 ```bash
-# Login
-curl -X POST http://localhost:3000/api/auth/login \
+# Login (Better Auth's built-in endpoint)
+curl -X POST http://localhost:3000/api/auth/sign-in/email \
   -H "Content-Type: application/json" \
   -d '{"email": "you@email.com", "password": "yourpassword"}' \
   -c cookies.txt
 
 # Check session
-curl http://localhost:3000/api/auth/me -b cookies.txt
-# Should return your user object
+curl http://localhost:3000/api/auth/get-session -b cookies.txt
+# Should return your user + session object
 
 # Without cookies
-curl http://localhost:3000/api/auth/me
+curl http://localhost:3000/api/auth/get-session
 # Should return 401
 ```
 
@@ -248,7 +232,7 @@ The PDF just sits on disk for now. That's fine.
 
 ---
 
-## Step 4 — PDF Parsing (The Hard Part)
+## Step 4 — PDF Parsing & Merchant Extraction (The Hard Part)
 
 **Time:** 3-5 hours (possibly more — this is the trickiest step)
 
@@ -263,14 +247,21 @@ This is where you turn a PDF into structured transaction data. Since you're usin
 2. Start by extracting the raw text from one of your statements and printing it to the console. Look at the output. Understand the structure. Where do transactions start? What separates them? Is it line-by-line? Tabular?
 3. Write a parser function specific to your bank's format:
    - Input: raw PDF text (or the PDF buffer)
-   - Output: array of `{ date, description, amount, type }` objects
+   - Output: array of `{ date, description, merchant, amount, type }` objects
    - Handle edge cases: multi-line descriptions, page headers/footers that appear in the middle of transactions, totals rows you need to skip
-4. Write tests for this parser. Use a real statement as a fixture. Assert the correct number of transactions, spot-check specific ones.
-5. Integrate into the upload flow:
+4. **Merchant extraction** — write a function that takes the raw description and extracts a clean merchant name:
+   - "POS PURCHASE - LOBLAWS #4521 TORONTO ON" → "Loblaws"
+   - "INTERAC PURCHASE - AMAZON.CA" → "Amazon"
+   - "PRE-AUTHORIZED - NETFLIX" → "Netflix"
+   - Strip transaction codes, store numbers, location info
+   - This is string parsing — no AI needed
+   - Some transactions won't have a clear merchant (ATM withdrawals, transfers) — set merchant to null for those
+5. Write tests for this parser. Use a real statement as a fixture. Assert the correct number of transactions, spot-check specific ones, verify merchant extraction.
+6. Integrate into the upload flow:
    - After saving the PDF, run the parser
    - Store the extracted raw text in `statements.raw_text`
-   - Insert each parsed transaction into the `transactions` table
-   - Set `category_id = null`, `status = 'needs_review'`, `confidence_score = null`
+   - Set `period_start` and `period_end` from the first/last transaction dates
+   - Insert each parsed transaction into the `transactions` table with `status = 'needs_review'`
 
 **Test it:**
 
@@ -282,12 +273,12 @@ curl -X POST http://localhost:3000/api/statements/upload \
 
 # Get the transactions for that statement
 curl http://localhost:3000/api/statements/{id}/transactions -b cookies.txt
-# Should return parsed transactions with correct dates, amounts, descriptions
+# Should return parsed transactions with correct dates, amounts, descriptions, and merchants
 ```
 
-**Manually verify:** Pick 5-10 transactions from the API response and cross-reference them with your actual bank statement. Do the amounts match? Are the dates right? Are descriptions captured fully?
+**Manually verify:** Pick 5-10 transactions from the API response and cross-reference them with your actual bank statement. Do the amounts match? Are the dates right? Are descriptions captured fully? Are merchants extracted cleanly?
 
-**Important:** Spend the time to get this right. If the parser misses transactions or mangles amounts, everything downstream (categorization, budgeting, reports) will be wrong. It's okay if this step takes longer than expected.
+**Important:** Spend the time to get this right. If the parser misses transactions or mangles amounts, everything downstream will be wrong. It's okay if this step takes longer than expected.
 
 ---
 
@@ -300,17 +291,18 @@ Build out the API routes you'll need for the frontend. This is a **shared househ
 **Do this:**
 
 1. `GET /api/transactions` — list all household transactions (not user-scoped)
-   - Support query params: `?month=2026-03&category=&status=`
+   - Support query params: `?month=2026-03&category=&status=&merchant=`
    - Paginate (limit/offset) so the UI stays fast
    - Include the category name in the response (join with categories table)
    - Include the uploader's name so you can see who uploaded each statement
 2. `PATCH /api/transactions/:id` — update a transaction
-   - Allow setting: `category_id`, `status` (set to `confirmed` when manually categorized), `categorized_by` (set to `human`)
+   - Allow setting: `category_id`, `status` (set to `confirmed` when manually categorized)
 3. `GET /api/categories` — list all categories
 4. `GET /api/transactions/stats` — basic household stats
    - Total spending for the current month
    - Count of uncategorized transactions
    - Spending breakdown by category (category name + total amount) for the current month
+   - Top merchants by spending for the current month
 
 **Test it:**
 
@@ -325,7 +317,7 @@ curl "http://localhost:3000/api/transactions?month=2026-03" -b cookies.txt
 curl -X PATCH http://localhost:3000/api/transactions/1 \
   -b cookies.txt \
   -H "Content-Type: application/json" \
-  -d '{"category_id": 1, "status": "confirmed", "categorized_by": "human"}'
+  -d '{"category_id": 1, "status": "confirmed"}'
 
 # Check stats
 curl "http://localhost:3000/api/transactions/stats" -b cookies.txt
@@ -354,7 +346,7 @@ Now you start making it real in the browser. The frontend has **4 routes total**
    - `Card` wrapping the form
    - `Input` for email and password
    - `Button` for submit
-   - Calls `POST /api/auth/login`
+   - Calls Better Auth's sign-in endpoint
    - On success, redirect to `/`
    - Store auth state in a React context or a `useAuth()` hook
 4. Build the app shell using shadcn's `Sidebar` component:
@@ -422,13 +414,15 @@ This is the core UI of Phase 1 — where you'll spend the most time interacting 
    - Category filter using `Select` (all categories + "All" + "Uncategorized")
    - Status filter using `Select`: All, Needs Review, Confirmed
 2. **Transaction table** using shadcn `Table`:
-   - Columns: date, description, amount, category, status
+   - Columns: date, merchant, description, amount, category, status
+   - Show merchant prominently — this is the human-readable identifier
+   - Fall back to description if merchant is null
    - Color amounts: red text for debits, green for credits (Tailwind `text-red-500` / `text-green-500`)
    - Status column shows a `Badge` — yellow for "needs_review", green for "confirmed"
    - Paginate at 50 rows per page (simple prev/next `Button`s)
 3. **Inline category assignment** — this is the key interaction:
    - Each row has a `Select` dropdown in the category column
-   - Selecting a category immediately calls `PATCH /api/transactions/:id` with the new category, `status: "confirmed"`, and `categorized_by: "human"`
+   - Selecting a category immediately calls `PATCH /api/transactions/:id` with the new category and `status: "confirmed"`
    - The `Badge` updates from yellow "needs review" to green "confirmed" without a page refresh
    - No save button — selection triggers the save
 4. **No bulk actions for MVP.** One at a time is fine. You can add multi-select later if the manual flow feels slow.
@@ -465,7 +459,7 @@ When you're done, run through this scenario end to end:
 2. Log in
 3. Upload this month's bank statement PDF
 4. Verify the transaction count matches your actual statement
-5. Spot-check 10 transactions for correct amounts and dates
+5. Spot-check 10 transactions for correct amounts, dates, and merchant names
 6. Go to the dashboard — see "Spent this month" and the uncategorized count
 7. Click the "Needs review" card — land on the transactions page filtered to uncategorized
 8. Categorize 20 transactions manually using the inline dropdown
@@ -476,7 +470,7 @@ When you're done, run through this scenario end to end:
 13. She uploads her statement — new transactions appear in the same shared pool
 14. She categorizes a few — you log back in and see her categorizations
 
-**If all of that works, Phase 1 is done.** You have a working, deployed, shared household finance tracker. No AI yet — but the foundation is solid, and Phase 2 (RAG categorization) has clean data and clear integration points to build on.
+**If all of that works, Phase 1 is done.** You have a working, deployed, shared household finance tracker. No AI yet — but the foundation is solid, and Phase 2 (MCP server) has clean data and clear integration points to build on.
 
 ---
 

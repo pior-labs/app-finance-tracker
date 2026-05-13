@@ -1,10 +1,5 @@
 import type { MiddlewareHandler } from 'hono';
-import { getCookie } from 'hono/cookie';
-import { eq } from 'drizzle-orm';
-import { db, schema } from '../db/index.js';
-import { getSession } from '../lib/session.js';
-
-const PUBLIC_API_PATHS = new Set(['/api/auth/login', '/health']);
+import { auth } from '../lib/auth.js';
 
 export interface AuthVariables {
   userId: number;
@@ -13,31 +8,30 @@ export interface AuthVariables {
 }
 
 export const authMiddleware: MiddlewareHandler<{ Variables: AuthVariables }> = async (c, next) => {
-  if (PUBLIC_API_PATHS.has(c.req.path)) {
-    await next();
-    return;
-  }
-
   if (!c.req.path.startsWith('/api/')) {
     await next();
     return;
   }
 
-  const sessionToken = getCookie(c, 'finlens_session');
-  const session = getSession(sessionToken);
+  if (c.req.path.startsWith('/api/auth/')) {
+    await next();
+    return;
+  }
 
-  if (!session) {
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+
+  if (!session?.user) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
-  const user = await db.query.users.findFirst({ where: eq(schema.users.id, session.userId) });
-  if (!user) {
+  const parsedId = Number(session.user.id);
+  if (!Number.isFinite(parsedId)) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
-  c.set('userId', user.id);
-  c.set('userEmail', user.email);
-  c.set('userName', user.name);
+  c.set('userId', parsedId);
+  c.set('userEmail', session.user.email);
+  c.set('userName', session.user.name);
 
   await next();
 };

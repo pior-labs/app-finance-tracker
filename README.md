@@ -1,12 +1,12 @@
-# FinLens (Phase 1 Scaffold)
+# FinLens (Phase 1)
 
-This repository is the Phase 1 structural scaffold for FinLens.
+FinLens is a self-hosted personal finance tracker for two users.
 
 ## Project Layout
 
 - `api/`: Hono + TypeScript + Drizzle + SQLite backend
 - `web/`: React 19 + Vite + Tailwind v4 + shadcn-style UI scaffold
-- `docs/`: source specification documents (kept untouched)
+- `docs/`: source specification documents
 - `data/`: gitignored local data (SQLite + uploads)
 
 ## Quick Start
@@ -28,6 +28,7 @@ cd ../web && pnpm install
 
 ```bash
 cd ../api
+pnpm db:generate
 pnpm db:migrate
 pnpm db:seed
 ```
@@ -42,7 +43,7 @@ cd api && pnpm dev
 cd web && pnpm dev
 ```
 
-## Docker (production-like baseline)
+## Docker
 
 ```bash
 docker compose up --build
@@ -50,14 +51,3 @@ docker compose up --build
 
 - API: `http://localhost:3000`
 - Web: `http://localhost:8080`
-
-## Current Scope
-
-This scaffold includes:
-
-- Exact Phase 1 database schema (5 tables)
-- Session auth baseline (`/api/auth/login`, `/api/auth/logout`, `/api/auth/me`)
-- Placeholder route handlers for statements, transactions, categories
-- Router + protected pages + placeholder UI components on web
-
-This scaffold intentionally does **not** include fully implemented PDF parsing/upload categorization flows yet.

@@ -1,17 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { readFile, unlink, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import { Hono } from 'hono';
 import { db, schema } from '../db/index.js';
 import { ensureDir, env, resolveFromApiDir } from '../lib/env.js';
 import type { AuthVariables } from '../middleware/auth.js';
-import {
-  extractPdfText,
-  parseBankStatementText,
-  parseRbcStatementTable,
-  type ParsedStatementRow
-} from '../services/pdf-parser.js';
+import { extractPdfText, parseBankStatementText } from '../services/pdf-parser.js';
 
 export const statementsRouter = new Hono<{ Variables: AuthVariables }>();
 
@@ -51,26 +46,15 @@ function sanitizeFilename(filename: string): string {
     .replace(/[^a-zA-Z0-9._-]/g, '_');
 }
 
-function logExtractedStatementText(logContext: string, filename: string, extractedText: string): void {
-  console.log(`[${logContext}] Extracted ${extractedText.length} characters from ${filename}`);
-  console.log('----- PDF RAW TEXT START -----');
-  console.log(extractedText);
-  console.log('----- PDF RAW TEXT END -----');
-}
-
-function logParsedRows(logContext: string, filename: string, parsedRows: ParsedStatementRow[]): void {
-  console.log(`[${logContext}] Parsed ${parsedRows.length} rows from ${filename}`);
-  console.log('----- PDF PARSED ROWS START -----');
-  console.log(JSON.stringify(parsedRows, null, 2));
-  console.log('----- PDF PARSED ROWS END -----');
-}
-
-function getStatementPeriodFromRows(rows: ParsedStatementRow[]): { periodStart: string | null; periodEnd: string | null } {
-  if (rows.length === 0) {
+function getStatementPeriodFromTransactions(
+  transactions: { date: string }[]
+): { periodStart: string | null; periodEnd: string | null } {
+  if (transactions.length === 0) {
     return { periodStart: null, periodEnd: null };
   }
 
-  const sortedDates = rows.map((row) => row.transactionDate).sort();
+  const sortedDates = transactions.map((transaction) => transaction.date).sort();
+
   return {
     periodStart: sortedDates[0],
     periodEnd: sortedDates[sortedDates.length - 1]
@@ -117,7 +101,6 @@ statementsRouter.get('/', async (c) => {
       institution: statement.institution,
       periodStart: statement.periodStart,
       periodEnd: statement.periodEnd,
-      rawText: statement.rawText,
       createdAt: statement.createdAt,
       uploadedByUser: statement.uploadedByUser,
       transactionCount: transactionCountByStatementId.get(statement.id) ?? 0
@@ -125,6 +108,51 @@ statementsRouter.get('/', async (c) => {
     meta: {
       count: statements.length
     }
+  });
+});
+
+statementsRouter.get('/:id/transactions', async (c) => {
+  const statementId = Number(c.req.param('id'));
+
+  if (!Number.isFinite(statementId) || statementId <= 0) {
+    return c.json({ error: 'Invalid statement id' }, 400);
+  }
+
+  const statement = await db.query.statements.findFirst({
+    where: eq(schema.statements.id, statementId)
+  });
+
+  if (!statement) {
+    return c.json({ error: 'Statement not found' }, 404);
+  }
+
+  const transactions = await db.query.transactions.findMany({
+    where: eq(schema.transactions.statementId, statementId),
+    with: {
+      category: {
+        columns: {
+          id: true,
+          name: true
+        }
+      }
+    },
+    orderBy: [desc(schema.transactions.date), desc(schema.transactions.id)]
+  });
+
+  return c.json({
+    data: transactions.map((transaction) => ({
+      id: transaction.id,
+      statementId: transaction.statementId,
+      date: transaction.date,
+      description: transaction.description,
+      merchant: transaction.merchant,
+      amount: transaction.amount,
+      type: transaction.type,
+      categoryId: transaction.categoryId,
+      categoryName: transaction.category?.name ?? null,
+      status: transaction.status,
+      createdAt: transaction.createdAt
+    }))
   });
 });
 
@@ -157,11 +185,8 @@ statementsRouter.post('/upload', async (c) => {
   await writeFile(absoluteFilePath, fileBuffer);
 
   const extractedText = await extractPdfText(fileBuffer);
-  logExtractedStatementText('statements/upload', sanitizedOriginalFilename, extractedText);
-  const parsedRows = parseRbcStatementTable(extractedText);
-  logParsedRows('statements/upload', sanitizedOriginalFilename, parsedRows);
   const parsedTransactions = parseBankStatementText(extractedText);
-  const { periodStart, periodEnd } = getStatementPeriodFromRows(parsedRows);
+  const { periodStart, periodEnd } = getStatementPeriodFromTransactions(parsedTransactions);
 
   const [createdStatement] = await db
     .insert(schema.statements)
@@ -181,15 +206,19 @@ statementsRouter.post('/upload', async (c) => {
         statementId: createdStatement.id,
         date: transaction.date,
         description: transaction.description,
+        merchant: transaction.merchant,
         amount: transaction.amount,
         type: transaction.type,
         categoryId: null,
-        confidenceScore: null,
-        status: 'needs_review',
-        categorizedBy: null
+        status: 'needs_review'
       }))
     );
   }
+
+  const [insertedCountRow] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.transactions)
+    .where(and(eq(schema.transactions.statementId, createdStatement.id)));
 
   return c.json(
     {
@@ -201,257 +230,12 @@ statementsRouter.post('/upload', async (c) => {
         institution: createdStatement.institution,
         periodStart: createdStatement.periodStart,
         periodEnd: createdStatement.periodEnd,
-        rawText: null,
         createdAt: createdStatement.createdAt
       },
       meta: {
-        uploadPath: path.relative(resolveFromApiDir('../data'), absoluteFilePath),
-        parsedRows: parsedRows.length,
-        insertedTransactions: parsedTransactions.length
+        insertedTransactions: Number(insertedCountRow?.count ?? 0)
       }
     },
     201
   );
-});
-
-statementsRouter.post('/:id/log', async (c) => {
-  const statementId = Number(c.req.param('id'));
-  if (Number.isNaN(statementId) || statementId <= 0) {
-    return c.json({ error: 'Invalid statement id' }, 400);
-  }
-
-  const statement = await db.query.statements.findFirst({
-    where: eq(schema.statements.id, statementId)
-  });
-
-  if (!statement) {
-    return c.json({ error: 'Statement not found' }, 404);
-  }
-
-  const uploadRootPath = resolveFromApiDir(env.uploadDir);
-  const safeStoredFilename = path.basename(statement.filename);
-  const statementFilePath = path.join(uploadRootPath, String(statement.uploadedBy), safeStoredFilename);
-
-  let fileBuffer: Buffer;
-  try {
-    fileBuffer = await readFile(statementFilePath);
-  } catch {
-    return c.json({ error: 'Statement file not found on disk' }, 404);
-  }
-
-  const extractedText = await extractPdfText(fileBuffer);
-  logExtractedStatementText('statements/log', statement.originalFilename, extractedText);
-  const parsedRows = parseRbcStatementTable(extractedText);
-  logParsedRows('statements/log', statement.originalFilename, parsedRows);
-
-  return c.json({
-    success: true,
-    statementId,
-    originalFilename: statement.originalFilename,
-    extractedCharacters: extractedText.length,
-    parsedRows: parsedRows.length
-  });
-});
-
-statementsRouter.post('/:id/reprocess', async (c) => {
-  const statementId = Number(c.req.param('id'));
-  if (Number.isNaN(statementId) || statementId <= 0) {
-    return c.json({ error: 'Invalid statement id' }, 400);
-  }
-
-  const statement = await db.query.statements.findFirst({
-    where: eq(schema.statements.id, statementId)
-  });
-
-  if (!statement) {
-    return c.json({ error: 'Statement not found' }, 404);
-  }
-
-  const forceReplace = c.req.query('force') === 'true';
-
-  const [existingCountRow] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(schema.transactions)
-    .where(eq(schema.transactions.statementId, statementId));
-  const existingTransactions = Number(existingCountRow?.count ?? 0);
-
-  if (existingTransactions > 0 && !forceReplace) {
-    return c.json(
-      {
-        error: 'Statement already has transactions. Reprocess with ?force=true to replace existing rows.',
-        statementId,
-        existingTransactions
-      },
-      409
-    );
-  }
-
-  const uploadRootPath = resolveFromApiDir(env.uploadDir);
-  const safeStoredFilename = path.basename(statement.filename);
-  const statementFilePath = path.join(uploadRootPath, String(statement.uploadedBy), safeStoredFilename);
-
-  let fileBuffer: Buffer;
-  try {
-    fileBuffer = await readFile(statementFilePath);
-  } catch {
-    return c.json({ error: 'Statement file not found on disk' }, 404);
-  }
-
-  const extractedText = await extractPdfText(fileBuffer);
-  const parsedRows = parseRbcStatementTable(extractedText);
-  const parsedTransactions = parseBankStatementText(extractedText);
-  const { periodStart, periodEnd } = getStatementPeriodFromRows(parsedRows);
-
-  db.transaction((tx) => {
-    tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId)).run();
-
-    tx
-      .update(schema.statements)
-      .set({
-        periodStart,
-        periodEnd,
-        rawText: extractedText
-      })
-      .where(eq(schema.statements.id, statementId))
-      .run();
-
-    if (parsedTransactions.length > 0) {
-      tx
-        .insert(schema.transactions)
-        .values(
-          parsedTransactions.map((transaction) => ({
-            statementId,
-            date: transaction.date,
-            description: transaction.description,
-            amount: transaction.amount,
-            type: transaction.type,
-            categoryId: null,
-            confidenceScore: null,
-            status: 'needs_review',
-            categorizedBy: null
-          }))
-        )
-        .run();
-    }
-  });
-
-  return c.json({
-    success: true,
-    statementId,
-    originalFilename: statement.originalFilename,
-    forceReplaced: forceReplace,
-    parsedRows: parsedRows.length,
-    insertedTransactions: parsedTransactions.length,
-    deletedTransactions: existingTransactions,
-    periodStart,
-    periodEnd
-  });
-});
-
-statementsRouter.get('/:id/file', async (c) => {
-  const statementId = Number(c.req.param('id'));
-  if (Number.isNaN(statementId) || statementId <= 0) {
-    return c.json({ error: 'Invalid statement id' }, 400);
-  }
-
-  const statement = await db.query.statements.findFirst({
-    where: eq(schema.statements.id, statementId)
-  });
-
-  if (!statement) {
-    return c.json({ error: 'Statement not found' }, 404);
-  }
-
-  const uploadRootPath = resolveFromApiDir(env.uploadDir);
-  const safeStoredFilename = path.basename(statement.filename);
-  const statementFilePath = path.join(uploadRootPath, String(statement.uploadedBy), safeStoredFilename);
-
-  let fileBuffer: Buffer;
-  try {
-    fileBuffer = await readFile(statementFilePath);
-  } catch {
-    return c.json({ error: 'Statement file not found on disk' }, 404);
-  }
-
-  const responseBytes = Uint8Array.from(fileBuffer);
-
-  return c.newResponse(responseBytes, 200, {
-    'Content-Type': 'application/pdf',
-    'Content-Disposition': `inline; filename="${statement.originalFilename}"`
-  });
-});
-
-statementsRouter.delete('/:id', async (c) => {
-  const statementId = Number(c.req.param('id'));
-  if (Number.isNaN(statementId) || statementId <= 0) {
-    return c.json({ error: 'Invalid statement id' }, 400);
-  }
-
-  const statement = await db.query.statements.findFirst({
-    where: eq(schema.statements.id, statementId)
-  });
-
-  if (!statement) {
-    return c.json({ error: 'Statement not found' }, 404);
-  }
-
-  const deletedTransactions = await db
-    .delete(schema.transactions)
-    .where(eq(schema.transactions.statementId, statementId))
-    .returning({ id: schema.transactions.id });
-
-  const deletedStatements = await db
-    .delete(schema.statements)
-    .where(eq(schema.statements.id, statementId))
-    .returning({ id: schema.statements.id });
-
-  if (deletedStatements.length === 0) {
-    return c.json({ error: 'Statement not found' }, 404);
-  }
-
-  const uploadRootPath = resolveFromApiDir(env.uploadDir);
-  const safeStoredFilename = path.basename(statement.filename);
-  const statementFilePath = path.join(uploadRootPath, String(statement.uploadedBy), safeStoredFilename);
-
-  let fileDeleted = true;
-  try {
-    await unlink(statementFilePath);
-  } catch {
-    fileDeleted = false;
-  }
-
-  return c.json({
-    success: true,
-    statementId,
-    deletedTransactions: deletedTransactions.length,
-    fileDeleted
-  });
-});
-
-statementsRouter.get('/:id/transactions', async (c) => {
-  const statementId = Number(c.req.param('id'));
-  if (Number.isNaN(statementId) || statementId <= 0) {
-    return c.json({ error: 'Invalid statement id' }, 400);
-  }
-
-  const statement = await db.query.statements.findFirst({
-    where: eq(schema.statements.id, statementId)
-  });
-
-  if (!statement) {
-    return c.json({ error: 'Statement not found' }, 404);
-  }
-
-  const statementTransactions = await db.query.transactions.findMany({
-    where: eq(schema.transactions.statementId, statementId),
-    orderBy: [desc(schema.transactions.date), desc(schema.transactions.id)]
-  });
-
-  return c.json({
-    data: statementTransactions,
-    meta: {
-      statementId,
-      count: statementTransactions.length
-    }
-  });
 });

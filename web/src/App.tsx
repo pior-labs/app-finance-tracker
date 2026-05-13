@@ -9,6 +9,7 @@ import { TransactionsPage } from '@/pages/Transactions';
 import { CategoriesPage } from '@/pages/Categories';
 import { StatementsPage } from '@/pages/Statements';
 import { DashboardOne } from '@/pages/designs/DashboardOne';
+import { DashboardTwo } from '@/pages/designs/DashboardTwo';
 
 export function App() {
   return (
@@ -17,6 +18,7 @@ export function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/1" element={<DashboardOne />} />
+          <Route path="/2" element={<DashboardTwo />} />
           <Route
             element={
               <ProtectedRoute>

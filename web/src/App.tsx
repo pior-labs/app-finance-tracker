@@ -8,6 +8,7 @@ import { CategorizePage } from '@/pages/Categorize';
 import { TransactionsPage } from '@/pages/Transactions';
 import { CategoriesPage } from '@/pages/Categories';
 import { StatementsPage } from '@/pages/Statements';
+import { DashboardOne } from '@/pages/designs/DashboardOne';
 
 export function App() {
   return (
@@ -15,6 +16,7 @@ export function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/1" element={<DashboardOne />} />
           <Route
             element={
               <ProtectedRoute>

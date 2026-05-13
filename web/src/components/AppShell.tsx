@@ -21,7 +21,7 @@ function formatMonthLabel(month: string): string {
 
 const mainNav = [
   { name: 'Dashboard', path: '/', icon: 'D' },
-  { name: 'Categorize', path: '/categorize', icon: '★' },
+  { name: 'Categorize', path: '/categorize', icon: '★', badgeKey: 'uncategorized' as const },
 ];
 
 const adminNav = [
@@ -59,8 +59,13 @@ function NavItem({ to, label, icon, collapsed, badge }: NavItemProps) {
       {!collapsed && (
         <>
           <span className="flex-1 font-bold">{label}</span>
-          {badge != null && badge > 0 && (
-            <span className="rounded-full border-[1.3px] border-border bg-warn-soft px-2 py-0.5 text-[11px] font-bold text-warn shadow-none">
+          {badge != null && (
+            <span
+              className={cn(
+                'rounded-full border-[1.3px] border-border px-2 py-0.5 text-[11px] font-bold shadow-none',
+                badge > 0 ? 'bg-warn-soft text-warn' : 'bg-good-soft text-good'
+              )}
+            >
               {badge}
             </span>
           )}
@@ -78,6 +83,7 @@ export function AppShell() {
   const monthFromUrl = searchParams.get('month');
   const selectedMonth = isValidMonth(monthFromUrl) ? monthFromUrl : getCurrentMonth();
   const [availableMonths, setAvailableMonths] = useState<string[]>([]);
+  const [uncategorizedTotal, setUncategorizedTotal] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -97,6 +103,20 @@ export function AppShell() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/transactions?status=needs_review&limit=1', { credentials: 'include' })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`tx ${res.status}`))))
+      .then((payload: { pagination?: { total?: number } }) => {
+        if (cancelled) return;
+        setUncategorizedTotal(Number(payload.pagination?.total ?? 0));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     if (!pickerOpen) return;
@@ -198,6 +218,7 @@ export function AppShell() {
               label={item.name}
               icon={item.icon}
               collapsed={collapsed}
+              badge={item.badgeKey === 'uncategorized' ? uncategorizedTotal : undefined}
             />
           ))}
         </nav>

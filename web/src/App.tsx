@@ -10,6 +10,7 @@ import { CategoriesPage } from '@/pages/Categories';
 import { StatementsPage } from '@/pages/Statements';
 import { DashboardOne } from '@/pages/designs/DashboardOne';
 import { DashboardTwo } from '@/pages/designs/DashboardTwo';
+import { DashboardThree } from '@/pages/designs/DashboardThree';
 
 export function App() {
   return (
@@ -19,6 +20,7 @@ export function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/1" element={<DashboardOne />} />
           <Route path="/2" element={<DashboardTwo />} />
+          <Route path="/3" element={<DashboardThree />} />
           <Route
             element={
               <ProtectedRoute>

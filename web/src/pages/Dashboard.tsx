@@ -4,6 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { UploadModal } from '@/components/UploadModal';
+import { useDashboardTheme } from '@/hooks/useDashboardTheme';
+import {
+  BentoContent,
+  GLASS_THEME,
+  type BentoContentData,
+  type BentoTheme,
+} from '@/pages/designs/DashboardTwo';
+import { SWISS_THEME } from '@/pages/designs/DashboardThree';
+import { BLOOM_THEME } from '@/pages/designs/DashboardFour';
 
 interface CategorySpending {
   category: string;
@@ -76,7 +85,14 @@ function formatStatementPeriod(start: string | null, end: string | null): string
   return `${startLabel} – ${endLabel}`;
 }
 
+const BENTO_THEMES: Record<'bloom' | 'glass' | 'swiss', BentoTheme> = {
+  bloom: BLOOM_THEME,
+  glass: GLASS_THEME,
+  swiss: SWISS_THEME,
+};
+
 export function DashboardPage() {
+  const { theme } = useDashboardTheme();
   const [searchParams] = useSearchParams();
   const monthFromUrl = searchParams.get('month');
   const month = isValidMonth(monthFromUrl) ? monthFromUrl : getCurrentMonth();
@@ -180,6 +196,55 @@ export function DashboardPage() {
         </div>
         <UploadModal open={uploadOpen} onClose={() => setUploadOpen(false)} onUploadComplete={() => void fetchDashboard()} />
       </div>
+    );
+  }
+
+  if (theme !== 'warm-sketch') {
+    const bentoTheme = BENTO_THEMES[theme];
+    const bentoData: BentoContentData = {
+      monthLabel: formatMonthLabel(month),
+      uncategorizedCount,
+      totalSpentCents: stats?.data.totalSpentCents ?? 0,
+      totalTransactions: totalTx,
+      categorizedPct,
+      recentUncategorized: recentUncategorized.map((tx) => ({
+        id: tx.id,
+        date: tx.date,
+        merchant: tx.merchant ?? tx.description,
+        amount: tx.amount,
+      })),
+      byCategory: categoryRows.map((c) => ({
+        name: c.category,
+        cents: c.totalCents,
+      })),
+      topMerchants: merchantRows.map((m) => ({
+        name: m.merchant,
+        cents: m.totalCents,
+      })),
+      statement: latestStatement
+        ? {
+            period: formatStatementPeriod(
+              latestStatement.periodStart,
+              latestStatement.periodEnd,
+            ),
+            transactionCount: latestStatement.transactionCount,
+            uploadedBy: latestStatement.uploadedByName,
+          }
+        : null,
+    };
+    return (
+      <>
+        <BentoContent
+          theme={bentoTheme}
+          data={bentoData}
+          onUploadNext={() => setUploadOpen(true)}
+        />
+        <UploadModal
+          open={uploadOpen}
+          onClose={() => setUploadOpen(false)}
+          onUploadComplete={() => void fetchDashboard()}
+        />
+      </>
     );
   }
 

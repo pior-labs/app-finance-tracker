@@ -1,4 +1,4 @@
-import { BentoDash } from './DashboardTwo';
+import { BentoDash, type BentoTheme } from './DashboardTwo';
 
 /**
  * SWISS — stark white, hairline 1px black borders, single forest-green accent,
@@ -9,7 +9,7 @@ export function DashboardThree() {
   return <BentoDash theme={SWISS_THEME} />;
 }
 
-const SWISS_THEME = {
+export const SWISS_THEME: BentoTheme = {
   name: 'swiss',
   font: '"Helvetica Neue", "Arial", system-ui, sans-serif',
   fontImport: null,

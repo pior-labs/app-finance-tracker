@@ -5,18 +5,17 @@ import { mock, money } from './mockData';
 /**
  * GLASS — frosted glassmorphism. Translucent cards on a soft mesh gradient,
  * heavy blur, generous rounding. Purple accent (#6c5ce7).
- * Layout: action card → stat trio → spending by category + top merchants.
  */
 export function DashboardTwo() {
   return <BentoDash theme={GLASS_THEME} />;
 }
 
-interface BentoTheme {
+export interface BentoTheme {
   name: string;
   font: string;
+  displayFont?: string;
   fontImport: string | null;
   appBg: string;
-  bgOverlay?: string;
   fg: string;
   muted: string;
   radius: number;
@@ -68,7 +67,7 @@ interface BentoTheme {
   linkFg: string;
 }
 
-const GLASS_THEME: BentoTheme = {
+export const GLASS_THEME: BentoTheme = {
   name: 'glass',
   font: '"Outfit", system-ui, sans-serif',
   fontImport:
@@ -126,8 +125,46 @@ const GLASS_THEME: BentoTheme = {
   linkFg: '#6c5ce7',
 };
 
-export function BentoDash({ theme: t }: { theme: BentoTheme }) {
-  const [collapsed, setCollapsed] = useState(false);
+export interface BentoContentData {
+  monthLabel: string;
+  uncategorizedCount: number;
+  totalSpentCents: number;
+  totalTransactions: number;
+  categorizedPct: number;
+  recentUncategorized: {
+    id: number | string;
+    date: string;
+    merchant: string;
+    amount: number;
+  }[];
+  byCategory: { name: string; cents: number }[];
+  topMerchants: { name: string; cents: number }[];
+  statement?: {
+    period: string;
+    transactionCount: number;
+    uploadedBy: string;
+  } | null;
+}
+
+interface BentoContentProps {
+  theme: BentoTheme;
+  data: BentoContentData;
+  categorizeHref?: string;
+  onUploadNext?: () => void;
+}
+
+export function BentoContent({
+  theme: t,
+  data,
+  categorizeHref = '/categorize',
+  onUploadNext,
+}: BentoContentProps) {
+  const cats = data.byCategory.slice(0, 5);
+  const maxCat = cats[0]?.cents ?? 1;
+  const merchants = data.topMerchants.slice(0, 5);
+  const monthShort = data.monthLabel.split(' ')[0];
+  const recents = data.recentUncategorized.slice(0, 3);
+  const moreCount = Math.max(0, data.uncategorizedCount - recents.length);
 
   const card = (extra: CSSProperties = {}): CSSProperties => ({
     background: t.cardBg,
@@ -138,9 +175,415 @@ export function BentoDash({ theme: t }: { theme: BentoTheme }) {
     ...extra,
   });
 
-  const cats = mock.byCategory.slice(0, 5);
-  const maxCat = cats[0].cents;
-  const merchants = mock.topMerchants;
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 20,
+        fontFamily: t.font,
+        color: t.fg,
+      }}
+    >
+      {t.fontImport && <link rel="stylesheet" href={t.fontImport} />}
+
+      {/* Action card */}
+      <section
+        style={card({
+          background: t.actionBg,
+          color: t.actionFg,
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0,1fr) minmax(260px, 360px)',
+          gap: 24,
+          border: t.actionBorder,
+        })}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: 8,
+            minWidth: 0,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: 1.5,
+              color: t.actionLabel,
+              textTransform: 'uppercase',
+            }}
+          >
+            Action needed
+          </div>
+          <div
+            style={{
+              fontSize: 48,
+              fontWeight: 700,
+              letterSpacing: '-1.2px',
+              lineHeight: 1,
+              color: t.actionAccent,
+              fontFamily: t.displayFont ?? t.font,
+            }}
+          >
+            {data.uncategorizedCount} left
+          </div>
+          <div
+            style={{
+              fontSize: 15,
+              color: t.actionFg,
+              opacity: 0.85,
+              marginTop: 4,
+            }}
+          >
+            Categorize these to complete {monthShort}'s picture.
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+            <Link
+              to={categorizeHref}
+              style={{
+                background: t.actionBtnBg,
+                color: t.actionBtnFg,
+                border: 0,
+                padding: '10px 18px',
+                borderRadius: 999,
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              Categorize now →
+            </Link>
+            <button
+              type="button"
+              style={{
+                background: 'transparent',
+                color: t.actionFg,
+                border: `1px solid ${t.actionGhostBorder}`,
+                padding: '10px 18px',
+                borderRadius: 999,
+                fontSize: 13,
+                fontWeight: 500,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Skip for now
+            </button>
+          </div>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {recents.map((r) => (
+            <div
+              key={r.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '10px 14px',
+                background: t.actionRowBg,
+                borderRadius: Math.max(8, t.radius / 1.5),
+                border: t.actionRowBorder,
+              }}
+            >
+              <span style={{ fontSize: 11, color: t.actionRowMuted, width: 46 }}>
+                {r.date}
+              </span>
+              <span
+                style={{
+                  flex: 1,
+                  fontWeight: 600,
+                  fontSize: 13,
+                  color: t.actionRowFg,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {r.merchant}
+              </span>
+              <span
+                style={{
+                  fontWeight: 600,
+                  fontSize: 13,
+                  fontVariantNumeric: 'tabular-nums',
+                  color: t.actionRowFg,
+                }}
+              >
+                −{money(r.amount)}
+              </span>
+            </div>
+          ))}
+          {moreCount > 0 && (
+            <div
+              style={{
+                textAlign: 'center',
+                fontSize: 12,
+                color: t.actionRowMuted,
+                marginTop: 2,
+              }}
+            >
+              + {moreCount} more
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Stats row */}
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, minmax(0,1fr))',
+          gap: 16,
+        }}
+      >
+        <div style={card()}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: 1.5,
+              color: t.muted,
+              textTransform: 'uppercase',
+            }}
+          >
+            Spent in {monthShort}
+          </div>
+          <div
+            style={{
+              fontSize: 36,
+              fontWeight: 700,
+              letterSpacing: '-.8px',
+              marginTop: 6,
+              fontVariantNumeric: 'tabular-nums',
+              fontFamily: t.displayFont ?? t.font,
+            }}
+          >
+            {money(data.totalSpentCents, { showCents: false })}
+            <span style={{ color: t.muted, fontSize: 24 }}>
+              .{String(data.totalSpentCents % 100).padStart(2, '0')}
+            </span>
+          </div>
+          <div style={{ fontSize: 13, color: t.muted, marginTop: 2 }}>
+            {data.totalTransactions} transactions
+          </div>
+        </div>
+        <div style={card()}>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: 1.5,
+              color: t.muted,
+              textTransform: 'uppercase',
+            }}
+          >
+            Categorized
+          </div>
+          <div
+            style={{
+              fontSize: 36,
+              fontWeight: 700,
+              letterSpacing: '-.8px',
+              marginTop: 6,
+              fontVariantNumeric: 'tabular-nums',
+              fontFamily: t.displayFont ?? t.font,
+            }}
+          >
+            {data.categorizedPct}
+            <span style={{ color: t.muted, fontSize: 24 }}>%</span>
+          </div>
+          <div
+            style={{
+              height: 6,
+              background: t.barTrack,
+              borderRadius: 999,
+              marginTop: 10,
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                width: `${data.categorizedPct}%`,
+                height: '100%',
+                background: t.good,
+                borderRadius: 999,
+              }}
+            />
+          </div>
+        </div>
+        <div style={card({ display: 'flex', alignItems: 'center', gap: 14 })}>
+          <div
+            style={{
+              width: 42,
+              height: 50,
+              background: t.thumbBg,
+              borderRadius: 6,
+              border: t.thumbBorder,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 10,
+              fontWeight: 700,
+              color: t.muted,
+              flexShrink: 0,
+            }}
+          >
+            PDF
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {data.statement ? (
+              <>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>
+                  {data.statement.period}
+                </div>
+                <div style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>
+                  {data.statement.transactionCount} tx · uploaded by{' '}
+                  {data.statement.uploadedBy}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: 13, color: t.muted }}>No statements yet</div>
+            )}
+            <button
+              type="button"
+              onClick={onUploadNext}
+              style={{
+                background: 'transparent',
+                border: 0,
+                padding: 0,
+                fontSize: 12,
+                color: t.linkFg,
+                marginTop: 6,
+                fontWeight: 500,
+                cursor: onUploadNext ? 'pointer' : 'default',
+                fontFamily: 'inherit',
+              }}
+            >
+              Upload next →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Spending + Merchants */}
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, minmax(0,1fr))',
+          gap: 16,
+        }}
+      >
+        <div style={card()}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 18 }}>
+            Spending by category
+          </div>
+          {cats.length === 0 ? (
+            <div style={{ fontSize: 13, color: t.muted }}>
+              No categorized spending yet.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {cats.map((c) => (
+                <div
+                  key={c.name}
+                  style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                    }}
+                  >
+                    <span style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</span>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 600,
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {money(c.cents)}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: 6,
+                      background: t.barTrack,
+                      borderRadius: 999,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${(c.cents / maxCat) * 100}%`,
+                        height: '100%',
+                        background: t.barFill,
+                        borderRadius: 999,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={card()}>
+          <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 18 }}>
+            Top merchants
+          </div>
+          {merchants.length === 0 ? (
+            <div style={{ fontSize: 13, color: t.muted }}>No merchant data yet.</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {merchants.map((m, i) => (
+                <div
+                  key={m.name}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12 }}
+                >
+                  <span
+                    style={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 8,
+                      background: t.numBg,
+                      color: t.numFg,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12,
+                      fontWeight: 700,
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  <span style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>
+                    {m.name}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 600,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >
+                    {money(m.cents)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+export function BentoDash({ theme: t }: { theme: BentoTheme }) {
+  const [collapsed, setCollapsed] = useState(false);
 
   const sidebarItem = (
     label: string,
@@ -222,6 +665,7 @@ export function BentoDash({ theme: t }: { theme: BentoTheme }) {
         { to: '/1', label: '1' },
         { to: '/2', label: '2', active: t.name === 'glass' },
         { to: '/3', label: '3', active: t.name === 'swiss' },
+        { to: '/4', label: '4', active: t.name === 'bloom' },
       ].map((d) => (
         <Link
           key={d.to}
@@ -246,6 +690,18 @@ export function BentoDash({ theme: t }: { theme: BentoTheme }) {
       ))}
     </div>
   );
+
+  const data: BentoContentData = {
+    monthLabel: mock.month,
+    uncategorizedCount: mock.uncategorizedCount,
+    totalSpentCents: mock.totalSpentCents,
+    totalTransactions: mock.totalTransactions,
+    categorizedPct: mock.categorizedPct,
+    recentUncategorized: mock.recentUncategorized,
+    byCategory: mock.byCategory,
+    topMerchants: mock.topMerchants,
+    statement: mock.statement,
+  };
 
   return (
     <div
@@ -474,6 +930,7 @@ export function BentoDash({ theme: t }: { theme: BentoTheme }) {
                 fontSize: 24,
                 fontWeight: 700,
                 letterSpacing: '-.4px',
+                fontFamily: t.displayFont ?? t.font,
               }}
             >
               Hey Piotr &amp; Natalie
@@ -515,391 +972,8 @@ export function BentoDash({ theme: t }: { theme: BentoTheme }) {
           </div>
         </header>
 
-        <div
-          style={{
-            flex: 1,
-            padding: '24px 32px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 20,
-          }}
-        >
-          {/* Action card */}
-          <section
-            style={card({
-              background: t.actionBg,
-              color: t.actionFg,
-              display: 'grid',
-              gridTemplateColumns: 'minmax(0,1fr) minmax(260px, 360px)',
-              gap: 24,
-              border: t.actionBorder,
-            })}
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                gap: 8,
-                minWidth: 0,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: 1.5,
-                  color: t.actionLabel,
-                  textTransform: 'uppercase',
-                }}
-              >
-                Action needed
-              </div>
-              <div
-                style={{
-                  fontSize: 48,
-                  fontWeight: 700,
-                  letterSpacing: '-1.2px',
-                  lineHeight: 1,
-                  color: t.actionAccent,
-                }}
-              >
-                {mock.uncategorizedCount} left
-              </div>
-              <div
-                style={{
-                  fontSize: 15,
-                  color: t.actionFg,
-                  opacity: 0.85,
-                  marginTop: 4,
-                }}
-              >
-                Categorize these to complete {mock.month}'s picture.
-              </div>
-              <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
-                <Link
-                  to="/categorize"
-                  style={{
-                    background: t.actionBtnBg,
-                    color: t.actionBtnFg,
-                    border: 0,
-                    padding: '10px 18px',
-                    borderRadius: 999,
-                    fontSize: 13,
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                  }}
-                >
-                  Categorize now →
-                </Link>
-                <button
-                  type="button"
-                  style={{
-                    background: 'transparent',
-                    color: t.actionFg,
-                    border: `1px solid ${t.actionGhostBorder}`,
-                    padding: '10px 18px',
-                    borderRadius: 999,
-                    fontSize: 13,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  Skip for now
-                </button>
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {mock.recentUncategorized.map((r) => (
-                <div
-                  key={r.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '10px 14px',
-                    background: t.actionRowBg,
-                    borderRadius: Math.max(8, t.radius / 1.5),
-                    border: t.actionRowBorder,
-                  }}
-                >
-                  <span
-                    style={{ fontSize: 11, color: t.actionRowMuted, width: 46 }}
-                  >
-                    {r.date}
-                  </span>
-                  <span
-                    style={{
-                      flex: 1,
-                      fontWeight: 600,
-                      fontSize: 13,
-                      color: t.actionRowFg,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {r.merchant}
-                  </span>
-                  <span
-                    style={{
-                      fontWeight: 600,
-                      fontSize: 13,
-                      fontVariantNumeric: 'tabular-nums',
-                      color: t.actionRowFg,
-                    }}
-                  >
-                    −{money(r.amount)}
-                  </span>
-                </div>
-              ))}
-              <div
-                style={{
-                  textAlign: 'center',
-                  fontSize: 12,
-                  color: t.actionRowMuted,
-                  marginTop: 2,
-                }}
-              >
-                + {Math.max(0, mock.uncategorizedCount - mock.recentUncategorized.length)} more
-              </div>
-            </div>
-          </section>
-
-          {/* Stats row */}
-          <section
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, minmax(0,1fr))',
-              gap: 16,
-            }}
-          >
-            <div style={card()}>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: 1.5,
-                  color: t.muted,
-                  textTransform: 'uppercase',
-                }}
-              >
-                Spent in {mock.month.split(' ')[0]}
-              </div>
-              <div
-                style={{
-                  fontSize: 36,
-                  fontWeight: 700,
-                  letterSpacing: '-.8px',
-                  marginTop: 6,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {money(mock.totalSpentCents, { showCents: false })}
-                <span style={{ color: t.muted, fontSize: 24 }}>
-                  .{String(mock.totalSpentCents % 100).padStart(2, '0')}
-                </span>
-              </div>
-              <div style={{ fontSize: 13, color: t.muted, marginTop: 2 }}>
-                {mock.totalTransactions} transactions
-              </div>
-            </div>
-            <div style={card()}>
-              <div
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  letterSpacing: 1.5,
-                  color: t.muted,
-                  textTransform: 'uppercase',
-                }}
-              >
-                Categorized
-              </div>
-              <div
-                style={{
-                  fontSize: 36,
-                  fontWeight: 700,
-                  letterSpacing: '-.8px',
-                  marginTop: 6,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {mock.categorizedPct}
-                <span style={{ color: t.muted, fontSize: 24 }}>%</span>
-              </div>
-              <div
-                style={{
-                  height: 6,
-                  background: t.barTrack,
-                  borderRadius: 999,
-                  marginTop: 10,
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    width: `${mock.categorizedPct}%`,
-                    height: '100%',
-                    background: t.good,
-                    borderRadius: 999,
-                  }}
-                />
-              </div>
-            </div>
-            <div style={card({ display: 'flex', alignItems: 'center', gap: 14 })}>
-              <div
-                style={{
-                  width: 42,
-                  height: 50,
-                  background: t.thumbBg,
-                  borderRadius: 6,
-                  border: t.thumbBorder,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: t.muted,
-                  flexShrink: 0,
-                }}
-              >
-                PDF
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>
-                  {mock.statement.period}
-                </div>
-                <div style={{ fontSize: 12, color: t.muted, marginTop: 2 }}>
-                  {mock.statement.transactionCount} tx · uploaded by{' '}
-                  {mock.statement.uploadedBy}
-                </div>
-                <div
-                  style={{
-                    fontSize: 12,
-                    color: t.linkFg,
-                    marginTop: 6,
-                    fontWeight: 500,
-                    cursor: 'pointer',
-                  }}
-                >
-                  Upload next →
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Spending + Merchants */}
-          <section
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, minmax(0,1fr))',
-              gap: 16,
-            }}
-          >
-            <div style={card()}>
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 18 }}>
-                Spending by category
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {cats.map((c) => (
-                  <div
-                    key={c.name}
-                    style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'baseline',
-                      }}
-                    >
-                      <span style={{ fontSize: 13, fontWeight: 500 }}>{c.name}</span>
-                      <span
-                        style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
-                      >
-                        {money(c.cents)}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        height: 6,
-                        background: t.barTrack,
-                        borderRadius: 999,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: `${(c.cents / maxCat) * 100}%`,
-                          height: '100%',
-                          background: t.barFill,
-                          borderRadius: 999,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={card()}>
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 18 }}>
-                Top merchants
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                {merchants.map((m, i) => (
-                  <div
-                    key={m.name}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12 }}
-                  >
-                    <span
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 8,
-                        background: t.numBg,
-                        color: t.numFg,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 12,
-                        fontWeight: 700,
-                      }}
-                    >
-                      {i + 1}
-                    </span>
-                    <span style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>
-                      {m.name}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 12,
-                        color: t.muted,
-                        fontVariantNumeric: 'tabular-nums',
-                        marginRight: 8,
-                      }}
-                    >
-                      {m.count}×
-                    </span>
-                    <span
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        fontVariantNumeric: 'tabular-nums',
-                      }}
-                    >
-                      {money(m.cents)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
+        <div style={{ flex: 1, padding: '24px 32px' }}>
+          <BentoContent theme={t} data={data} />
         </div>
       </main>
     </div>

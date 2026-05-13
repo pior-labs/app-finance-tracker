@@ -74,6 +74,7 @@ export const categories = sqliteTable('categories', {
   color: text('color').notNull().default('#6b8db5'),
   isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(true),
   isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
+  favoritedAt: integer('favorited_at', { mode: 'timestamp_ms' }),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs)
 });
 

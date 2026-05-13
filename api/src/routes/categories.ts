@@ -42,6 +42,7 @@ categoriesRouter.get('/', async (c) => {
       color: category.color,
       isDefault: category.isDefault,
       isFavorite: category.isFavorite,
+      favoritedAt: category.favoritedAt,
       createdAt: category.createdAt
     })),
     meta: {
@@ -72,7 +73,8 @@ categoriesRouter.post('/', async (c) => {
       keywords: payload.keywords ?? '',
       color: payload.color ?? '#6b8db5',
       isDefault: false,
-      isFavorite: payload.isFavorite ?? false
+      isFavorite: payload.isFavorite ?? false,
+      favoritedAt: payload.isFavorite ? new Date() : null
     })
     .returning();
 
@@ -120,6 +122,13 @@ categoriesRouter.patch('/:id', async (c) => {
     }
   }
 
+  const nextIsFavorite = parsed.data.isFavorite ?? current.isFavorite;
+  const favoriteChanged =
+    parsed.data.isFavorite !== undefined && parsed.data.isFavorite !== current.isFavorite;
+  const nextFavoritedAt = favoriteChanged
+    ? (nextIsFavorite ? new Date() : null)
+    : current.favoritedAt;
+
   const [updated] = await db
     .update(schema.categories)
     .set({
@@ -127,7 +136,8 @@ categoriesRouter.patch('/:id', async (c) => {
       description: parsed.data.description ?? current.description,
       keywords: parsed.data.keywords ?? current.keywords,
       color: parsed.data.color ?? current.color,
-      isFavorite: parsed.data.isFavorite ?? current.isFavorite
+      isFavorite: nextIsFavorite,
+      favoritedAt: nextFavoritedAt
     })
     .where(eq(schema.categories.id, id))
     .returning();

@@ -8,6 +8,14 @@ interface Category {
   name: string;
   color: string;
   isFavorite?: boolean;
+  favoritedAt?: string | null;
+}
+
+const FAVORITE_HOTKEY_LIMIT = 10;
+
+function favoriteHotkey(index: number): string | null {
+  if (index < 0 || index >= FAVORITE_HOTKEY_LIMIT) return null;
+  return index === 9 ? '0' : String(index + 1);
 }
 
 const PRESET_COLORS = ['#c96442', '#5b8a5a', '#6b8db5', '#a87cc4', '#d4a55a', '#e2738a', '#7ec1c1'];
@@ -123,20 +131,33 @@ export function CategoriesPage() {
   };
 
   const toggleFavorite = async (category: Category) => {
+    const next = !category.isFavorite;
+    const nextFavoritedAt = next ? new Date().toISOString() : null;
     setError(null);
+    setCategories((prev) =>
+      prev.map((c) =>
+        c.id === category.id ? { ...c, isFavorite: next, favoritedAt: nextFavoritedAt } : c
+      )
+    );
     try {
       const res = await fetch(`/api/categories/${category.id}`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isFavorite: !category.isFavorite }),
+        body: JSON.stringify({ isFavorite: next }),
       });
       if (!res.ok) {
         const payload = await res.json().catch(() => ({}));
         throw new Error((payload as { error?: string }).error ?? `Failed to update favorite (${res.status})`);
       }
-      await fetchCategories();
     } catch (err) {
+      setCategories((prev) =>
+        prev.map((c) =>
+          c.id === category.id
+            ? { ...c, isFavorite: category.isFavorite, favoritedAt: category.favoritedAt ?? null }
+            : c
+        )
+      );
       setError(err instanceof Error ? err.message : 'Failed to update favorite');
     }
   };
@@ -166,8 +187,139 @@ export function CategoriesPage() {
     }
   };
 
+  const favorites = categories
+    .filter((c) => c.isFavorite)
+    .sort((a, b) => {
+      const aAt = a.favoritedAt ? new Date(a.favoritedAt).getTime() : 0;
+      const bAt = b.favoritedAt ? new Date(b.favoritedAt).getTime() : 0;
+      return aAt - bAt;
+    });
+  const rest = categories.filter((c) => !c.isFavorite);
+
+  const renderCard = (cat: Category, favoriteIndex: number | null = null) => {
+    const color = cat.color || DEFAULT_COLOR;
+    const hotkey = favoriteIndex !== null ? favoriteHotkey(favoriteIndex) : null;
+    return (
+      <Card key={cat.id} className="shadow-sketch-sm">
+        <CardContent className="flex items-center gap-3 p-4">
+          <span
+            className="h-7 w-7 shrink-0 rounded-full border-[1.5px] border-border"
+            style={{ background: color }}
+          />
+          <div className="min-w-0 flex-1">
+            {editingId === cat.id ? (
+              <div className="flex gap-2">
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') void renameCategory(cat.id); if (e.key === 'Escape') setEditingId(null); }}
+                  className="h-8 text-sm"
+                  autoFocus
+                />
+                <Button size="sm" onClick={() => void renameCategory(cat.id)}>Save</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>✕</Button>
+              </div>
+            ) : (
+              <>
+                <div className="font-hand text-lg">{cat.name}</div>
+                {colorEditingId === cat.id && (
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                    {PRESET_COLORS.map((swatch) => (
+                      <button
+                        key={swatch}
+                        type="button"
+                        onClick={() => setColorEditValue(swatch)}
+                        className={`h-4.5 w-4.5 rounded-full border-[1.3px] border-border ${
+                          swatch.toLowerCase() === colorEditValue.toLowerCase()
+                            ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                            : ''
+                        }`}
+                        style={{ background: swatch }}
+                        title="Choose color"
+                      />
+                    ))}
+                    <Input
+                      value={colorEditValue}
+                      onChange={(e) => setColorEditValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void updateCategoryColor(cat.id, colorEditValue);
+                      }}
+                      placeholder="#6b8db5"
+                      className="h-7 w-28 uppercase text-xs"
+                      maxLength={7}
+                      aria-label={`Custom color for ${cat.name}`}
+                    />
+                    <Button size="sm" onClick={() => void updateCategoryColor(cat.id, colorEditValue)}>Save</Button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+          {editingId !== cat.id && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => void toggleFavorite(cat)}
+                className={`flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border font-hand text-sm hover:bg-muted ${
+                  cat.isFavorite ? 'bg-primary-soft text-primary' : 'bg-card'
+                }`}
+                title={cat.isFavorite ? 'Unfavorite' : 'Favorite'}
+              >
+                ★
+              </button>
+              {hotkey && (
+                <kbd
+                  className="inline-grid h-5.5 w-5.5 place-items-center rounded-md border-[1.3px] border-border bg-muted font-sans text-xs font-bold leading-none"
+                  title={`Press ${hotkey} on the Categorize page to assign`}
+                >
+                  <span className="block leading-none">{hotkey}</span>
+                </kbd>
+              )}
+              <button
+                onClick={() => { setEditingId(cat.id); setEditName(cat.name); setColorEditingId(null); }}
+                className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
+                title="Rename"
+              >
+                ✎
+              </button>
+              <button
+                onClick={() => {
+                  if (colorEditingId === cat.id) {
+                    setColorEditingId(null);
+                    setColorEditValue(DEFAULT_COLOR);
+                    return;
+                  }
+                  setColorEditingId(cat.id);
+                  setColorEditValue(cat.color ?? DEFAULT_COLOR);
+                  setEditingId(null);
+                }}
+                className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
+                title="Edit color"
+              >
+                ●
+              </button>
+              <button
+                onClick={() => { setEditingId(cat.id); setEditName(cat.name); }}
+                className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
+                title="Merge into…"
+              >
+                ⇆
+              </button>
+              <button
+                onClick={() => setCategoryPendingDelete(cat)}
+                className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm text-primary hover:bg-primary-soft"
+                title="Delete"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
-    <div className="space-y-5">
+    <div className="flex h-full flex-col gap-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -222,7 +374,7 @@ export function CategoriesPage() {
         </Card>
       )}
 
-      {/* Category grid */}
+      {/* Category sections */}
       {loading ? (
         <div className="grid grid-cols-2 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -230,124 +382,35 @@ export function CategoriesPage() {
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
-          {categories.map((cat) => {
-            const color = cat.color || DEFAULT_COLOR;
-            return (
-              <Card key={cat.id} className="shadow-sketch-sm">
-                <CardContent className="flex items-center gap-3 p-4">
-                  <span
-                    className="h-7 w-7 shrink-0 rounded-full border-[1.5px] border-border"
-                    style={{ background: color }}
-                  />
-                  <div className="min-w-0 flex-1">
-                    {editingId === cat.id ? (
-                      <div className="flex gap-2">
-                        <Input
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') void renameCategory(cat.id); if (e.key === 'Escape') setEditingId(null); }}
-                          className="h-8 text-sm"
-                          autoFocus
-                        />
-                        <Button size="sm" onClick={() => void renameCategory(cat.id)}>Save</Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>✕</Button>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="font-hand text-lg">{cat.name}</div>
-                        {colorEditingId === cat.id && (
-                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                            {PRESET_COLORS.map((swatch) => (
-                              <button
-                                key={swatch}
-                                type="button"
-                                onClick={() => setColorEditValue(swatch)}
-                                className={`h-4.5 w-4.5 rounded-full border-[1.3px] border-border ${
-                                  swatch.toLowerCase() === colorEditValue.toLowerCase()
-                                    ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                                    : ''
-                                }`}
-                                style={{ background: swatch }}
-                                title="Choose color"
-                              />
-                            ))}
-                            <Input
-                              value={colorEditValue}
-                              onChange={(e) => setColorEditValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') void updateCategoryColor(cat.id, colorEditValue);
-                              }}
-                              placeholder="#6b8db5"
-                              className="h-7 w-28 uppercase text-xs"
-                              maxLength={7}
-                              aria-label={`Custom color for ${cat.name}`}
-                            />
-                            <Button size="sm" onClick={() => void updateCategoryColor(cat.id, colorEditValue)}>Save</Button>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  {editingId !== cat.id && (
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => void toggleFavorite(cat)}
-                        className={`flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border font-hand text-sm hover:bg-muted ${
-                          cat.isFavorite ? 'bg-primary-soft text-primary' : 'bg-card'
-                        }`}
-                        title={cat.isFavorite ? 'Unfavorite' : 'Favorite'}
-                      >
-                        ★
-                      </button>
-                      <button
-                        onClick={() => { setEditingId(cat.id); setEditName(cat.name); setColorEditingId(null); }}
-                        className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
-                        title="Rename"
-                      >
-                        ✎
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (colorEditingId === cat.id) {
-                            setColorEditingId(null);
-                            setColorEditValue(DEFAULT_COLOR);
-                            return;
-                          }
-                          setColorEditingId(cat.id);
-                          setColorEditValue(cat.color ?? DEFAULT_COLOR);
-                          setEditingId(null);
-                        }}
-                        className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
-                        title="Edit color"
-                      >
-                        ●
-                      </button>
-                      <button
-                        onClick={() => { setEditingId(cat.id); setEditName(cat.name); }}
-                        className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
-                        title="Merge into…"
-                      >
-                        ⇆
-                      </button>
-                      <button
-                        onClick={() => setCategoryPendingDelete(cat)}
-                        className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm text-primary hover:bg-primary-soft"
-                        title="Delete"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+        <div className="space-y-8">
+          {favorites.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="flex items-center gap-2 font-hand text-xl">
+                <span className="text-primary">★</span>
+                Favorites
+                <span className="font-sans text-[13px] text-muted-foreground">({favorites.length})</span>
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                {favorites.map((cat, i) => renderCard(cat, i))}
+              </div>
+            </section>
+          )}
+          {rest.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="flex items-center gap-2 font-hand text-xl">
+                All categories
+                <span className="font-sans text-[13px] text-muted-foreground">({rest.length})</span>
+              </h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                {rest.map((cat) => renderCard(cat))}
+              </div>
+            </section>
+          )}
         </div>
       )}
 
       {/* Warning */}
-      <Card className="bg-muted shadow-sketch-sm">
+      <Card className="mt-auto bg-muted shadow-sketch-sm">
         <CardContent className="flex items-center gap-2 p-3 text-[13px]">
           <span>⚠</span>
           <span>Deleting a category moves its transactions to <strong>Other</strong>. Merging keeps history.</span>

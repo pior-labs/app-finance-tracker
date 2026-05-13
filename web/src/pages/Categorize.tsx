@@ -8,6 +8,7 @@ interface Category {
   id: number;
   name: string;
   isFavorite?: boolean;
+  favoritedAt?: string | null;
 }
 
 interface Transaction {
@@ -46,7 +47,14 @@ export function CategorizePage() {
   const progressPct = totalTransactions > 0 ? Math.round((categorizedCount / totalTransactions) * 100) : 0;
   const current = queue[0] ?? null;
   const favoriteCategories = useMemo(() => {
-    return categories.filter((category) => category.isFavorite).slice(0, 10);
+    return categories
+      .filter((category) => category.isFavorite)
+      .sort((a, b) => {
+        const aAt = a.favoritedAt ? new Date(a.favoritedAt).getTime() : 0;
+        const bAt = b.favoritedAt ? new Date(b.favoritedAt).getTime() : 0;
+        return aAt - bAt;
+      })
+      .slice(0, 10);
   }, [categories]);
 
   const fetchData = useCallback(async () => {

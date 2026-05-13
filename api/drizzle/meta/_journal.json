@@ -22,6 +22,13 @@
       "when": 1778449847685,
       "tag": "0002_purple_kate_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1778500000000,
+      "tag": "0003_add_category_favorited_at",
+      "breakpoints": true
     }
   ]
 }

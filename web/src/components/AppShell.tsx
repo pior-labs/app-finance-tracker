@@ -7,6 +7,7 @@ import {
   type DashboardTheme,
 } from '@/hooks/useDashboardTheme';
 import { cn } from '@/lib/utils';
+import { useCategorizeStats } from '@/hooks/useCategorizeStats';
 import { GLASS_THEME, type BentoTheme } from '@/pages/designs/DashboardTwo';
 import { SWISS_THEME } from '@/pages/designs/DashboardThree';
 import { BLOOM_THEME } from '@/pages/designs/DashboardFour';
@@ -192,6 +193,8 @@ export function AppShell() {
   const pickerRef = useRef<HTMLDivElement>(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const categorizeStats = useCategorizeStats();
+  const onCategorize = location.pathname === '/categorize';
 
   useEffect(() => {
     let cancelled = false;
@@ -656,6 +659,15 @@ export function AppShell() {
             >
               {pageTitle}
             </h1>
+            {onCategorize && categorizeStats && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 13 }}>
+                <span style={{ color: t.muted }}>{categorizeStats.done} done</span>
+                <span style={{ fontWeight: 700, color: t.fg }}>{categorizeStats.left} left</span>
+                <span style={{ color: t.muted, fontSize: 12 }}>
+                  · {categorizeStats.position} of {categorizeStats.total}
+                </span>
+              </div>
+            )}
             {showMonthPicker && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <div ref={pickerRef} style={{ position: 'relative' }}>
@@ -941,6 +953,15 @@ export function AppShell() {
       <div className="flex min-h-screen flex-1 flex-col">
         <header className="flex items-center justify-between border-b-[1.3px] border-dashed border-muted-foreground bg-muted px-5 py-3">
           <h1 className="font-hand text-2xl">{pageTitle}</h1>
+          {onCategorize && categorizeStats && (
+            <div className="flex items-center gap-3 font-hand text-sm">
+              <span className="text-muted-foreground">{categorizeStats.done} done</span>
+              <span className="font-bold text-good">{categorizeStats.left} left</span>
+              <span className="text-xs text-muted-foreground">
+                · {categorizeStats.position} of {categorizeStats.total}
+              </span>
+            </div>
+          )}
           {location.pathname === '/' && (
             <div className="flex items-center gap-3">
               <div ref={pickerRef} className="relative">

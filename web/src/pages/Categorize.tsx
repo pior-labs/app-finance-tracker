@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
+import { Card } from '@/components/ui/card';
+import { usePublishCategorizeStats } from '@/hooks/useCategorizeStats';
 
 interface Category {
   id: number;
@@ -21,9 +21,11 @@ interface Transaction {
 }
 
 interface ConfirmedItem {
+  txId: number;
   merchant: string;
   category: string;
   amount: number;
+  at: number;
 }
 
 function formatMoney(cents: number): string {
@@ -31,6 +33,12 @@ function formatMoney(cents: number): string {
   return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
+/**
+ * CATEGORIZE SIX — Vertical feed (design E).
+ * Subtle header counter (no progress bar). Just-confirmed rows above,
+ * highlighted current card in the middle, up-next rows below.
+ * Shortcuts pinned to the foot of the scrolling column.
+ */
 export function CategorizePage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [queue, setQueue] = useState<Transaction[]>([]);
@@ -44,11 +52,20 @@ export function CategorizePage() {
 
   const categorizedCount = totalTransactions - totalUncategorized + confirmedList.length;
   const remaining = Math.max(0, totalUncategorized - confirmedList.length);
-  const progressPct = totalTransactions > 0 ? Math.round((categorizedCount / totalTransactions) * 100) : 0;
+  const positionInBatch = confirmedList.length + 1;
   const current = queue[0] ?? null;
+  const upNext = queue.slice(1);
+
+  usePublishCategorizeStats({
+    done: categorizedCount,
+    left: remaining,
+    position: positionInBatch,
+    total: totalUncategorized,
+  });
+
   const favoriteCategories = useMemo(() => {
     return categories
-      .filter((category) => category.isFavorite)
+      .filter((c) => c.isFavorite)
       .sort((a, b) => {
         const aAt = a.favoritedAt ? new Date(a.favoritedAt).getTime() : 0;
         const bAt = b.favoritedAt ? new Date(b.favoritedAt).getTime() : 0;
@@ -93,7 +110,13 @@ export function CategorizePage() {
 
     setLastAction({ txId: current.id, categoryId });
     setConfirmedList((prev) => [
-      { merchant: current.merchant ?? current.description, category: category?.name ?? 'Unknown', amount: current.amount },
+      {
+        txId: current.id,
+        merchant: current.merchant ?? current.description,
+        category: category?.name ?? 'Unknown',
+        amount: current.amount,
+        at: Date.now(),
+      },
       ...prev,
     ]);
     setQueue((prev) => prev.slice(1));
@@ -187,18 +210,12 @@ export function CategorizePage() {
 
   if (loading) {
     return (
-      <div className="flex h-full">
-        <div className="flex-1 p-5">
-          <div className="h-full min-h-96 animate-pulse rounded-sketch bg-muted" />
-        </div>
-        <div className="w-72 p-5">
-          <div className="h-full min-h-96 animate-pulse rounded-sketch bg-muted" />
-        </div>
+      <div className="flex h-full items-center justify-center p-5">
+        <div className="h-[520px] w-full max-w-2xl animate-pulse rounded-sketch bg-muted" />
       </div>
     );
   }
 
-  /* Inbox zero! */
   if (remaining === 0 && queue.length === 0) {
     return (
       <div className="flex flex-col items-center gap-5 py-20 text-center">
@@ -219,175 +236,217 @@ export function CategorizePage() {
     );
   }
 
+  const confirmedTop = confirmedList.slice(0, 4);
+
   return (
-    <div className="flex h-full">
-      {/* Main stage — card stack */}
-      <div className="flex min-w-0 flex-1 flex-col items-center justify-center p-5">
-        {current && (
-          <div className="w-full max-w-lg">
-            {/* Card stack */}
-            <div className="relative min-h-105">
-              {/* Background cards for depth */}
-              {queue.length > 2 && (
-                <div
-                  className="absolute inset-0 rounded-sketch border-[1.5px] border-border bg-muted"
-                  style={{ transform: 'rotate(2deg) translate(8px, 8px)' }}
-                />
-              )}
-              {queue.length > 1 && (
-                <div
-                  className="absolute inset-0 rounded-sketch border-[1.5px] border-border bg-muted"
-                  style={{ transform: 'rotate(-3deg) translate(-6px, 4px)' }}
-                />
-              )}
-              {/* Top card */}
-              <Card className="relative" style={{ transform: 'rotate(-0.5deg)' }}>
-                <CardContent className="flex h-full flex-col justify-between p-5 space-y-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 rounded-full border-[1.3px] border-dashed border-muted-foreground bg-transparent px-2.5 py-0.5 text-xs text-muted-foreground">
-                        {current.date}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        card • {current.type}
-                      </span>
-                    </div>
-                    <h2 className="font-hand text-4xl leading-none">{current.merchant ?? current.description}</h2>
+    <div className="flex h-full flex-col">
+      {/* Scrollable feed */}
+      <div className="flex-1 overflow-y-auto px-6 py-7">
+        <div className="mx-auto flex w-full max-w-2xl flex-col">
+
+          {/* JUST CONFIRMED */}
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Just confirmed
+            </p>
+            <button
+              onClick={() => void undo()}
+              disabled={!lastAction}
+              className="flex items-center gap-1.5 rounded-lg border-[1.3px] border-border bg-card px-2 py-1 text-[11px] shadow-sketch-xs transition enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:bg-primary-soft disabled:opacity-40"
+            >
+              <kbd className="inline-flex h-4 min-w-4 items-center justify-center rounded border-[1.2px] border-border bg-muted px-1 font-hand text-xs leading-none">
+                U
+              </kbd>
+              undo last
+            </button>
+          </div>
+          {confirmedTop.length === 0 ? (
+            <div className="rounded-sketch border-[1.3px] border-dashed border-border px-4 py-3 text-center text-xs text-muted-foreground">
+              Nothing yet — assign a category to start the feed.
+            </div>
+          ) : (
+            <ul className="overflow-hidden rounded-sketch border-[1.3px] border-border bg-card shadow-sketch-xs">
+              {confirmedTop.map((item, i) => (
+                <li
+                  key={`${item.txId}-${i}`}
+                  className={`grid grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-3 ${
+                    i > 0 ? 'border-t-[1px] border-dashed border-border/60' : ''
+                  }`}
+                  style={{ opacity: 1 - i * 0.12 }}
+                >
+                  <span className="flex items-center gap-2 truncate">
+                    <span className="font-hand text-base leading-none text-good">✓</span>
+                    <span className="truncate text-sm font-bold">{item.merchant}</span>
+                  </span>
+                  <span className="inline-flex items-center rounded-full border-[1.3px] border-border bg-good-soft px-2 py-0.5 text-[11px] font-bold text-good">
+                    {item.category}
+                  </span>
+                  <span className="w-16 text-right font-hand text-sm">
+                    −{formatMoney(item.amount)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Divider — reviewing now */}
+          <div className="flex items-center gap-3 px-2 py-6">
+            <div className="h-px flex-1 bg-border" />
+            <span className="font-hand text-[11px] uppercase tracking-wider text-muted-foreground">
+              reviewing now
+            </span>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+
+          {/* CURRENT — highlighted card */}
+          {current && (
+            <Card
+              className="border-2 border-primary"
+              style={{ boxShadow: '3px 4px 0 0 var(--primary)' }}
+            >
+              <div className="px-7 pb-5 pt-6">
+                <div className="flex items-start justify-between gap-5">
+                  <div className="space-y-1.5">
+                    <span className="font-hand text-xs text-muted-foreground">
+                      {current.date} · {current.type}
+                    </span>
+                    <h2 className="font-hand text-4xl leading-none">
+                      {current.merchant ?? current.description}
+                    </h2>
                     <p className="text-[13px] text-muted-foreground">{current.description}</p>
-                    <div className="font-hand text-5xl text-primary">
-                      −{formatMoney(current.amount)}
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <div className="font-hand text-5xl leading-none text-primary">
+                      {current.type === 'credit' ? '+' : '−'}{formatMoney(current.amount)}
                     </div>
                   </div>
+                </div>
+              </div>
 
-                  <div className="space-y-6">
-                    <div className="flex flex-wrap gap-2">
-                      {favoriteCategories.map((cat, i) => (
+              <div className="px-7 pb-6">
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Pick a category
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {favoriteCategories.map((cat, i) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => void assignCategory(cat.id)}
+                      className={`flex cursor-pointer items-center gap-1.5 rounded-lg border-[1.3px] border-border px-2.5 py-1 text-[13px] shadow-sketch-xs transition hover:-translate-y-px hover:bg-primary-soft ${
+                        i === 0 ? 'bg-primary-soft' : 'bg-card'
+                      }`}
+                    >
+                      <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border-[1.2px] border-border bg-muted px-1 font-hand text-sm leading-none">
+                        {i === 9 ? 0 : i + 1}
+                      </kbd>
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative mt-6" ref={categoryMenuRef}>
+                  <button
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded={isCategoryMenuOpen}
+                    className="flex h-9 w-full items-center justify-between rounded-lg border-[1.3px] border-border bg-card px-3 text-sm shadow-sketch-xs"
+                    onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
+                  >
+                    <span className="text-muted-foreground">
+                      or pick from all {categories.length} categories…
+                    </span>
+                    <span className="text-xs text-muted-foreground">{isCategoryMenuOpen ? '▲' : '▼'}</span>
+                  </button>
+                  {isCategoryMenuOpen && (
+                    <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-lg border-[1.3px] border-border bg-card p-1 shadow-sketch">
+                      {categories.map((cat) => (
                         <button
                           key={cat.id}
-                          onClick={() => void assignCategory(cat.id)}
-                          className={`flex cursor-pointer items-center gap-1.5 rounded-lg border-[1.3px] border-border px-2.5 py-1 text-[13px] shadow-sketch-xs ${
-                            i === 0
-                              ? 'bg-primary-soft'
-                              : 'bg-card'
-                          }`}
+                          type="button"
+                          className="block w-full rounded-md px-2.5 py-2 text-left text-sm hover:bg-primary-soft"
+                          onClick={() => {
+                            void assignCategory(cat.id);
+                            setIsCategoryMenuOpen(false);
+                          }}
                         >
-                          <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border-[1.2px] border-border bg-muted px-1 font-hand text-sm leading-none">
-                            {i === 9 ? 0 : i + 1}
-                          </kbd>
                           {cat.name}
                         </button>
                       ))}
                     </div>
-                    <div className="space-y-1.5">
-                      <p className="text-xs uppercase tracking-widest text-muted-foreground">All categories</p>
-                      <div className="relative" ref={categoryMenuRef}>
-                        <button
-                          type="button"
-                          aria-haspopup="listbox"
-                          aria-expanded={isCategoryMenuOpen}
-                          className="flex h-10 w-full items-center justify-between rounded-lg border-[1.3px] border-border bg-card px-3 text-sm shadow-sketch-xs"
-                          onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
-                        >
-                          <span className="text-muted-foreground">Choose a category...</span>
-                          <span className="text-xs text-muted-foreground">{isCategoryMenuOpen ? '▲' : '▼'}</span>
-                        </button>
-                        {isCategoryMenuOpen && (
-                          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-56 overflow-y-auto rounded-lg border-[1.3px] border-border bg-card p-1 shadow-sketch">
-                            {categories.map((cat) => (
-                              <button
-                                key={cat.id}
-                                type="button"
-                                className="block w-full rounded-md px-2.5 py-2 text-left text-sm hover:bg-primary-soft"
-                                onClick={() => {
-                                  void assignCategory(cat.id);
-                                  setIsCategoryMenuOpen(false);
-                                }}
-                              >
-                                {cat.name}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  )}
+                </div>
+              </div>
 
-                  {/* Swipe hints */}
-                  <div className="flex items-center justify-between pt-2 font-hand text-lg text-muted-foreground">
-                    <button onClick={goBack} className="cursor-pointer hover:text-foreground">← back</button>
-                    <button onClick={skip} className="cursor-pointer hover:text-foreground">forward →</button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Side rail */}
-      <div className="hidden w-75 flex-col gap-4 border-l-[1.3px] border-dashed border-muted-foreground p-5 lg:flex bg-muted" >
-        {/* Progress */}
-        <div className="space-y-1">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Progress</p>
-          <div className="flex items-baseline gap-2">
-            <span className="font-hand text-4xl">{remaining}</span>
-            <span className="text-sm text-muted-foreground">left to review</span>
-          </div>
-          <Progress value={progressPct} variant="good" />
-          <p className="text-xs text-muted-foreground">{progressPct}% complete</p>
-        </div>
-
-        <hr className="border-border opacity-85" />
-
-        {/* Recently confirmed */}
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Just confirmed</p>
-          {confirmedList.length === 0 ? (
-            <p className="text-xs text-muted-foreground">Nothing yet — start categorizing!</p>
-          ) : (
-            confirmedList.slice(0, 4).map((item, i) => (
-              <Card key={i} className="shadow-sketch-sm">
-                <CardContent className="space-y-1 p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="truncate text-sm font-bold">{item.merchant}</span>
-                    <span className="text-[13px] font-bold">−{formatMoney(item.amount)}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="inline-flex items-center gap-1 rounded-full border-[1.3px] border-border bg-good-soft px-2 py-0.5 text-[11px] font-bold text-good shadow-none">
-                      ✓ {item.category}
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">· just now</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+              <div className="flex items-center justify-between rounded-b-sketch border-t-[1.5px] border-dashed border-border bg-muted/40 px-6 py-3.5">
+                <button
+                  onClick={goBack}
+                  className="flex cursor-pointer items-center gap-1.5 font-hand text-sm text-muted-foreground transition hover:text-foreground"
+                >
+                  <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border-[1.2px] border-border bg-muted px-1 font-hand text-sm leading-none shadow-sketch-xs">
+                    ←
+                  </kbd>
+                  skip
+                </button>
+                <button
+                  onClick={skip}
+                  className="flex cursor-pointer items-center gap-1.5 font-hand text-sm font-bold text-primary transition hover:opacity-80"
+                >
+                  forward
+                  <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border-[1.2px] border-border bg-muted px-1 font-hand text-sm leading-none text-foreground shadow-sketch-xs">
+                    →
+                  </kbd>
+                </button>
+              </div>
+            </Card>
           )}
-        </div>
 
-        <hr className="border-border opacity-85" />
-
-        {/* Shortcuts */}
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Shortcuts</p>
-          <div className="flex flex-wrap gap-1.5">
-            <KbdChip keys="Num keys" label="favorites" />
-            <KbdChip keys="←" label="back" />
-            <KbdChip keys="→" label="forward" />
-            <KbdChip keys="U" label="undo" />
+          {/* Divider — up next */}
+          <div className="flex items-center gap-3 px-2 py-6">
+            <div className="h-px flex-1 bg-border" />
+            <span className="font-hand text-[11px] uppercase tracking-wider text-muted-foreground">
+              up next
+            </span>
+            <div className="h-px flex-1 bg-border" />
           </div>
+
+          {/* UP NEXT */}
+          {upNext.length === 0 ? (
+            <div className="rounded-sketch border-[1.3px] border-dashed border-border px-4 py-3 text-center text-xs text-muted-foreground">
+              That was the last one in the queue.
+            </div>
+          ) : (
+            <ul className="overflow-hidden rounded-sketch border-[1.3px] border-border bg-card shadow-sketch-xs">
+              {upNext.slice(0, 5).map((tx, i) => (
+                <li
+                  key={tx.id}
+                  className={`grid grid-cols-[56px_1fr_auto] items-center gap-4 px-5 py-3 ${
+                    i > 0 ? 'border-t-[1px] border-dashed border-border/60' : ''
+                  }`}
+                  style={{ opacity: 1 - i * 0.15 }}
+                >
+                  <span className="font-hand text-xs text-muted-foreground">{tx.date}</span>
+                  <span className="truncate text-sm">
+                    <span className="font-bold">{tx.merchant ?? tx.description}</span>
+                    {tx.merchant && (
+                      <span className="ml-2 text-xs text-muted-foreground">{tx.description}</span>
+                    )}
+                  </span>
+                  <span className="w-16 text-right font-hand text-sm">
+                    {tx.type === 'credit' ? '+' : '−'}{formatMoney(tx.amount)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {upNext.length > 5 && (
+            <p className="mt-2 px-2 text-xs text-muted-foreground">
+              + {upNext.length - 5} more in queue
+            </p>
+          )}
+
+
         </div>
       </div>
     </div>
-  );
-}
-
-function KbdChip({ keys, label }: { keys: string; label: string }) {
-  return (
-    <span className="flex items-center gap-1.5 rounded-lg border-[1.3px] border-border bg-card px-2.5 py-1 text-[13px] shadow-sketch-xs">
-      <kbd className="inline-flex h-5 min-w-5 items-center justify-center rounded border-[1.2px] border-border bg-muted px-1 font-hand text-sm leading-none">
-          {keys}
-      </kbd>
-      {label}
-    </span>
   );
 }

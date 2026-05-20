@@ -3,7 +3,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UploadModal } from '@/components/UploadModal';
 
 interface CategorySpending {
+  categoryId?: number;
   category: string;
+  transactionCount?: number;
   totalCents: number;
 }
 
@@ -17,8 +19,8 @@ interface DashboardStatsResponse {
   data: {
     totalSpentCents: number;
     uncategorizedCount: number;
+    monthTransactionCount: number;
     totalTransactionCount: number;
-    categorizedPercent: number;
     byCategory: CategorySpending[];
     topMerchants: MerchantSpending[];
   };
@@ -146,10 +148,17 @@ export function DashboardPage() {
       }
       const statsPayload = (await statsRes.json()) as DashboardStatsResponse;
       setStats(statsPayload);
-      if (statsPayload.meta?.availableMonths?.length) {
-        const months = new Set<string>([getCurrentMonth(), ...statsPayload.meta.availableMonths]);
-        setAvailableMonths(Array.from(months).sort((a, b) => b.localeCompare(a)));
-      }
+      const months = new Set<string>([
+        getCurrentMonth(),
+        month,
+        statsPayload.meta.month,
+        ...(statsPayload.meta.availableMonths ?? []),
+      ]);
+      setAvailableMonths(
+        Array.from(months)
+          .filter((candidate) => isValidMonth(candidate))
+          .sort((a, b) => b.localeCompare(a)),
+      );
       if (txRes.ok) {
         const txPayload = (await txRes.json()) as { data: RecentTransaction[] };
         setRecentUncategorized(txPayload.data);
@@ -188,12 +197,19 @@ export function DashboardPage() {
   }, [stats]);
 
   const uncategorizedCount = stats?.data.uncategorizedCount ?? 0;
+  const monthTx = stats?.data.monthTransactionCount ?? 0;
   const totalTx = stats?.data.totalTransactionCount ?? 0;
+  const categorizedCount = Math.max(0, monthTx - uncategorizedCount);
   const categorizedPct =
-    totalTx > 0 ? Math.round(((totalTx - uncategorizedCount) / totalTx) * 100) : 0;
+    monthTx > 0 ? Math.round((categorizedCount / monthTx) * 100) : 0;
   const totalSpentCents = stats?.data.totalSpentCents ?? 0;
   const latestStatement = stats?.meta?.latestStatement;
   const monthLabel = formatMonthLabel(month);
+  const needsReviewHref = `/transactions?${new URLSearchParams({
+    status: 'needs_review',
+    month,
+  }).toString()}`;
+  const monthTransactionsHref = `/transactions?${new URLSearchParams({ month }).toString()}`;
 
   const onPickMonth = (m: string) => {
     const next = new URLSearchParams(searchParams);
@@ -336,6 +352,9 @@ export function DashboardPage() {
               <Link to="/categorize" className="pill-btn primary">
                 Categorize now <span className="arr">→</span>
               </Link>
+              <Link to={needsReviewHref} className="pill-btn ghost">
+                Open list
+              </Link>
             </div>
           </div>
           <div className="action-right">
@@ -355,6 +374,29 @@ export function DashboardPage() {
             )}
           </div>
         </section>
+      ) : monthTx === 0 ? (
+        <section className="action-card all-caught">
+          <div className="action-bg" />
+          <div className="action-left">
+            <div className="tag tag-good">↺ No activity</div>
+            <div className="huge-num">
+              —
+              <span className="huge-sub">
+                transactions in
+                <br />
+                this month
+              </span>
+            </div>
+            <p className="action-copy">
+              No transactions were found for <em>{monthLabel}</em>.
+            </p>
+            <div className="action-buttons">
+              <Link to="/transactions" className="pill-btn primary">
+                View all transactions <span className="arr">→</span>
+              </Link>
+            </div>
+          </div>
+        </section>
       ) : (
         <section className="action-card all-caught">
           <div className="action-bg" />
@@ -372,7 +414,7 @@ export function DashboardPage() {
               Everything for <em>{monthLabel}</em> is sorted.
             </p>
             <div className="action-buttons">
-              <Link to="/transactions" className="pill-btn primary">
+              <Link to={monthTransactionsHref} className="pill-btn primary">
                 View transactions <span className="arr">→</span>
               </Link>
             </div>
@@ -388,7 +430,7 @@ export function DashboardPage() {
             {splitMoney(totalSpentCents).whole}
             <span className="cents">.{splitMoney(totalSpentCents).cents}</span>
           </div>
-          <div className="stat-meta">{totalTx} transactions</div>
+          <div className="stat-meta">{monthTx} transactions</div>
           <svg className="wave" viewBox="0 0 200 40" preserveAspectRatio="none">
             <path
               d="M0 28 Q 25 18 50 22 T 100 24 T 150 16 T 200 22 L 200 40 L 0 40 Z"
@@ -413,7 +455,7 @@ export function DashboardPage() {
             <Donut pct={categorizedPct} />
             <div className="ring-meta">
               <div>
-                <b>{totalTx - uncategorizedCount}</b> sorted
+                <b>{categorizedCount}</b> sorted
               </div>
               <div className="dim">{uncategorizedCount} to go</div>
             </div>
@@ -458,14 +500,24 @@ export function DashboardPage() {
             <div className="cat-list">
               {categoryRows.slice(0, 8).map((c, i) => (
                 <div key={c.category} className="cat-row">
-                  <div className="cat-name-row">
+                  <Link
+                    to={
+                      c.categoryId
+                        ? `/transactions?${new URLSearchParams({
+                            month,
+                            category: String(c.categoryId),
+                          }).toString()}`
+                        : monthTransactionsHref
+                    }
+                    className="cat-name-row cat-link"
+                  >
                     <span
                       className="cat-bubble"
                       style={{ background: PALETTE[i % PALETTE.length] }}
                     />
                     <span className="cat-name">{c.category}</span>
                     <span className="cat-amt">{formatMoney(c.totalCents, { showCents: false })}</span>
-                  </div>
+                  </Link>
                   <div className="cat-bar-wrap">
                     <div
                       className="cat-bar-fill"
@@ -494,34 +546,42 @@ export function DashboardPage() {
             <ul className="merch-list">
               {merchantRows.slice(0, 6).map((m, i) => (
                 <li key={m.merchant} className="merch-li">
-                  <div
-                    className="m-avatar"
-                    style={{
-                      background: `linear-gradient(135deg, ${PALETTE[i % PALETTE.length]}, ${
-                        PALETTE[(i + 2) % PALETTE.length]
-                      })`,
-                    }}
+                  <Link
+                    to={`/transactions?${new URLSearchParams({
+                      month,
+                      merchant: m.merchant,
+                    }).toString()}`}
+                    className="merch-link"
                   >
-                    {m.merchant[0]?.toUpperCase() ?? '?'}
-                  </div>
-                  <div className="m-main">
-                    <div className="m-name-row">
-                      <span className="m-name">{prettyName(m.merchant)}</span>
-                      <span className="m-amt">{formatMoney(m.totalCents)}</span>
+                    <div
+                      className="m-avatar"
+                      style={{
+                        background: `linear-gradient(135deg, ${PALETTE[i % PALETTE.length]}, ${
+                          PALETTE[(i + 2) % PALETTE.length]
+                        })`,
+                      }}
+                    >
+                      {m.merchant[0]?.toUpperCase() ?? '?'}
                     </div>
-                    {m.transactionCount && m.transactionCount > 0 ? (
-                      <div className="m-visits">
-                        {Array.from({ length: Math.min(m.transactionCount, 14) }).map((_, k) => (
-                          <span
-                            key={k}
-                            className="visit-dot"
-                            style={{ background: PALETTE[i % PALETTE.length] }}
-                          />
-                        ))}
-                        <span className="m-count">{m.transactionCount} visits</span>
+                    <div className="m-main">
+                      <div className="m-name-row">
+                        <span className="m-name">{prettyName(m.merchant)}</span>
+                        <span className="m-amt">{formatMoney(m.totalCents)}</span>
                       </div>
-                    ) : null}
-                  </div>
+                      {m.transactionCount && m.transactionCount > 0 ? (
+                        <div className="m-visits">
+                          {Array.from({ length: Math.min(m.transactionCount, 14) }).map((_, k) => (
+                            <span
+                              key={k}
+                              className="visit-dot"
+                              style={{ background: PALETTE[i % PALETTE.length] }}
+                            />
+                          ))}
+                          <span className="m-count">{m.transactionCount} visits</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -938,6 +998,13 @@ const DASHBOARD_CSS = `
   gap: 10px;
   margin-bottom: 6px;
 }
+.cat-link {
+  text-decoration: none;
+  color: inherit;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+.cat-link:hover { background: rgba(45,36,24,0.05); }
 .cat-bubble {
   width: 10px; height: 10px;
   border-radius: 50%;
@@ -962,6 +1029,19 @@ const DASHBOARD_CSS = `
 
 .merch-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
 .merch-li { display: flex; gap: 14px; align-items: center; }
+.merch-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 14px;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  transition: background 0.15s ease;
+}
+.merch-link:hover { background: rgba(45,36,24,0.05); }
 .m-avatar {
   width: 44px; height: 44px;
   border-radius: 50%;

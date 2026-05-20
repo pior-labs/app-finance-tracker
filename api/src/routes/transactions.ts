@@ -96,7 +96,9 @@ transactionsRouter.get('/stats', async (c) => {
 
   const byCategoryRows = await db
     .select({
+      categoryId: schema.categories.id,
       category: schema.categories.name,
+      transactionCount: sql<number>`count(*)`,
       totalCents:
         sql<number>`coalesce(sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end), 0)`
     })
@@ -109,6 +111,7 @@ transactionsRouter.get('/stats', async (c) => {
   const byMerchantRows = await db
     .select({
       merchant: schema.transactions.merchant,
+      transactionCount: sql<number>`count(*)`,
       totalCents:
         sql<number>`coalesce(sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end), 0)`
     })
@@ -164,13 +167,16 @@ transactionsRouter.get('/stats', async (c) => {
       monthTransactionCount: Number(monthTransactionCountRow?.monthTransactionCount ?? 0),
       totalTransactionCount: Number(transactionCountRow?.totalTransactionCount ?? 0),
       byCategory: byCategoryRows.map((row) => ({
+        categoryId: Number(row.categoryId),
         category: row.category,
+        transactionCount: Number(row.transactionCount ?? 0),
         totalCents: Number(row.totalCents ?? 0)
       })),
       topMerchants: byMerchantRows
         .filter((row) => row.merchant)
         .map((row) => ({
           merchant: row.merchant as string,
+          transactionCount: Number(row.transactionCount ?? 0),
           totalCents: Number(row.totalCents ?? 0)
         }))
     },

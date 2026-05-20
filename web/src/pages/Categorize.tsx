@@ -577,8 +577,79 @@ export function CategorizePage() {
         </div>
       )}
 
-      {/* ─── Bottom row: confirmed + up next ─── */}
+      {/* ─── Bottom row: up next + confirmed ─── */}
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {/* Up next */}
+        <div
+          className="rounded-[24px] border p-5"
+          style={{
+            background: 'rgba(255,253,247,0.45)',
+            borderColor: 'rgba(255,255,255,0.7)',
+            backdropFilter: 'blur(20px) saturate(140%)',
+            boxShadow: '0 8px 28px -8px rgba(45,36,24,0.08)',
+          }}
+        >
+          <div
+            className="mb-3.5 flex items-center justify-between border-b border-dashed pb-2.5"
+            style={{ borderColor: 'rgba(45,36,24,0.1)' }}
+          >
+            <span
+              className="text-[13px] italic"
+              style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}
+            >
+              Up next
+            </span>
+            {upNext.length > 4 && (
+              <span
+                className="rounded-full bg-[rgba(45,36,24,0.06)] px-2.5 py-0.5 text-xs not-italic"
+                style={{ color: 'var(--ink-3)' }}
+              >
+                +{upNext.length - 4} more
+              </span>
+            )}
+          </div>
+          {upNextPreview.length === 0 ? (
+            <p className="py-4 text-center text-[13px] leading-relaxed" style={{ color: 'var(--ink-3)' }}>
+              That's the last one in the queue.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {upNextPreview.map((tx, i) => (
+                <div
+                  key={tx.id}
+                  className="grid items-center gap-2.5 rounded-xl px-1.5 py-2 transition-opacity"
+                  style={{
+                    gridTemplateColumns: '8px 1fr auto',
+                    opacity: 1 - i * 0.2,
+                  }}
+                >
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{
+                      background: isCredit ? '#cae0a8' : '#f8d7c0',
+                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.6)',
+                    }}
+                  />
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
+                      {prettyName(tx.merchant ?? tx.description)}
+                    </span>
+                    <span className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
+                      {formatShortDate(tx.date)}
+                    </span>
+                  </div>
+                  <span
+                    className="shrink-0 text-sm font-medium"
+                    style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}
+                  >
+                    {tx.type === 'credit' ? '+' : '−'}{formatMoney(tx.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Just confirmed */}
         <div
           className="rounded-[24px] border p-5"
@@ -654,77 +725,6 @@ export function CategorizePage() {
                     style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}
                   >
                     −{formatMoney(item.amount)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Up next */}
-        <div
-          className="rounded-[24px] border p-5"
-          style={{
-            background: 'rgba(255,253,247,0.45)',
-            borderColor: 'rgba(255,255,255,0.7)',
-            backdropFilter: 'blur(20px) saturate(140%)',
-            boxShadow: '0 8px 28px -8px rgba(45,36,24,0.08)',
-          }}
-        >
-          <div
-            className="mb-3.5 flex items-center justify-between border-b border-dashed pb-2.5"
-            style={{ borderColor: 'rgba(45,36,24,0.1)' }}
-          >
-            <span
-              className="text-[13px] italic"
-              style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}
-            >
-              Up next
-            </span>
-            {upNext.length > 4 && (
-              <span
-                className="rounded-full bg-[rgba(45,36,24,0.06)] px-2.5 py-0.5 text-xs not-italic"
-                style={{ color: 'var(--ink-3)' }}
-              >
-                +{upNext.length - 4} more
-              </span>
-            )}
-          </div>
-          {upNextPreview.length === 0 ? (
-            <p className="py-4 text-center text-[13px] leading-relaxed" style={{ color: 'var(--ink-3)' }}>
-              That's the last one in the queue.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-1">
-              {upNextPreview.map((tx, i) => (
-                <div
-                  key={tx.id}
-                  className="grid items-center gap-2.5 rounded-xl px-1.5 py-2 transition-opacity"
-                  style={{
-                    gridTemplateColumns: '8px 1fr auto',
-                    opacity: 1 - i * 0.2,
-                  }}
-                >
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{
-                      background: isCredit ? '#cae0a8' : '#f8d7c0',
-                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.6)',
-                    }}
-                  />
-                  <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
-                      {prettyName(tx.merchant ?? tx.description)}
-                    </span>
-                    <span className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
-                      {formatShortDate(tx.date)}
-                    </span>
-                  </div>
-                  <span
-                    className="shrink-0 text-sm font-medium"
-                    style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}
-                  >
-                    {tx.type === 'credit' ? '+' : '−'}{formatMoney(tx.amount)}
                   </span>
                 </div>
               ))}

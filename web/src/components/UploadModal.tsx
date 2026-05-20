@@ -1,6 +1,5 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -91,22 +90,41 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-border/45" onClick={handleClose} />
+      <div
+        className="absolute inset-0"
+        style={{ background: 'rgba(45,36,24,0.3)', backdropFilter: 'blur(6px)' }}
+        onClick={handleClose}
+      />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg rounded-sketch border-[1.5px] border-border bg-card p-5 shadow-sketch">
+      <div
+        className="relative w-full max-w-lg rounded-[28px] border p-7"
+        style={{
+          background: 'rgba(255,253,247,0.94)',
+          borderColor: 'rgba(255,255,255,0.8)',
+          backdropFilter: 'blur(24px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(140%)',
+          boxShadow: '0 24px 60px -12px rgba(45,36,24,0.25), inset 0 0 0 1px rgba(255,255,255,0.5)',
+        }}
+      >
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
-          <h2 className="font-hand text-2xl">Upload bank statement</h2>
+          <h2
+            className="m-0 text-2xl font-normal"
+            style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
+          >
+            Upload statement
+          </h2>
           <button
             onClick={handleClose}
-            className="flex h-5.5 w-5.5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-sm hover:bg-muted"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
+            style={{ color: 'var(--ink-3)' }}
           >
             ✕
           </button>
         </div>
 
-        {/* Idle — drop zone */}
+        {/* ─── Idle — drop zone ─── */}
         {state === 'idle' && (
           <>
             <div
@@ -114,18 +132,37 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`flex cursor-pointer flex-col items-center gap-3 rounded-sketch-sm border-[1.5px] border-dashed p-8 text-center transition-colors ${
-                dragOver
-                  ? 'border-primary bg-primary-soft'
-                  : 'border-muted-foreground hover:border-border hover:bg-muted'
-              }`}
+              className="flex cursor-pointer flex-col items-center gap-4 rounded-[20px] border-2 border-dashed p-10 text-center transition-all"
+              style={{
+                borderColor: dragOver ? 'rgba(142,181,103,0.6)' : 'rgba(45,36,24,0.15)',
+                background: dragOver
+                  ? 'linear-gradient(135deg, rgba(202,224,168,0.3), rgba(198,227,212,0.2))'
+                  : 'rgba(255,255,255,0.3)',
+              }}
             >
-              <div className="flex h-14 w-12 items-center justify-center rounded-md border-[1.3px] border-dashed border-muted-foreground thumb-hatch text-[13px] font-bold text-muted-foreground">
+              {/* PDF badge */}
+              <span
+                className="flex h-14 w-11 items-center justify-center rounded-xl text-[11px] font-bold uppercase"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(220,211,240,0.5), rgba(248,215,192,0.4))',
+                  color: 'var(--ink-3)',
+                  border: '1px solid rgba(255,255,255,0.6)',
+                  boxShadow: '0 4px 14px -4px rgba(45,36,24,0.08)',
+                }}
+              >
                 PDF
+              </span>
+              <div
+                className="text-xl font-normal"
+                style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
+              >
+                Drop your PDF here
               </div>
-              <div className="font-hand text-xl">Drop your PDF here</div>
-              <div className="text-[13px] text-muted-foreground">
-                or <span className="text-primary underline">choose a file</span>
+              <div className="text-[13px]" style={{ color: 'var(--ink-3)' }}>
+                or{' '}
+                <span className="font-medium underline underline-offset-2" style={{ color: 'var(--accent)' }}>
+                  choose a file
+                </span>
               </div>
             </div>
             <input
@@ -135,80 +172,194 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               className="hidden"
               onChange={(e) => onFileSelect(e.target.files?.[0])}
             />
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className="mt-3 text-xs" style={{ color: 'var(--ink-3)' }}>
               Only PDF statements from the supported bank format are supported for now.
             </p>
             <div className="mt-4 flex justify-end">
-              <Button variant="ghost" onClick={handleClose}>Cancel</Button>
+              <button
+                onClick={handleClose}
+                className="cursor-pointer rounded-full border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50"
+                style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)' }}
+              >
+                Cancel
+              </button>
             </div>
           </>
         )}
 
-        {/* Uploading — progress */}
+        {/* ─── Uploading ─── */}
         {state === 'uploading' && (
           <>
-            <div className="flex flex-col items-center gap-3 rounded-sketch-sm border-[1.3px] border-border p-8 text-center">
-              <div className="flex h-14 w-12 items-center justify-center rounded-md border-[1.3px] border-border bg-primary-soft text-[13px] font-bold text-muted-foreground">
+            <div
+              className="flex flex-col items-center gap-4 rounded-[20px] border p-10 text-center"
+              style={{
+                background: 'rgba(255,255,255,0.3)',
+                borderColor: 'rgba(255,255,255,0.7)',
+              }}
+            >
+              <span
+                className="flex h-14 w-11 items-center justify-center rounded-xl text-[11px] font-bold uppercase"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(202,224,168,0.5), rgba(248,215,192,0.3))',
+                  color: 'var(--ink-3)',
+                  border: '1px solid rgba(255,255,255,0.6)',
+                }}
+              >
                 PDF
+              </span>
+              <div
+                className="text-xl font-normal"
+                style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
+              >
+                Parsing statement…
               </div>
-              <div className="font-hand text-xl">Parsing statement…</div>
-              <div className="h-2.5 w-3/4 overflow-hidden rounded-md border-[1.3px] border-border bg-muted">
-                <div className="bar-fill h-full w-3/5 animate-pulse" />
+              <div className="h-2 w-3/4 overflow-hidden rounded-full bg-[rgba(45,36,24,0.06)]">
+                <div
+                  className="h-full w-3/5 animate-pulse rounded-full"
+                  style={{
+                    background: 'linear-gradient(90deg, #cae0a8, #8eb567)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
+                  }}
+                />
               </div>
-              <p className="text-xs text-muted-foreground">Reading transactions — this usually takes a few seconds</p>
+              <p className="text-xs" style={{ color: 'var(--ink-3)' }}>
+                Reading transactions — this usually takes a few seconds
+              </p>
             </div>
             <div className="mt-4 flex justify-end">
-              <Button variant="ghost" onClick={handleClose}>Cancel</Button>
+              <button
+                onClick={handleClose}
+                className="cursor-pointer rounded-full border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50"
+                style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)' }}
+              >
+                Cancel
+              </button>
             </div>
           </>
         )}
 
-        {/* Success */}
+        {/* ─── Success ─── */}
         {state === 'success' && result && (
           <>
-            <div className="rounded-sketch-sm border-[1.3px] border-border bg-good-soft p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-[5px] border-[1.5px] border-border bg-good-soft font-hand text-lg text-good">
+            <div
+              className="rounded-[20px] border p-5"
+              style={{
+                background: 'linear-gradient(135deg, rgba(202,224,168,0.35), rgba(198,227,212,0.2))',
+                borderColor: 'rgba(255,255,255,0.6)',
+              }}
+            >
+              <div className="flex items-center gap-3.5">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
+                  style={{
+                    background: 'linear-gradient(135deg, #cae0a8, #8eb567)',
+                    boxShadow: '0 4px 14px -2px rgba(93,138,63,0.3)',
+                  }}
+                >
                   ✓
-                </div>
+                </span>
                 <div>
-                  <div className="font-hand text-xl">Statement imported</div>
-                  <div className="text-[13px]">
-                    {result.transactionCount} transactions found
-                    {result.periodStart && result.periodEnd && ` · ${result.periodStart} – ${result.periodEnd}`}
+                  <div
+                    className="text-xl font-normal"
+                    style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
+                  >
+                    Statement imported
+                  </div>
+                  <div className="mt-0.5 text-[13px]" style={{ color: 'var(--ink-2)' }}>
+                    <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 500 }}>
+                      {result.transactionCount}
+                    </span>{' '}
+                    transactions found
+                    {result.periodStart && result.periodEnd && (
+                      <span style={{ color: 'var(--ink-3)' }}>
+                        {' '}· {result.periodStart} – {result.periodEnd}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="ghost" onClick={handleClose}>Close</Button>
-              <Button onClick={() => { handleClose(); navigate('/categorize'); }}>
+            <div className="mt-5 flex justify-end gap-2.5">
+              <button
+                onClick={handleClose}
+                className="cursor-pointer rounded-full border bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/50"
+                style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)' }}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => { handleClose(); navigate('/categorize'); }}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 px-5 py-2.5 text-sm font-medium transition-transform hover:-translate-y-px"
+                style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  background: 'var(--ink)',
+                  color: 'var(--cream)',
+                  boxShadow: '0 6px 18px -6px rgba(45,36,24,0.35)',
+                }}
+              >
                 Categorize {result.transactionCount} →
-              </Button>
+              </button>
             </div>
           </>
         )}
 
-        {/* Error */}
+        {/* ─── Error ─── */}
         {state === 'error' && (
           <>
-            <div className="rounded-sketch-sm border-[1.3px] border-border bg-primary-soft p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-[5px] border-[1.5px] border-border bg-primary-soft font-hand text-lg text-primary">
+            <div
+              className="rounded-[20px] border p-5"
+              style={{
+                background: 'linear-gradient(135deg, rgba(248,215,192,0.4), rgba(245,227,160,0.2))',
+                borderColor: 'rgba(255,255,255,0.6)',
+              }}
+            >
+              <div className="flex items-center gap-3.5">
+                <span
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-bold"
+                  style={{
+                    background: 'linear-gradient(135deg, #f8d7c0, #c5704a)',
+                    color: 'white',
+                    boxShadow: '0 4px 14px -2px rgba(197,112,74,0.3)',
+                  }}
+                >
                   !
-                </div>
+                </span>
                 <div>
-                  <div className="font-hand text-xl">Couldn't parse this statement</div>
-                  <div className="text-xs text-muted-foreground">{errorMessage}</div>
+                  <div
+                    className="text-xl font-normal"
+                    style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
+                  >
+                    Couldn't parse this statement
+                  </div>
+                  <div className="mt-0.5 text-xs" style={{ color: 'var(--ink-3)' }}>
+                    {errorMessage}
+                  </div>
                 </div>
               </div>
-              <p className="mt-2 pl-11 text-[13px]">
+              <p className="mt-3 pl-[52px] text-[13px]" style={{ color: 'var(--ink-2)' }}>
                 Try another PDF or check that it matches the supported bank format.
               </p>
             </div>
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="ghost" onClick={handleClose}>Cancel</Button>
-              <Button variant="outline" onClick={reset}>Try another file</Button>
+            <div className="mt-5 flex justify-end gap-2.5">
+              <button
+                onClick={handleClose}
+                className="cursor-pointer rounded-full border bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/50"
+                style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={reset}
+                className="cursor-pointer rounded-full border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/50"
+                style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  color: 'var(--ink)',
+                  borderColor: 'rgba(45,36,24,0.2)',
+                  background: 'transparent',
+                }}
+              >
+                Try another file
+              </button>
             </div>
           </>
         )}

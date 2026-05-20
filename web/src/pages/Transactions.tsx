@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select, type SelectOption } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface Category {
   id: number;
   name: string;
+  color: string;
 }
 
 interface CategoryResponse {
   data: Category[];
+}
+
+interface SelectOption {
+  value: string;
+  label: string;
 }
 
 interface TransactionListItem {
@@ -73,6 +73,17 @@ function formatAmount(cents: number): string {
   const value = Math.abs(cents) / 100;
   const formatted = value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return cents < 0 ? `-$${formatted}` : `$${formatted}`;
+}
+
+function formatShortDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function prettyName(s: string | null | undefined): string {
+  if (!s) return '';
+  return s.replace(/\b\w+/g, (w) => w[0] + w.slice(1).toLowerCase());
 }
 
 export function TransactionsPage() {
@@ -270,153 +281,425 @@ export function TransactionsPage() {
     }
   };
 
+  const needsReviewCount = transactions.filter((t) => t.status === 'needs_review').length;
+  const confirmedCount = transactions.filter((t) => t.status === 'confirmed').length;
+  const completePct = transactions.length > 0 ? Math.round((confirmedCount / transactions.length) * 100) : 0;
+
+  // Active filters summary for eyebrow
+  const filterParts: string[] = [];
+  if (month !== 'all') filterParts.push(formatMonthLabel(month));
+  if (category !== 'all') {
+    const catLabel = category === 'uncategorized'
+      ? 'Uncategorized'
+      : categories.find((c) => String(c.id) === category)?.name ?? category;
+    filterParts.push(catLabel);
+  }
+  if (status !== 'all') filterParts.push(status === 'needs_review' ? 'Needs review' : 'Confirmed');
+  if (merchant.trim()) filterParts.push(`"${merchant.trim()}"`);
+
+  const categoryColorMap = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const cat of categories) map.set(cat.id, cat.color);
+    return map;
+  }, [categories]);
+
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
-      {/* Filters + summary */}
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative">
-          <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4"
-              aria-hidden="true"
+    <div className="flex h-full min-h-0 flex-col gap-5">
+      {/* ─── Header ─── */}
+      <header className="flex flex-wrap items-end justify-between gap-6 px-1 pt-3">
+        <div>
+          <div className="text-[13px] tracking-wide" style={{ color: 'var(--ink-3)' }}>
+            {filterParts.length > 0 ? (
+              <>
+                Filtered ·{' '}
+                <em style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}>
+                  {filterParts.join(' · ')}
+                </em>
+              </>
+            ) : (
+              <>
+                All time ·{' '}
+                <em style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}>
+                  {total} total
+                </em>
+              </>
+            )}
+          </div>
+          <h1
+            className="m-0 my-1.5 text-[52px] font-normal leading-none tracking-tight"
+            style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
+          >
+            Transactions
+          </h1>
+        </div>
+        {/* Summary pills */}
+        <div className="flex items-center gap-2.5">
+          {needsReviewCount > 0 && (
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
+              style={{
+                background: 'linear-gradient(135deg, rgba(248,215,192,0.7), rgba(245,227,160,0.5))',
+                borderColor: 'rgba(255,255,255,0.6)',
+                color: 'var(--ink-2)',
+              }}
             >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
+              ⚘ {needsReviewCount} needs review
+            </span>
+          )}
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
+            style={{
+              background: 'linear-gradient(135deg, rgba(202,224,168,0.7), rgba(198,227,212,0.5))',
+              borderColor: 'rgba(255,255,255,0.6)',
+              color: '#3d6b1f',
+            }}
+          >
+            ✓ {completePct}% sorted
           </span>
-          <Input
+        </div>
+      </header>
+
+      {/* ─── Filter bar ─── */}
+      <div
+        className="flex flex-wrap items-center gap-2.5 rounded-full border px-4 py-2.5"
+        style={{
+          background: 'rgba(255,253,247,0.55)',
+          borderColor: 'rgba(255,255,255,0.8)',
+          backdropFilter: 'blur(20px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+          boxShadow: '0 6px 22px -8px rgba(45,36,24,0.08)',
+        }}
+      >
+        {/* Search */}
+        <div className="relative">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2"
+            style={{ color: 'var(--ink-3)' }}
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
             value={merchant}
             onChange={(e) => {
               setMerchant(e.target.value);
               setOffset(0);
             }}
-            placeholder="Search merchant"
+            placeholder="Search merchant…"
             aria-label="Search by merchant"
-            className="h-10 w-48 bg-card pl-8"
+            className="h-9 w-44 rounded-full border-0 bg-white/50 pl-8 pr-3 text-sm outline-none transition-colors placeholder:text-[var(--ink-3)] focus:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30"
+            style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
           />
         </div>
-        <Select options={monthOptions} value={month} onChange={(e) => onFilterChange('month', e.target.value)} aria-label="Filter by month" variant="dashed" className="w-auto" />
-        <Select options={categoryFilterOptions} value={category} onChange={(e) => onFilterChange('category', e.target.value)} aria-label="Filter by category" variant="dashed" className="w-auto" />
-        <Select options={statusOptions} value={status} onChange={(e) => onFilterChange('status', e.target.value)} aria-label="Filter by status" variant="dashed" className="w-auto" />
-        <div className="flex-1" />
-        <Badge variant="warning">
-          {transactions.filter((t) => t.status === 'needs_review').length} needs review
-        </Badge>
-        <Badge variant="success">
-          ✓ {Math.round((transactions.filter((t) => t.status === 'confirmed').length / Math.max(transactions.length, 1)) * 100)}% complete
-        </Badge>
+
+        {/* Divider */}
+        <div className="h-5 w-px bg-[rgba(45,36,24,0.1)]" />
+
+        {/* Month filter */}
+        <select
+          value={month}
+          onChange={(e) => onFilterChange('month', e.target.value)}
+          aria-label="Filter by month"
+          className="h-9 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-sm outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30"
+          style={{ fontFamily: "'Outfit', sans-serif", color: month === 'all' ? 'var(--ink-3)' : 'var(--ink)' }}
+        >
+          {monthOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+
+        {/* Category filter */}
+        <select
+          value={category}
+          onChange={(e) => onFilterChange('category', e.target.value)}
+          aria-label="Filter by category"
+          className="h-9 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-sm outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30"
+          style={{ fontFamily: "'Outfit', sans-serif", color: category === 'all' ? 'var(--ink-3)' : 'var(--ink)' }}
+        >
+          {categoryFilterOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+
+        {/* Status filter */}
+        <select
+          value={status}
+          onChange={(e) => onFilterChange('status', e.target.value)}
+          aria-label="Filter by status"
+          className="h-9 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-sm outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30"
+          style={{ fontFamily: "'Outfit', sans-serif", color: status === 'all' ? 'var(--ink-3)' : 'var(--ink)' }}
+        >
+          {statusOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p
+          className="rounded-2xl border px-5 py-3 text-sm"
+          style={{
+            background: 'rgba(245,180,160,0.4)',
+            borderColor: 'rgba(197,112,74,0.4)',
+            color: '#6b3a1f',
+          }}
+        >
+          {error}
+        </p>
+      )}
 
-      {/* Table */}
-      <Card className="min-h-0 flex-1 overflow-hidden">
-        <div ref={tableViewportRef} className="h-full overflow-hidden">
-          <CardContent className="h-full p-0">
-            <Table>
-              <TableHeader>
-              <TableRow>
-                <TableHead className="h-9 px-2.5">Date</TableHead>
-                <TableHead className="h-9 px-2.5">Merchant</TableHead>
-                <TableHead className="h-9 px-2.5">Description</TableHead>
-                <TableHead className="h-9 px-2.5 text-right">Amount</TableHead>
-                <TableHead className="h-9 px-2.5">Category</TableHead>
-                <TableHead className="h-9 px-2.5">Status</TableHead>
-                <TableHead className="h-9 px-2.5 text-right">Actions</TableHead>
-              </TableRow>
-              </TableHeader>
-              <TableBody>
+      {/* ─── Table ─── */}
+      <div
+        ref={tableViewportRef}
+        className="min-h-0 flex-1 overflow-hidden rounded-[28px] border"
+        style={{
+          background: 'rgba(255,253,247,0.55)',
+          borderColor: 'rgba(255,255,255,0.8)',
+          backdropFilter: 'blur(24px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(24px) saturate(140%)',
+          boxShadow: '0 14px 44px -10px rgba(45,36,24,0.1), inset 0 0 0 1px rgba(255,255,255,0.45)',
+        }}
+      >
+        <div className="h-full overflow-x-auto">
+          <table className="w-full caption-bottom text-sm" style={{ fontFamily: "'Outfit', sans-serif" }}>
+            <thead>
+              <tr
+                className="border-b"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(248,215,192,0.25), rgba(220,211,240,0.2), rgba(202,224,168,0.15))',
+                  borderColor: 'rgba(45,36,24,0.08)',
+                }}
+              >
+                <th className="h-11 px-5 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Date</th>
+                <th className="h-11 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Merchant</th>
+                <th className="h-11 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Description</th>
+                <th className="h-11 px-4 text-right text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Amount</th>
+                <th className="h-11 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Category</th>
+                <th className="h-11 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Status</th>
+                <th className="h-11 px-5 text-right text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
               {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">Loading transactions...</TableCell>
-                </TableRow>
+                Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i} className="border-b border-dashed" style={{ borderColor: 'rgba(45,36,24,0.08)' }}>
+                    <td colSpan={7} className="px-5 py-3">
+                      <div
+                        className="h-4 rounded-full animate-pulse"
+                        style={{
+                          background: 'rgba(255,253,247,0.6)',
+                          width: `${65 + (i % 3) * 12}%`,
+                          animationDelay: `${i * 0.08}s`,
+                        }}
+                      />
+                    </td>
+                  </tr>
+                ))
               ) : transactions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">No transactions found.</TableCell>
-                </TableRow>
+                <tr>
+                  <td colSpan={7} className="py-16 text-center">
+                    <p
+                      className="text-base italic"
+                      style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}
+                    >
+                      No transactions found.
+                    </p>
+                  </td>
+                </tr>
               ) : (
                 transactions.map((tx) => {
                   const isUpdating = updatingTransactionIds.includes(tx.id);
+                  const catColor = tx.categoryId ? categoryColorMap.get(tx.categoryId) : undefined;
                   return (
-                    <TableRow key={tx.id} style={rowHeightPx ? { height: `${rowHeightPx}px` } : undefined}>
-                      <TableCell className="px-2.5 py-1.5 text-[11px] text-muted-foreground">{tx.date}</TableCell>
-                      <TableCell className="px-2.5 py-1.5">
-                        <span className="font-hand text-base leading-none">{tx.merchant ?? tx.description}</span>
-                      </TableCell>
-                      <TableCell className="max-w-80 truncate px-2.5 py-1.5 text-[10px] text-muted-foreground" title={tx.description}>
+                    <tr
+                      key={tx.id}
+                      className="border-b border-dashed transition-colors hover:bg-white/40"
+                      style={{
+                        borderColor: 'rgba(45,36,24,0.08)',
+                        ...(rowHeightPx ? { height: `${rowHeightPx}px` } : {}),
+                      }}
+                    >
+                      {/* Date */}
+                      <td className="whitespace-nowrap px-5 py-1.5 text-[12px]" style={{ color: 'var(--ink-3)' }}>
+                        {formatShortDate(tx.date)}
+                      </td>
+
+                      {/* Merchant */}
+                      <td className="px-4 py-1.5">
+                        <span
+                          className="text-[15px] font-medium"
+                          style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
+                        >
+                          {prettyName(tx.merchant ?? tx.description)}
+                        </span>
+                      </td>
+
+                      {/* Description */}
+                      <td
+                        className="max-w-72 truncate px-4 py-1.5 text-[12px]"
+                        style={{ color: 'var(--ink-3)' }}
+                        title={tx.description}
+                      >
                         {tx.description}
-                      </TableCell>
-                      <TableCell className="px-2.5 py-1.5 text-right font-bold">
-                        <span className={tx.type === 'credit' ? 'text-good' : ''}>
+                      </td>
+
+                      {/* Amount */}
+                      <td className="whitespace-nowrap px-4 py-1.5 text-right">
+                        <span
+                          className="text-[15px] font-medium"
+                          style={{
+                            fontFamily: "'Fraunces', serif",
+                            color: tx.type === 'credit' ? '#3d6b1f' : 'var(--ink)',
+                          }}
+                        >
+                          {tx.type === 'credit' ? '+' : ''}
                           {formatAmount(tx.amount)}
                         </span>
-                      </TableCell>
-                      <TableCell className="px-2.5 py-1.5">
-                        <Select
-                          value={tx.categoryId === null ? 'uncategorized' : String(tx.categoryId)}
-                          options={rowCategoryOptions}
-                          disabled={isUpdating}
-                          variant={tx.categoryId === null ? 'dashed' : 'default'}
-                          onChange={(e) => void onCategoryAssign(tx, e.target.value)}
-                          aria-label={`Set category for transaction ${tx.id}`}
-                          className="h-8 w-31 text-xs"
-                        />
-                      </TableCell>
-                      <TableCell className="px-2.5 py-1.5">
+                      </td>
+
+                      {/* Category */}
+                      <td className="px-4 py-1.5">
+                        <div className="relative inline-flex items-center">
+                          {catColor && (
+                            <span
+                              className="absolute left-2.5 h-2 w-2 rounded-full"
+                              style={{ background: catColor, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.5)' }}
+                            />
+                          )}
+                          <select
+                            value={tx.categoryId === null ? 'uncategorized' : String(tx.categoryId)}
+                            disabled={isUpdating}
+                            onChange={(e) => void onCategoryAssign(tx, e.target.value)}
+                            aria-label={`Set category for transaction ${tx.id}`}
+                            className="h-7 cursor-pointer appearance-none rounded-full border border-white/70 bg-white/50 pr-6 text-xs font-medium outline-none transition-colors hover:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 disabled:cursor-default disabled:opacity-50"
+                            style={{
+                              fontFamily: "'Outfit', sans-serif",
+                              color: tx.categoryId === null ? 'var(--ink-3)' : 'var(--ink)',
+                              paddingLeft: catColor ? '1.25rem' : '0.625rem',
+                              boxShadow: '0 2px 8px -2px rgba(45,36,24,0.06)',
+                            }}
+                          >
+                            {rowCategoryOptions.map((opt) => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-4 py-1.5">
                         {tx.status === 'confirmed' ? (
-                          <Badge variant="success" className="px-2 py-0 text-[11px]">✓ confirmed</Badge>
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                            style={{
+                              background: 'rgba(202,224,168,0.6)',
+                              color: '#3d6b1f',
+                              border: '1px solid rgba(255,255,255,0.5)',
+                            }}
+                          >
+                            ✓ confirmed
+                          </span>
                         ) : (
-                          <Badge variant="warning" className="px-2 py-0 text-[11px]">needs review</Badge>
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                            style={{
+                              background: 'rgba(248,215,192,0.6)',
+                              color: 'var(--ink-2)',
+                              border: '1px solid rgba(255,255,255,0.5)',
+                            }}
+                          >
+                            needs review
+                          </span>
                         )}
-                      </TableCell>
-                      <TableCell className="px-2.5 py-1.5">
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-5 py-1.5">
                         <div className="flex justify-end gap-1">
                           <button
-                            className="flex h-5 w-5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-xs hover:bg-muted"
+                            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
+                            style={{ color: 'var(--ink-2)' }}
                             title="Edit"
                           >
                             ✎
                           </button>
                           <button
-                            className="flex h-5 w-5 items-center justify-center rounded-md border-[1.3px] border-border bg-card font-hand text-xs text-primary hover:bg-primary-soft"
+                            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
+                            style={{ color: 'var(--accent)' }}
                             title="Delete"
                           >
                             ✕
                           </button>
                         </div>
-                      </TableCell>
-                    </TableRow>
+                      </td>
+                    </tr>
                   );
                 })
               )}
-              </TableBody>
-            </Table>
-          </CardContent>
+            </tbody>
+          </table>
         </div>
-      </Card>
+      </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-end">
-        <div className="flex items-center gap-2">
-          {canGoPrevious && (
-            <Button variant="ghost" size="sm" onClick={() => setOffset((p) => Math.max(0, p - PAGE_SIZE))}>
-              ← prev
-            </Button>
+      {/* ─── Pagination ─── */}
+      <div className="flex items-center justify-between px-1">
+        <span className="text-[13px]" style={{ color: 'var(--ink-3)' }}>
+          {total > 0 && (
+            <>
+              Showing{' '}
+              <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 500, color: 'var(--ink-2)' }}>
+                {offset + 1}–{Math.min(offset + PAGE_SIZE, total)}
+              </span>
+              {' '}of{' '}
+              <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 500, color: 'var(--ink-2)' }}>
+                {total}
+              </span>
+            </>
           )}
-          <span className="text-[13px] text-muted-foreground">
+        </span>
+        <div className="flex items-center gap-2.5">
+          {canGoPrevious && (
+            <button
+              onClick={() => setOffset((p) => Math.max(0, p - PAGE_SIZE))}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50"
+              style={{
+                fontFamily: "'Outfit', sans-serif",
+                color: 'var(--ink-2)',
+                borderColor: 'rgba(45,36,24,0.15)',
+                background: 'transparent',
+              }}
+            >
+              ← prev
+            </button>
+          )}
+          <span
+            className="text-[13px] italic"
+            style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}
+          >
             {pageNumber} of {totalPages}
           </span>
           {canGoNext && (
-            <Button variant="outline" size="sm" onClick={() => setOffset((p) => p + PAGE_SIZE)}>
+            <button
+              onClick={() => setOffset((p) => p + PAGE_SIZE)}
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-transform hover:-translate-y-px"
+              style={{
+                fontFamily: "'Outfit', sans-serif",
+                background: 'var(--ink)',
+                color: 'var(--cream)',
+                border: 0,
+                boxShadow: '0 6px 18px -6px rgba(45,36,24,0.35)',
+              }}
+            >
               next →
-            </Button>
+            </button>
           )}
         </div>
       </div>

@@ -38,6 +38,20 @@ interface TransactionsResponse {
   };
 }
 
+interface TransactionUpdatePayload {
+  id: number;
+  statementId: number;
+  date: string;
+  description: string;
+  merchant: string | null;
+  amount: number;
+  type: 'debit' | 'credit';
+  categoryId: number | null;
+  categoryName: string | null;
+  status: 'needs_review' | 'confirmed';
+  createdAt: string;
+}
+
 interface StatsResponse {
   meta: {
     month: string;
@@ -109,8 +123,11 @@ export function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatingTransactionIds, setUpdatingTransactionIds] = useState<number[]>([]);
+  const [deletingTransactionIds, setDeletingTransactionIds] = useState<number[]>([]);
+  const [reloadToken, setReloadToken] = useState(0);
   const [rowHeightPx, setRowHeightPx] = useState<number | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
+  const categorySelectRefs = useRef<Map<number, HTMLSelectElement>>(new Map());
 
   useEffect(() => {
     const fetchFilterData = async () => {
@@ -171,7 +188,7 @@ export function TransactionsPage() {
       }
     };
     void fetchTransactions();
-  }, [month, category, status, merchant, offset]);
+  }, [month, category, status, merchant, offset, reloadToken]);
 
   useEffect(() => {
     const updateRowHeight = () => {
@@ -245,32 +262,41 @@ export function TransactionsPage() {
     setOffset(0);
   };
 
+  const patchTransaction = async (
+    transactionId: number,
+    updatePayload: { category_id?: number | null; status?: 'needs_review' | 'confirmed' }
+  ): Promise<TransactionUpdatePayload> => {
+    const response = await fetch(`/api/transactions/${transactionId}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updatePayload),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error((payload as { error?: string }).error ?? `Failed to update transaction (${response.status})`);
+    }
+    const payload = (await response.json()) as { data: TransactionUpdatePayload };
+    return payload.data;
+  };
+
   const onCategoryAssign = async (transaction: TransactionListItem, selectedValue: string) => {
     const selectedCategoryId = selectedValue === 'uncategorized' ? null : Number(selectedValue);
     if (selectedValue !== 'uncategorized' && (!Number.isFinite(selectedCategoryId) || (selectedCategoryId as number) <= 0)) return;
     if (selectedCategoryId === transaction.categoryId && transaction.status === 'confirmed') return;
 
-    setUpdatingTransactionIds((prev) => [...prev, transaction.id]);
+    setUpdatingTransactionIds((prev) => (prev.includes(transaction.id) ? prev : [...prev, transaction.id]));
     setError(null);
 
     try {
-      const response = await fetch(`/api/transactions/${transaction.id}`, {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category_id: selectedCategoryId, status: selectedCategoryId === null ? 'needs_review' : 'confirmed' }),
+      const payload = await patchTransaction(transaction.id, {
+        category_id: selectedCategoryId,
+        status: selectedCategoryId === null ? 'needs_review' : 'confirmed',
       });
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}));
-        throw new Error((payload as { error?: string }).error ?? `Failed to update transaction (${response.status})`);
-      }
-      const payload = (await response.json()) as {
-        data: { id: number; categoryId: number | null; categoryName: string | null; status: 'needs_review' | 'confirmed' };
-      };
       setTransactions((prev) =>
         prev.map((item) =>
           item.id === transaction.id
-            ? { ...item, categoryId: payload.data.categoryId, categoryName: payload.data.categoryName, status: payload.data.status }
+            ? { ...item, categoryId: payload.categoryId, categoryName: payload.categoryName, status: payload.status }
             : item
         )
       );
@@ -278,6 +304,61 @@ export function TransactionsPage() {
       setError(updateError instanceof Error ? updateError.message : 'Failed to update transaction');
     } finally {
       setUpdatingTransactionIds((prev) => prev.filter((id) => id !== transaction.id));
+    }
+  };
+
+  const onEditTransaction = async (transaction: TransactionListItem) => {
+    setError(null);
+
+    try {
+      if (transaction.status !== 'needs_review') {
+        setUpdatingTransactionIds((prev) => (prev.includes(transaction.id) ? prev : [...prev, transaction.id]));
+        const payload = await patchTransaction(transaction.id, { status: 'needs_review' });
+        setTransactions((prev) =>
+          prev.map((item) =>
+            item.id === transaction.id
+              ? { ...item, categoryId: payload.categoryId, categoryName: payload.categoryName, status: payload.status }
+              : item
+          )
+        );
+      }
+      categorySelectRefs.current.get(transaction.id)?.focus();
+    } catch (updateError) {
+      setError(updateError instanceof Error ? updateError.message : 'Failed to prepare transaction for editing');
+    } finally {
+      setUpdatingTransactionIds((prev) => prev.filter((id) => id !== transaction.id));
+    }
+  };
+
+  const onDeleteTransaction = async (transaction: TransactionListItem) => {
+    const label = transaction.merchant ?? transaction.description;
+    const confirmed = window.confirm(`Delete transaction "${label}" from ${formatShortDate(transaction.date)}?`);
+    if (!confirmed) return;
+
+    setError(null);
+    setDeletingTransactionIds((prev) => (prev.includes(transaction.id) ? prev : [...prev, transaction.id]));
+
+    try {
+      const response = await fetch(`/api/transactions/${transaction.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Failed to delete transaction (${response.status})`);
+      }
+
+      setTransactions((prev) => prev.filter((item) => item.id !== transaction.id));
+      setTotal((prev) => Math.max(0, prev - 1));
+      if (transactions.length === 1 && offset > 0) {
+        setOffset((prev) => Math.max(0, prev - PAGE_SIZE));
+      } else {
+        setReloadToken((prev) => prev + 1);
+      }
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : 'Failed to delete transaction');
+    } finally {
+      setDeletingTransactionIds((prev) => prev.filter((id) => id !== transaction.id));
     }
   };
 
@@ -517,6 +598,8 @@ export function TransactionsPage() {
               ) : (
                 transactions.map((tx) => {
                   const isUpdating = updatingTransactionIds.includes(tx.id);
+                  const isDeleting = deletingTransactionIds.includes(tx.id);
+                  const isBusy = isUpdating || isDeleting;
                   const catColor = tx.categoryId ? categoryColorMap.get(tx.categoryId) : undefined;
                   return (
                     <tr
@@ -576,7 +659,11 @@ export function TransactionsPage() {
                           )}
                           <select
                             value={tx.categoryId === null ? 'uncategorized' : String(tx.categoryId)}
-                            disabled={isUpdating}
+                            disabled={isBusy}
+                            ref={(node) => {
+                              if (node) categorySelectRefs.current.set(tx.id, node);
+                              else categorySelectRefs.current.delete(tx.id);
+                            }}
                             onChange={(e) => void onCategoryAssign(tx, e.target.value)}
                             aria-label={`Set category for transaction ${tx.id}`}
                             className="h-7 cursor-pointer appearance-none rounded-full border border-white/70 bg-white/50 pr-6 text-xs font-medium outline-none transition-colors hover:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 disabled:cursor-default disabled:opacity-50"
@@ -625,6 +712,8 @@ export function TransactionsPage() {
                       <td className="px-5 py-1.5">
                         <div className="flex justify-end gap-1">
                           <button
+                            onClick={() => void onEditTransaction(tx)}
+                            disabled={isBusy}
                             className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
                             style={{ color: 'var(--ink-2)' }}
                             title="Edit"
@@ -632,6 +721,8 @@ export function TransactionsPage() {
                             ✎
                           </button>
                           <button
+                            onClick={() => void onDeleteTransaction(tx)}
+                            disabled={isBusy}
                             className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
                             style={{ color: 'var(--accent)' }}
                             title="Delete"

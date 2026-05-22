@@ -387,3 +387,25 @@ transactionsRouter.patch('/:id', async (c) => {
     }
   });
 });
+
+transactionsRouter.delete('/:id', async (c) => {
+  const transactionId = Number(c.req.param('id'));
+  if (!Number.isFinite(transactionId) || transactionId <= 0) {
+    return c.json({ error: 'Invalid transaction id' }, 400);
+  }
+
+  const deletedRows = await db
+    .delete(schema.transactions)
+    .where(eq(schema.transactions.id, transactionId))
+    .returning({ id: schema.transactions.id });
+
+  if (deletedRows.length === 0) {
+    return c.json({ error: 'Transaction not found' }, 404);
+  }
+
+  return c.json({
+    data: {
+      id: deletedRows[0].id
+    }
+  });
+});

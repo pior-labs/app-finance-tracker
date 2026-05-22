@@ -370,7 +370,7 @@ export function CategorizePage() {
       {/* ─── Hero transaction card ─── */}
       {current && (
         <div
-          className="relative overflow-hidden rounded-[36px] border transition-all duration-300"
+          className="relative z-30 rounded-[36px] border transition-all duration-300"
           style={{
             background: 'rgba(255,253,247,0.6)',
             borderColor: 'rgba(255,255,255,0.85)',
@@ -384,7 +384,7 @@ export function CategorizePage() {
         >
           {/* Gradient background */}
           <div
-            className="pointer-events-none absolute inset-0"
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-[36px]"
             style={{
               background: isCredit
                 ? 'radial-gradient(ellipse at 0% 0%, rgba(202,224,168,0.6), transparent 50%), radial-gradient(ellipse at 100% 100%, rgba(198,227,212,0.4), transparent 50%)'
@@ -438,7 +438,7 @@ export function CategorizePage() {
           </div>
 
           {/* Category selection */}
-          <div className="relative z-[1] px-9 pb-7">
+          <div className="relative z-10 px-9 pb-7">
             <div
               className="mb-3.5 text-sm italic"
               style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}
@@ -500,7 +500,7 @@ export function CategorizePage() {
               </button>
               {isCategoryMenuOpen && (
                 <div
-                  className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 max-h-[260px] overflow-y-auto rounded-[22px] border p-2"
+                  className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 max-h-[260px] overflow-y-auto rounded-[22px] border p-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                   style={{
                     background: 'rgba(255,253,247,0.94)',
                     borderColor: 'rgba(255,255,255,0.8)',
@@ -533,7 +533,7 @@ export function CategorizePage() {
 
           {/* Navigation bar */}
           <div
-            className="relative z-[1] flex items-center justify-between border-t border-dashed px-8 py-4"
+            className="relative z-[1] flex items-center justify-between rounded-b-[36px] border-t border-dashed px-8 py-4"
             style={{ borderColor: 'rgba(45,36,24,0.1)', background: 'rgba(255,255,255,0.25)' }}
           >
             <button

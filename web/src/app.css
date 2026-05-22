@@ -70,6 +70,12 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: var(--font-body);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body::-webkit-scrollbar {
+  display: none;
 }
 
 a {

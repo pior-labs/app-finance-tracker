@@ -285,7 +285,7 @@ function MobileNavOverlay({ uncategorizedTotal, userName, onClose, onSignOut }: 
       role="dialog"
       aria-modal="true"
       aria-label="Navigation"
-      className="fixed inset-0 z-50 flex flex-col bg-cream animate-bloom-overlay-in motion-reduce:animate-none md:hidden"
+      className="bloom-overlay-anim fixed inset-0 z-50 flex flex-col bg-cream motion-reduce:animate-none md:hidden"
     >
       <div className="bloom-mesh pointer-events-none" aria-hidden="true">
         <div className="bloom-blob b1" />
@@ -312,7 +312,7 @@ function MobileNavOverlay({ uncategorizedTotal, userName, onClose, onSignOut }: 
         {allItems.map((item, idx) => {
           const showAdminHeader = item.group === 'admin' && allItems[idx - 1]?.group !== 'admin';
           return (
-            <div key={item.path} style={{ animationDelay: `${120 + idx * 70}ms` }} className="animate-bloom-overlay-item-in motion-reduce:animate-none">
+            <div key={item.path} style={{ animationDelay: `${120 + idx * 70}ms` }} className="bloom-overlay-item-anim motion-reduce:animate-none">
               {showAdminHeader && (
                 <div className="mb-2 mt-5 font-serif text-xs italic tracking-[0.18em] uppercase text-ink-3">Admin</div>
               )}

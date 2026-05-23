@@ -285,18 +285,18 @@ export function CategorizePage() {
           </span>
         </div>
         <h2
-          className="m-0 text-[42px] font-normal tracking-tight"
+          className="m-0 text-[32px] font-normal tracking-tight sm:text-[38px] md:text-[42px]"
           style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
         >
           All sorted.
         </h2>
-        <p className="m-0 max-w-[420px] text-base leading-relaxed" style={{ color: 'var(--ink-2)' }}>
+        <p className="m-0 max-w-[420px] px-4 text-[15px] leading-relaxed sm:px-0 sm:text-base" style={{ color: 'var(--ink-2)' }}>
           Every transaction has a home. Your spending picture is complete.
         </p>
-        <div className="mt-2 flex gap-3">
+        <div className="mt-2 flex w-full flex-col items-stretch gap-3 px-4 sm:w-auto sm:flex-row sm:items-center sm:px-0">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-[15px] font-medium no-underline transition-transform hover:-translate-y-px"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-3 text-[15px] font-medium no-underline transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0"
             style={{
               fontFamily: "'Outfit', sans-serif",
               background: 'var(--ink)',
@@ -330,16 +330,16 @@ export function CategorizePage() {
   return (
     <>
       {/* ─── Header ─── */}
-      <header className="flex flex-wrap items-end justify-between gap-6 px-1 pt-3">
-        <div>
-          <div className="text-[13px] tracking-wide" style={{ color: 'var(--ink-3)' }}>
+      <header className="flex flex-col gap-5 px-1 pt-1 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-6 sm:pt-3">
+        <div className="min-w-0">
+          <div className="text-[12px] tracking-wide sm:text-[13px]" style={{ color: 'var(--ink-3)' }}>
             Categorize ·{' '}
             <em style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}>
               {remaining} remaining
             </em>
           </div>
           <h1
-            className="m-0 my-1.5 text-[52px] font-normal leading-none tracking-tight"
+            className="m-0 my-1.5 text-[34px] font-normal leading-[1.05] tracking-tight sm:text-[42px] sm:leading-none md:text-[52px]"
             style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
           >
             Sort your{' '}
@@ -347,16 +347,16 @@ export function CategorizePage() {
           </h1>
         </div>
         {/* Progress */}
-        <div className="flex min-w-[160px] flex-col items-end gap-1.5">
-          <div className="italic" style={{ fontFamily: "'Fraunces', serif", fontSize: 14, color: 'var(--ink-3)' }}>
-            <span className="not-italic text-[28px] font-normal tracking-tight" style={{ color: 'var(--ink)' }}>
+        <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:min-w-40 sm:items-end">
+          <div className="italic" style={{ fontFamily: "'Fraunces', serif", fontSize: 13, color: 'var(--ink-3)' }}>
+            <span className="not-italic text-[22px] font-normal tracking-tight sm:text-[28px]" style={{ color: 'var(--ink)' }}>
               {confirmedList.length}
             </span>{' '}
             of {totalUncategorized}
           </div>
-          <div className="relative h-2 w-40 overflow-hidden rounded-full bg-[rgba(45,36,24,0.06)]">
+          <div className="relative h-2 w-full overflow-hidden rounded-full bg-[rgba(45,36,24,0.06)] sm:w-40">
             <div
-              className="h-full rounded-full transition-all duration-500 ease-out"
+              className="h-full rounded-full transition-all duration-500 ease-out motion-reduce:transition-none"
               style={{
                 width: `${Math.max(progressPct, 2)}%`,
                 background: 'linear-gradient(90deg, #cae0a8, #8eb567)',
@@ -370,7 +370,7 @@ export function CategorizePage() {
       {/* ─── Hero transaction card ─── */}
       {current && (
         <div
-          className="relative z-30 rounded-[36px] border transition-all duration-300"
+          className="relative z-30 rounded-[28px] border transition-all duration-300 motion-reduce:transition-none sm:rounded-[36px]"
           style={{
             background: 'rgba(255,253,247,0.6)',
             borderColor: 'rgba(255,255,255,0.85)',
@@ -384,7 +384,7 @@ export function CategorizePage() {
         >
           {/* Gradient background */}
           <div
-            className="pointer-events-none absolute inset-0 overflow-hidden rounded-[36px]"
+            className="pointer-events-none absolute inset-0 overflow-hidden rounded-[28px] sm:rounded-[36px]"
             style={{
               background: isCredit
                 ? 'radial-gradient(ellipse at 0% 0%, rgba(202,224,168,0.6), transparent 50%), radial-gradient(ellipse at 100% 100%, rgba(198,227,212,0.4), transparent 50%)'
@@ -392,9 +392,9 @@ export function CategorizePage() {
             }}
           />
 
-          {/* Top: meta + amount */}
-          <div className="relative z-[1] flex items-start justify-between px-9 pt-8">
-            <div className="flex items-center gap-2.5">
+          {/* Top: meta + amount — stacked on mobile, side-by-side from sm */}
+          <div className="relative z-[1] flex flex-col gap-3 px-5 pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-7 sm:pt-8 md:px-9">
+            <div className="flex flex-wrap items-center gap-2.5">
               <span className="text-[13px]" style={{ color: 'var(--ink-3)' }}>
                 {formatShortDate(current.date)}
               </span>
@@ -410,37 +410,38 @@ export function CategorizePage() {
               </span>
             </div>
             <div
-              className="text-[64px] font-normal leading-none tracking-tight"
-              style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)', fontFeatureSettings: "'lnum'" }}
+              className="text-[44px] font-normal leading-none tracking-tight tabular-nums sm:text-[52px] md:text-[64px]"
+              style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)', fontFeatureSettings: "'lnum', 'tnum'" }}
+              aria-label={`${isCredit ? 'Credit' : 'Debit'} ${formatMoney(current.amount)}`}
             >
-              <span className="align-top text-4xl" style={{ color: 'var(--ink-3)' }}>
+              <span className="align-top text-[26px] sm:text-[30px] md:text-4xl" style={{ color: 'var(--ink-3)' }}>
                 {isCredit ? '+' : '−'}
               </span>
-              <span className="align-top text-[32px]" style={{ color: 'var(--ink-3)' }}>$</span>
+              <span className="align-top text-[22px] sm:text-[26px] md:text-[32px]" style={{ color: 'var(--ink-3)' }}>$</span>
               {whole}
-              <span className="text-[28px]" style={{ color: 'var(--ink-3)' }}>.{centsPart}</span>
+              <span className="text-[20px] sm:text-[24px] md:text-[28px]" style={{ color: 'var(--ink-3)' }}>.{centsPart}</span>
             </div>
           </div>
 
           {/* Merchant name */}
-          <div className="relative z-[1] px-9 pb-7 pt-5">
+          <div className="relative z-[1] px-5 pb-5 pt-4 sm:px-7 sm:pb-6 sm:pt-5 md:px-9 md:pb-7">
             <h2
-              className="m-0 text-[38px] font-normal leading-tight tracking-tight"
+              className="m-0 text-[26px] font-normal leading-tight tracking-tight sm:text-[32px] md:text-[38px]"
               style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
             >
               {prettyName(current.merchant ?? current.description)}
             </h2>
             {current.merchant && (
-              <p className="m-0 mt-1.5 max-w-[500px] truncate text-sm" style={{ color: 'var(--ink-3)' }}>
+              <p className="m-0 mt-1.5 max-w-[500px] truncate text-[13px] sm:text-sm" style={{ color: 'var(--ink-3)' }}>
                 {current.description}
               </p>
             )}
           </div>
 
           {/* Category selection */}
-          <div className="relative z-10 px-9 pb-7">
+          <div className="relative z-10 px-5 pb-6 sm:px-7 sm:pb-7 md:px-9">
             <div
-              className="mb-3.5 text-sm italic"
+              className="mb-3 text-[13px] italic sm:mb-3.5 sm:text-sm"
               style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}
             >
               Pick a category
@@ -450,17 +451,19 @@ export function CategorizePage() {
                 <button
                   key={cat.id}
                   onClick={() => void assignCategory(cat.id)}
-                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-[0.98]"
+                  className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border px-4 py-2 text-[15px] font-medium transition-all hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-[0.98] sm:min-h-0 sm:text-sm motion-reduce:transform-none motion-reduce:transition-none"
                   style={{
                     fontFamily: "'Outfit', sans-serif",
                     color: 'var(--ink)',
                     borderColor: 'rgba(255,255,255,0.7)',
                     background: `linear-gradient(135deg, ${lighten(cat.color, 0.7)}, ${lighten(cat.color, 0.82)})`,
                     boxShadow: '0 4px 14px -4px rgba(45,36,24,0.1)',
+                    touchAction: 'manipulation',
                   }}
                 >
                   <span
-                    className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-xs"
+                    aria-hidden="true"
+                    className="hidden h-5 w-5 shrink-0 items-center justify-center rounded-md text-xs md:inline-flex"
                     style={{
                       fontFamily: "'Fraunces', serif",
                       background: 'rgba(255,255,255,0.65)',
@@ -471,6 +474,7 @@ export function CategorizePage() {
                     {i === 9 ? 0 : i + 1}
                   </span>
                   <span
+                    aria-hidden="true"
                     className="mr-0.5 h-2.5 w-2.5 shrink-0 rounded-full"
                     style={{ background: cat.color, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.5)' }}
                   />
@@ -486,17 +490,18 @@ export function CategorizePage() {
                 aria-haspopup="listbox"
                 aria-expanded={isCategoryMenuOpen}
                 onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
-                className="flex w-full cursor-pointer items-center justify-between rounded-full border px-5 py-2.5 text-sm italic transition-colors hover:bg-white/75"
+                className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-full border px-5 py-2.5 text-sm italic transition-colors hover:bg-white/75"
                 style={{
                   fontFamily: "'Fraunces', serif",
                   color: 'var(--ink-3)',
                   background: 'rgba(255,255,255,0.5)',
                   borderColor: 'rgba(255,255,255,0.8)',
                   backdropFilter: 'blur(12px)',
+                  touchAction: 'manipulation',
                 }}
               >
                 <span>All {categories.length} categories</span>
-                <span className="not-italic text-[13px]">{isCategoryMenuOpen ? '⌃' : '⌄'}</span>
+                <span aria-hidden="true" className="not-italic text-[13px]">{isCategoryMenuOpen ? '⌃' : '⌄'}</span>
               </button>
               {isCategoryMenuOpen && (
                 <div
@@ -512,8 +517,8 @@ export function CategorizePage() {
                     <button
                       key={cat.id}
                       type="button"
-                      className="flex w-full cursor-pointer items-center gap-2.5 rounded-[14px] border-0 bg-transparent px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-[rgba(45,36,24,0.06)]"
-                      style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
+                      className="flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-[14px] border-0 bg-transparent px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-[rgba(45,36,24,0.06)]"
+                      style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)', touchAction: 'manipulation' }}
                       onClick={() => {
                         void assignCategory(cat.id);
                         setIsCategoryMenuOpen(false);
@@ -533,35 +538,41 @@ export function CategorizePage() {
 
           {/* Navigation bar */}
           <div
-            className="relative z-[1] flex items-center justify-between rounded-b-[36px] border-t border-dashed px-8 py-4"
+            className="relative z-[1] flex items-center justify-between gap-3 rounded-b-[28px] border-t border-dashed px-4 py-3 sm:gap-4 sm:rounded-b-[36px] sm:px-8 sm:py-4"
             style={{ borderColor: 'rgba(45,36,24,0.1)', background: 'rgba(255,255,255,0.25)' }}
           >
             <button
               onClick={goBack}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-full border-0 bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50"
-              style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-3)' }}
+              aria-label="Previous transaction"
+              className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border-0 bg-transparent px-3 py-2 text-sm font-medium transition-colors hover:bg-white/50 sm:px-4"
+              style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-3)', touchAction: 'manipulation' }}
             >
-              <KeyHint char="←" /> Back
+              <span aria-hidden="true" className="hidden md:inline-flex"><KeyHint char="←" /></span>
+              <span aria-hidden="true" className="text-base md:hidden">←</span>
+              <span className="hidden sm:inline">Back</span>
             </button>
             <div
-              className="text-[13px] italic"
+              className="text-[12px] italic tabular-nums sm:text-[13px]"
               style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}
             >
               {positionInBatch} of {remaining + confirmedList.length}
             </div>
             <button
               onClick={skip}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-full px-5 py-2 text-sm font-medium transition-transform hover:-translate-y-px"
+              aria-label="Skip transaction"
+              className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 sm:px-5"
               style={{
                 fontFamily: "'Outfit', sans-serif",
                 background: 'var(--ink)',
                 color: 'var(--cream)',
                 border: 0,
                 boxShadow: '0 6px 18px -6px rgba(45,36,24,0.35)',
+                touchAction: 'manipulation',
               }}
             >
               Skip{' '}
               <span
+                aria-hidden="true"
                 className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-md text-xs font-medium"
                 style={{
                   fontFamily: "'Fraunces', serif",
@@ -578,10 +589,10 @@ export function CategorizePage() {
       )}
 
       {/* ─── Bottom row: up next + confirmed ─── */}
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2">
         {/* Up next */}
         <div
-          className="rounded-[24px] border p-5"
+          className="rounded-[20px] border p-4 sm:rounded-3xl sm:p-5"
           style={{
             background: 'rgba(255,253,247,0.45)',
             borderColor: 'rgba(255,255,255,0.7)',
@@ -614,14 +625,11 @@ export function CategorizePage() {
             </p>
           ) : (
             <div className="flex flex-col gap-1">
-              {upNextPreview.map((tx, i) => (
+              {upNextPreview.map((tx) => (
                 <div
                   key={tx.id}
-                  className="grid items-center gap-2.5 rounded-xl px-1.5 py-2 transition-opacity"
-                  style={{
-                    gridTemplateColumns: '8px 1fr auto',
-                    opacity: 1 - i * 0.2,
-                  }}
+                  className="grid items-center gap-2.5 rounded-xl px-1.5 py-2"
+                  style={{ gridTemplateColumns: '8px 1fr auto' }}
                 >
                   <span
                     className="h-2 w-2 rounded-full"
@@ -652,7 +660,7 @@ export function CategorizePage() {
 
         {/* Just confirmed */}
         <div
-          className="rounded-[24px] border p-5"
+          className="rounded-[20px] border p-4 sm:rounded-3xl sm:p-5"
           style={{
             background: 'rgba(255,253,247,0.45)',
             borderColor: 'rgba(255,255,255,0.7)',
@@ -673,15 +681,18 @@ export function CategorizePage() {
             <button
               onClick={() => void undo()}
               disabled={!lastAction}
-              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] not-italic transition-all enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:bg-white/90 disabled:cursor-default disabled:opacity-35"
+              aria-label="Undo last categorization"
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] not-italic transition-all enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:bg-white/90 disabled:cursor-default disabled:opacity-35 motion-reduce:enabled:hover:translate-y-0 sm:text-[11px]"
               style={{
                 fontFamily: "'Outfit', sans-serif",
                 color: 'var(--ink-2)',
                 background: 'rgba(255,255,255,0.6)',
                 borderColor: 'rgba(255,255,255,0.8)',
+                touchAction: 'manipulation',
               }}
             >
-              <KeyHint char="U" /> undo
+              <span className="hidden md:inline-flex"><KeyHint char="U" /></span>
+              undo
             </button>
           </div>
           {confirmedTop.length === 0 ? (

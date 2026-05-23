@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { BrandMark } from '@/components/BrandMark';
+import { ToastViewport } from '@/hooks/useToast';
 
 const mainNav = [
   { name: 'Dashboard', path: '/', icon: '◐' },
@@ -126,7 +127,7 @@ export function AppShell() {
           type="button"
           aria-label="Close navigation"
           onClick={() => setMobileNavOpen(false)}
-          className="fixed inset-0 z-40 cursor-pointer border-0 bg-ink/40 p-0 animate-bloom-scrim-in motion-reduce:animate-none backdrop-blur-[2px] md:hidden"
+          className="fixed inset-0 z-40 cursor-pointer border-0 bg-ink/40 p-0 animate-bloom-scrim-in motion-reduce:animate-none md:hidden"
         />
       )}
 
@@ -134,7 +135,7 @@ export function AppShell() {
         <aside
           id="bloom-mobile-nav"
           className={[
-            'flex flex-col gap-1.5 rounded-[32px] border border-white/80 bg-[rgba(255,252,244,0.55)] p-[22px_16px_18px] shadow-[0_8px_32px_rgba(45,36,24,0.07),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150',
+            'flex flex-col gap-1.5 rounded-[32px] border border-white/80 bg-cream p-[22px_16px_18px] shadow-[0_8px_32px_rgba(45,36,24,0.07),inset_0_0_0_1px_rgba(255,255,255,0.5)] md:bg-[rgba(255,252,244,0.55)] md:backdrop-blur-xl md:backdrop-saturate-150',
             'fixed left-0 top-0 bottom-0 z-50 w-[min(86vw,320px)] max-h-none rounded-l-none -translate-x-[105%] transition-transform duration-250 motion-reduce:transition-none [padding-top:max(1.375rem,env(safe-area-inset-top))] [padding-bottom:max(1.125rem,env(safe-area-inset-bottom))]',
             mobileNavOpen ? 'translate-x-0 shadow-[24px_0_60px_-20px_rgba(45,36,24,0.3)]' : '',
             'md:sticky md:top-6 md:left-auto md:bottom-auto md:z-auto md:w-auto md:max-h-[calc(100vh-52px)] md:translate-x-0 md:self-start md:overflow-y-auto md:rounded-[32px] md:py-[22px] md:pb-[18px]',
@@ -235,6 +236,7 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+      <ToastViewport />
     </div>
   );
 }

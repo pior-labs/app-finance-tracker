@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/useToast';
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -23,6 +24,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const navigate = useNavigate();
+  const { pushToast } = useToast();
 
   if (!open) return null;
 
@@ -33,7 +35,19 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
     setDragOver(false);
   };
 
+  const notifySuccessIfNeeded = () => {
+    if (state !== 'success' || !result) return;
+    const period =
+      result.periodStart && result.periodEnd ? `${result.periodStart} – ${result.periodEnd}` : result.filename;
+    pushToast({
+      variant: 'success',
+      title: `Imported ${result.transactionCount} ${result.transactionCount === 1 ? 'transaction' : 'transactions'}`,
+      description: period,
+    });
+  };
+
   const handleClose = () => {
+    notifySuccessIfNeeded();
     reset();
     onClose();
   };

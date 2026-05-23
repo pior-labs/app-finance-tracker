@@ -128,6 +128,8 @@ export function TransactionsPage() {
   const [rowHeightPx, setRowHeightPx] = useState<number | null>(null);
   const tableViewportRef = useRef<HTMLDivElement | null>(null);
   const categorySelectRefs = useRef<Map<number, HTMLSelectElement>>(new Map());
+  const rowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
+  const [focusedRowId, setFocusedRowId] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchFilterData = async () => {
@@ -157,8 +159,30 @@ export function TransactionsPage() {
     if (category !== 'all') params.set('category', category);
     if (status !== 'all') params.set('status', status);
     if (merchant.trim()) params.set('merchant', merchant.trim());
+    const focusParam = searchParams.get('focus');
+    if (focusParam) params.set('focus', focusParam);
     if (params.toString() !== searchParams.toString()) setSearchParams(params, { replace: true });
   }, [month, category, status, merchant, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const focusParam = searchParams.get('focus');
+    if (!focusParam) return;
+    const focusId = Number(focusParam);
+    if (!Number.isFinite(focusId)) return;
+    if (loading) return;
+    if (!transactions.some((t) => t.id === focusId)) return;
+
+    const row = rowRefs.current.get(focusId);
+    if (row) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setFocusedRowId(focusId);
+      const timeout = window.setTimeout(() => setFocusedRowId(null), 2400);
+      const params = new URLSearchParams(searchParams);
+      params.delete('focus');
+      setSearchParams(params, { replace: true });
+      return () => window.clearTimeout(timeout);
+    }
+  }, [loading, transactions, searchParams, setSearchParams]);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -601,10 +625,17 @@ export function TransactionsPage() {
                   const isDeleting = deletingTransactionIds.includes(tx.id);
                   const isBusy = isUpdating || isDeleting;
                   const catColor = tx.categoryId ? categoryColorMap.get(tx.categoryId) : undefined;
+                  const isFocused = focusedRowId === tx.id;
                   return (
                     <tr
                       key={tx.id}
-                      className="border-b border-dashed transition-colors hover:bg-white/40"
+                      ref={(node) => {
+                        if (node) rowRefs.current.set(tx.id, node);
+                        else rowRefs.current.delete(tx.id);
+                      }}
+                      className={`border-b border-dashed transition-colors ${
+                        isFocused ? 'bg-(--accent)/15' : 'hover:bg-white/40'
+                      }`}
                       style={{
                         borderColor: 'rgba(45,36,24,0.08)',
                         ...(rowHeightPx ? { height: `${rowHeightPx}px` } : {}),

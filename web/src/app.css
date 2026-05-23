@@ -87,6 +87,7 @@
   --animate-bloom-drift: bloom-drift 22s ease-in-out infinite alternate;
   --animate-bloom-pulse: bloom-pulse 1.4s ease-in-out infinite;
   --animate-bloom-scrim-in: bloom-scrim-in 0.18s ease-out;
+  --animate-bloom-toast-in: bloom-toast-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes bloom-drift {
@@ -100,6 +101,10 @@
 @keyframes bloom-scrim-in {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+@keyframes bloom-toast-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @layer base {

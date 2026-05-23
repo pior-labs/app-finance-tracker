@@ -1,5 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, Check, ChevronDown, Flower2, RotateCcw } from 'lucide-react';
 import { UploadModal } from '@/components/UploadModal';
 import { BrandMark } from '@/components/BrandMark';
 
@@ -131,7 +132,10 @@ export function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerActiveIndex, setPickerActiveIndex] = useState(0);
   const pickerRef = useRef<HTMLDivElement>(null);
+  const pickerTriggerRef = useRef<HTMLButtonElement>(null);
+  const pickerOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const fetchDashboard = useCallback(async () => {
     setLoading(true);
@@ -227,22 +231,103 @@ export function DashboardPage() {
     }
     setSearchParams(next, { replace: true });
     setPickerOpen(false);
+    pickerTriggerRef.current?.focus();
   };
+
+  const openPicker = (focusFirst?: 'selected' | 'first' | 'last') => {
+    const idx =
+      focusFirst === 'first'
+        ? 0
+        : focusFirst === 'last'
+          ? Math.max(0, availableMonths.length - 1)
+          : Math.max(0, availableMonths.indexOf(month));
+    setPickerActiveIndex(idx);
+    setPickerOpen(true);
+  };
+
+  const closePickerAndReturnFocus = () => {
+    setPickerOpen(false);
+    pickerTriggerRef.current?.focus();
+  };
+
+  const onTriggerKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openPicker('selected');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      openPicker('last');
+    }
+  };
+
+  const onListboxKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (availableMonths.length === 0) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closePickerAndReturnFocus();
+      }
+      return;
+    }
+    const last = availableMonths.length - 1;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setPickerActiveIndex((i) => (i >= last ? 0 : i + 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setPickerActiveIndex((i) => (i <= 0 ? last : i - 1));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setPickerActiveIndex(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setPickerActiveIndex(last);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closePickerAndReturnFocus();
+    } else if (e.key === 'Tab') {
+      setPickerOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const node = pickerOptionRefs.current[pickerActiveIndex];
+    if (node) node.focus();
+  }, [pickerOpen, pickerActiveIndex]);
 
   if (error) {
     return (
-      <div className="rounded-3xl border border-[rgba(197,112,74,0.4)] bg-[rgba(245,180,160,0.4)] px-6 py-5 text-[15px] text-[#6b3a1f]">
-        {error}
+      <div
+        role="alert"
+        className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[rgba(197,112,74,0.4)] bg-[rgba(245,180,160,0.4)] px-6 py-5 text-[15px] text-[#6b3a1f]"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="font-serif text-base font-medium">Couldn't load your dashboard</div>
+          <div className="mt-0.5 text-[13px] text-[#7a4b2f]/85">{error}</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => void fetchDashboard()}
+          className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border-0 bg-[#6b3a1f] px-4 py-2 text-[13px] font-medium text-cream shadow-[0_6px_18px_-6px_rgba(107,58,31,0.45)] transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6b3a1f]/40 motion-reduce:hover:translate-y-0"
+        >
+          Try again
+        </button>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6">
-        <div className="h-[100px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
-        <div className="h-[280px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.3fr_1fr_1.1fr]">
+      <div
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+        className="flex flex-col gap-6"
+      >
+        <span className="sr-only">Loading dashboard…</span>
+        <div aria-hidden="true" className="h-[100px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
+        <div aria-hidden="true" className="h-[280px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
+        <div aria-hidden="true" className="grid grid-cols-1 gap-5 lg:grid-cols-[1.3fr_1fr_1.1fr]">
           <div className="h-[200px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
           <div className="h-[200px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
           <div className="h-[200px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
@@ -294,35 +379,47 @@ export function DashboardPage() {
         </div>
         <div ref={pickerRef} className="relative">
           <button
+            ref={pickerTriggerRef}
             type="button"
-            onClick={() => setPickerOpen((v) => !v)}
-            className="flex cursor-pointer items-center gap-2 rounded-full border border-white/80 bg-white/55 px-4 py-2 font-serif text-[15px] italic text-ink shadow-[0_6px_18px_rgba(45,36,24,0.05)] backdrop-blur-xl hover:bg-white/70 sm:px-4.5 sm:text-[17px]"
+            onClick={() => (pickerOpen ? closePickerAndReturnFocus() : openPicker('selected'))}
+            onKeyDown={onTriggerKeyDown}
+            className="flex cursor-pointer items-center gap-2 rounded-full border border-white/80 bg-white/55 px-4 py-2 font-serif text-[15px] italic text-ink shadow-[0_6px_18px_rgba(45,36,24,0.05)] backdrop-blur-xl hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 sm:px-4.5 sm:text-[17px]"
             aria-haspopup="listbox"
             aria-expanded={pickerOpen}
+            aria-controls="bloom-month-listbox"
           >
             <span>{monthLabel}</span>
-            <span>⌄</span>
+            <ChevronDown aria-hidden="true" className="h-4 w-4 text-ink-3" strokeWidth={2.25} />
           </button>
           {pickerOpen && (
             <div
+              id="bloom-month-listbox"
               role="listbox"
-              className="absolute right-0 top-[calc(100%+8px)] z-20 min-w-[220px] rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150"
+              aria-label="Choose month"
+              tabIndex={-1}
+              onKeyDown={onListboxKeyDown}
+              className="absolute right-0 top-[calc(100%+8px)] z-20 min-w-[220px] rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150 focus-visible:outline-none"
             >
               {availableMonths.length === 0 ? (
                 <div className="px-3 py-2.5 text-[13px] text-ink-3">No months yet</div>
               ) : (
-                availableMonths.map((m) => {
+                availableMonths.map((m, idx) => {
                   const isSelected = m === month;
                   const isCurrent = m === getCurrentMonth();
                   return (
                     <button
                       key={m}
+                      ref={(node) => {
+                        pickerOptionRefs.current[idx] = node;
+                      }}
                       type="button"
                       role="option"
                       aria-selected={isSelected}
+                      tabIndex={pickerActiveIndex === idx ? 0 : -1}
                       onClick={() => onPickMonth(m)}
+                      onFocus={() => setPickerActiveIndex(idx)}
                       className={[
-                        'flex w-full cursor-pointer items-center justify-between rounded-xl border-0 px-3 py-2.5 text-left text-sm font-[inherit]',
+                        'flex w-full cursor-pointer items-center justify-between rounded-xl border-0 px-3 py-2.5 text-left text-sm font-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
                         isSelected ? 'bg-ink text-cream' : 'bg-transparent text-ink hover:bg-ink/5',
                       ].join(' ')}
                     >
@@ -351,7 +448,8 @@ export function DashboardPage() {
           <div className="action-bg" />
           <div className="relative z-[1]">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-peach/80 px-3.5 py-1.5 text-[13px] font-medium text-ink-2">
-              ⚘ Needs attention
+              <Flower2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+              Needs attention
             </div>
             <HugeNum value={uncategorizedCount}>
               uncategorized
@@ -404,7 +502,12 @@ export function DashboardPage() {
       ) : monthTx === 0 ? (
         <AllCaughtCard
           tagClass="bg-pistachio/80 text-[#3d6b1f]"
-          tagText="↺ No activity"
+          tagText={
+            <>
+              <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
+              No activity
+            </>
+          }
           mainNum="—"
           subText={
             <>
@@ -424,7 +527,12 @@ export function DashboardPage() {
       ) : (
         <AllCaughtCard
           tagClass="bg-pistachio/80 text-[#3d6b1f]"
-          tagText="✓ All caught up"
+          tagText={
+            <>
+              <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
+              All caught up
+            </>
+          }
           mainNum="0"
           subText={
             <>
@@ -692,7 +800,7 @@ function AllCaughtCard({
   ctaLabel,
 }: {
   tagClass: string;
-  tagText: string;
+  tagText: React.ReactNode;
   mainNum: string;
   subText: React.ReactNode;
   copy: React.ReactNode;
@@ -727,9 +835,11 @@ function AllCaughtCard({
 
 function Arrow() {
   return (
-    <span className="transition-transform duration-200 group-hover:translate-x-[3px] motion-reduce:transition-none">
-      →
-    </span>
+    <ArrowRight
+      aria-hidden="true"
+      className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-[3px] motion-reduce:transition-none"
+      strokeWidth={2.25}
+    />
   );
 }
 

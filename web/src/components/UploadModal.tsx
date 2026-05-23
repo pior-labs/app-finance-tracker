@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight, Check, TriangleAlert, X } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
@@ -131,10 +132,11 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
           </h2>
           <button
             onClick={handleClose}
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
+            aria-label="Close upload dialog"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 transition-colors hover:bg-white/80"
             style={{ color: 'var(--ink-3)' }}
           >
-            ✕
+            <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.25} />
           </button>
         </div>
 
@@ -264,13 +266,14 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
             >
               <div className="flex items-center gap-3.5">
                 <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-bold text-white"
+                  aria-hidden="true"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white"
                   style={{
                     background: 'linear-gradient(135deg, #cae0a8, #8eb567)',
                     boxShadow: '0 4px 14px -2px rgba(93,138,63,0.3)',
                   }}
                 >
-                  ✓
+                  <Check className="h-4 w-4" strokeWidth={2.5} />
                 </span>
                 <div>
                   <div
@@ -303,7 +306,7 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
               </button>
               <button
                 onClick={() => { handleClose(); navigate('/categorize'); }}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 px-5 py-2.5 text-sm font-medium transition-transform hover:-translate-y-px"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 px-5 py-2.5 text-sm font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0"
                 style={{
                   fontFamily: "'Outfit', sans-serif",
                   background: 'var(--ink)',
@@ -311,7 +314,8 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
                   boxShadow: '0 6px 18px -6px rgba(45,36,24,0.35)',
                 }}
               >
-                Categorize {result.transactionCount} →
+                Categorize {result.transactionCount}
+                <ArrowRight aria-hidden="true" className="h-4 w-4" strokeWidth={2.25} />
               </button>
             </div>
           </>
@@ -329,14 +333,15 @@ export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProp
             >
               <div className="flex items-center gap-3.5">
                 <span
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-bold"
+                  aria-hidden="true"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
                   style={{
                     background: 'linear-gradient(135deg, #f8d7c0, #c5704a)',
                     color: 'white',
                     boxShadow: '0 4px 14px -2px rgba(197,112,74,0.3)',
                   }}
                 >
-                  !
+                  <TriangleAlert className="h-4 w-4" strokeWidth={2.25} />
                 </span>
                 <div>
                   <div

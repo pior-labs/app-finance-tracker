@@ -113,7 +113,7 @@ function prettyName(s: string | null | undefined): string {
 
 const PILL_BASE =
   'inline-flex items-center gap-2 rounded-full border border-transparent px-5.5 py-3 font-sans text-[15px] font-medium no-underline cursor-pointer transition-[transform,box-shadow,background-color] duration-150 motion-reduce:transition-none';
-const PILL_PRIMARY = `group ${PILL_BASE} bg-pistachio text-ink ring-1 ring-inset ring-white/60 shadow-[0_10px_26px_-10px_rgba(93,138,63,0.55)] hover:-translate-y-px hover:shadow-[0_14px_32px_-10px_rgba(93,138,63,0.65)] motion-reduce:hover:translate-y-0`;
+const PILL_PRIMARY = `group ${PILL_BASE} bg-ink text-cream shadow-[0_8px_22px_-6px_rgba(45,36,24,0.4)] hover:-translate-y-px hover:shadow-[0_10px_26px_-6px_rgba(45,36,24,0.5)] motion-reduce:hover:translate-y-0`;
 const PILL_GHOST = `${PILL_BASE} bg-transparent text-ink-2 border-ink/20 hover:bg-white/50`;
 const PILL_SMALL =
   'inline-flex items-center gap-2 self-start mt-3.5 rounded-full bg-ink/5 px-4 py-2 font-sans text-[13px] font-medium text-ink cursor-pointer border-0 hover:bg-ink/10';
@@ -323,7 +323,7 @@ export function DashboardPage() {
                       onClick={() => onPickMonth(m)}
                       className={[
                         'flex w-full cursor-pointer items-center justify-between rounded-xl border-0 px-3 py-2.5 text-left text-sm font-[inherit]',
-                        isSelected ? 'bg-pistachio text-ink' : 'bg-transparent text-ink hover:bg-ink/5',
+                        isSelected ? 'bg-ink text-cream' : 'bg-transparent text-ink hover:bg-ink/5',
                       ].join(' ')}
                     >
                       <span>{formatMonthLabel(m)}</span>
@@ -331,7 +331,7 @@ export function DashboardPage() {
                         <span
                           className={[
                             'font-serif text-[11px] italic',
-                            isSelected ? 'text-ink/60' : 'text-ink-3',
+                            isSelected ? 'text-cream/80' : 'text-ink-3',
                           ].join(' ')}
                         >
                           current

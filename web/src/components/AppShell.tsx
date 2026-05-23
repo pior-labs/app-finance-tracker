@@ -20,7 +20,15 @@ export function AppShell() {
   const [uncategorizedTotal, setUncategorizedTotal] = useState(0);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -76,21 +84,41 @@ export function AppShell() {
       </div>
       <div className="bloom-grain" />
 
-      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/70 bg-[rgba(255,252,244,0.85)] px-4 py-3 backdrop-blur-xl backdrop-saturate-150 md:hidden [padding-top:max(0.75rem,env(safe-area-inset-top))]">
-        <Link to="/" className="flex items-center gap-2.5 text-inherit no-underline">
-          <BrandMark size={28} />
-          <span className="font-serif text-[19px] font-medium italic tracking-tight">finlens</span>
-        </Link>
-        <button
-          type="button"
-          aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
-          aria-expanded={mobileNavOpen}
-          aria-controls="bloom-mobile-nav"
-          onClick={() => setMobileNavOpen((v) => !v)}
-          className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-white/80 bg-white/60 p-0 shadow-[inset_0_0_0_1px_rgba(45,36,24,0.04)] hover:bg-white/85"
-        >
-          <BurgerBars open={mobileNavOpen} />
-        </button>
+      <header className="pointer-events-none fixed top-0 left-0 right-0 z-30 md:hidden">
+        <div
+          aria-hidden="true"
+          style={{ transition: 'opacity 300ms ease-out' }}
+          className={[
+            'pointer-events-none absolute inset-0 border-b border-white/70 bg-[rgba(255,252,244,0.85)] backdrop-blur-xl backdrop-saturate-150',
+            scrolled || mobileNavOpen ? 'opacity-0' : 'opacity-100',
+          ].join(' ')}
+        />
+        <div className="relative flex items-center justify-between gap-3 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <Link
+            to="/"
+            style={{ transition: 'opacity 300ms ease-out' }}
+            className={[
+              'flex items-center gap-2.5 text-inherit no-underline',
+              scrolled || mobileNavOpen ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100',
+            ].join(' ')}
+            aria-hidden={scrolled || mobileNavOpen}
+            tabIndex={scrolled || mobileNavOpen ? -1 : 0}
+          >
+            <BrandMark size={28} />
+            <span className="font-serif text-[19px] font-medium italic tracking-tight">finlens</span>
+          </Link>
+          <button
+            type="button"
+            aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
+            aria-expanded={mobileNavOpen}
+            aria-controls="bloom-mobile-nav"
+            onClick={() => setMobileNavOpen((v) => !v)}
+            style={{ transition: 'transform 300ms ease-out, box-shadow 300ms ease-out, background-color 300ms ease-out' }}
+            className="pointer-events-auto inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-ink/10 bg-ink p-0 text-cream shadow-[0_8px_22px_-6px_rgba(45,36,24,0.4)] hover:-translate-y-px hover:bg-ink/95 hover:shadow-[0_10px_26px_-6px_rgba(45,36,24,0.5)] motion-reduce:hover:translate-y-0"
+          >
+            <BurgerBars open={mobileNavOpen} />
+          </button>
+        </div>
       </header>
 
       {mobileNavOpen && (
@@ -102,7 +130,7 @@ export function AppShell() {
         />
       )}
 
-      <div className="relative z-[2] mx-auto grid max-w-[1320px] grid-cols-1 gap-0 px-4 pt-4 pb-12 md:grid-cols-[220px_1fr] md:gap-7 md:px-8 md:pt-6 md:pb-15">
+      <div className="relative z-[2] mx-auto grid max-w-[1320px] grid-cols-1 gap-0 px-4 pt-[calc(68px+env(safe-area-inset-top))] pb-12 md:grid-cols-[220px_1fr] md:gap-7 md:px-8 md:pt-6 md:pb-15">
         <aside
           id="bloom-mobile-nav"
           className={[
@@ -215,7 +243,7 @@ function navLinkClass(isActive: boolean) {
   const base =
     'flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm font-medium no-underline transition-colors';
   return isActive
-    ? `${base} bg-pistachio text-ink shadow-[0_6px_18px_-8px_rgba(93,138,63,0.45)] ring-1 ring-inset ring-white/60`
+    ? `${base} bg-ink text-cream shadow-[0_6px_18px_-6px_rgba(45,36,24,0.35)]`
     : `${base} text-ink-2 hover:bg-white/50 hover:text-ink`;
 }
 
@@ -224,7 +252,7 @@ function NavIcon({ active, children }: { active: boolean; children: React.ReactN
     <span
       className={[
         'inline-flex h-5.5 w-5.5 flex-shrink-0 items-center justify-center rounded-full text-xs shadow-[inset_0_0_0_1px_rgba(45,36,24,0.08)]',
-        active ? 'bg-cream text-ink shadow-[inset_0_0_0_1px_rgba(45,36,24,0.08)]' : 'bg-white/70 text-ink-2',
+        active ? 'bg-pistachio text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)]' : 'bg-white/70 text-ink-2',
       ].join(' ')}
       style={{ width: 22, height: 22 }}
     >
@@ -237,15 +265,15 @@ function BurgerBars({ open }: { open: boolean }) {
   return (
     <span className="relative inline-block h-3.5 w-[18px]">
       <span
-        className="absolute left-0 right-0 h-0.5 rounded-sm bg-ink transition-[transform,opacity,top] duration-200"
+        className="absolute left-0 right-0 h-0.5 rounded-sm bg-cream transition-[transform,opacity,top] duration-200"
         style={{ top: open ? 6 : 0, transform: open ? 'rotate(45deg)' : 'none' }}
       />
       <span
-        className="absolute left-0 right-0 h-0.5 rounded-sm bg-ink transition-[transform,opacity,top] duration-200"
+        className="absolute left-0 right-0 h-0.5 rounded-sm bg-cream transition-[transform,opacity,top] duration-200"
         style={{ top: 6, opacity: open ? 0 : 1 }}
       />
       <span
-        className="absolute left-0 right-0 h-0.5 rounded-sm bg-ink transition-[transform,opacity,top] duration-200"
+        className="absolute left-0 right-0 h-0.5 rounded-sm bg-cream transition-[transform,opacity,top] duration-200"
         style={{ top: open ? 6 : 12, transform: open ? 'rotate(-45deg)' : 'none' }}
       />
     </span>

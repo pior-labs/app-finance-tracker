@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UploadModal } from '@/components/UploadModal';
+import { BrandMark } from '@/components/BrandMark';
 
 interface CategorySpending {
   categoryId?: number;
@@ -110,6 +111,13 @@ function prettyName(s: string | null | undefined): string {
   return s.replace(/\b\w+/g, (w) => w[0] + w.slice(1).toLowerCase());
 }
 
+const PILL_BASE =
+  'inline-flex items-center gap-2 rounded-full border border-transparent px-5.5 py-3 font-sans text-[15px] font-medium no-underline cursor-pointer transition-[transform,box-shadow,background-color] duration-150 motion-reduce:transition-none';
+const PILL_PRIMARY = `group ${PILL_BASE} bg-pistachio text-ink ring-1 ring-inset ring-white/60 shadow-[0_10px_26px_-10px_rgba(93,138,63,0.55)] hover:-translate-y-px hover:shadow-[0_14px_32px_-10px_rgba(93,138,63,0.65)] motion-reduce:hover:translate-y-0`;
+const PILL_GHOST = `${PILL_BASE} bg-transparent text-ink-2 border-ink/20 hover:bg-white/50`;
+const PILL_SMALL =
+  'inline-flex items-center gap-2 self-start mt-3.5 rounded-full bg-ink/5 px-4 py-2 font-sans text-[13px] font-medium text-ink cursor-pointer border-0 hover:bg-ink/10';
+
 export function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const monthFromUrl = searchParams.get('month');
@@ -200,8 +208,7 @@ export function DashboardPage() {
   const monthTx = stats?.data.monthTransactionCount ?? 0;
   const totalTx = stats?.data.totalTransactionCount ?? 0;
   const categorizedCount = Math.max(0, monthTx - uncategorizedCount);
-  const categorizedPct =
-    monthTx > 0 ? Math.round((categorizedCount / monthTx) * 100) : 0;
+  const categorizedPct = monthTx > 0 ? Math.round((categorizedCount / monthTx) * 100) : 0;
   const totalSpentCents = stats?.data.totalSpentCents ?? 0;
   const latestStatement = stats?.meta?.latestStatement;
   const monthLabel = formatMonthLabel(month);
@@ -224,49 +231,41 @@ export function DashboardPage() {
 
   if (error) {
     return (
-      <>
-        <style>{DASHBOARD_CSS}</style>
-        <div className="dash-error">{error}</div>
-      </>
+      <div className="rounded-3xl border border-[rgba(197,112,74,0.4)] bg-[rgba(245,180,160,0.4)] px-6 py-5 text-[15px] text-[#6b3a1f]">
+        {error}
+      </div>
     );
   }
 
   if (loading) {
     return (
-      <>
-        <style>{DASHBOARD_CSS}</style>
-        <div className="dash-skeleton">
-          <div className="sk-header" />
-          <div className="sk-action" />
-          <div className="sk-trio">
-            <div className="sk-card" />
-            <div className="sk-card" />
-            <div className="sk-card" />
-          </div>
+      <div className="flex flex-col gap-6">
+        <div className="h-[100px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
+        <div className="h-[280px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.3fr_1fr_1.1fr]">
+          <div className="h-[200px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
+          <div className="h-[200px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
+          <div className="h-[200px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
         </div>
-      </>
+      </div>
     );
   }
 
   if (totalTx === 0) {
     return (
       <>
-        <style>{DASHBOARD_CSS}</style>
-        <div className="dash-empty">
-          <div className="dash-empty-mark">
-            <span className="petal p1" />
-            <span className="petal p2" />
-            <span className="petal p3" />
-            <span className="brand-core" />
-          </div>
-          <h2>Nothing here yet.</h2>
-          <p>
+        <div className="flex flex-col items-center gap-3.5 px-6 py-15 text-center">
+          <BrandMark size={64} className="mb-2" />
+          <h2 className="m-0 font-serif text-4xl font-normal tracking-tight text-ink">
+            Nothing here yet.
+          </h2>
+          <p className="m-0 max-w-[460px] text-[15px] text-ink-2">
             Upload your first bank statement and we'll show you a month-at-a-glance picture of
             your spending.
           </p>
-          <div className="dash-empty-buttons">
-            <button className="pill-btn primary" onClick={() => setUploadOpen(true)}>
-              Upload statement <span className="arr">→</span>
+          <div className="mt-2 flex gap-2.5">
+            <button className={PILL_PRIMARY} onClick={() => setUploadOpen(true)}>
+              Upload statement <Arrow />
             </button>
           </div>
         </div>
@@ -281,33 +280,36 @@ export function DashboardPage() {
 
   return (
     <>
-      <style>{DASHBOARD_CSS}</style>
-
-      <header className="b-head">
+      <header className="flex flex-wrap items-end justify-between gap-6 px-0.5 pt-3 sm:px-1">
         <div>
-          <div className="b-eyebrow">
-            Overview · <em>{monthLabel}</em>
+          <div className="text-[13px] tracking-wide text-ink-3">
+            Overview · <em className="font-serif italic text-ink-2 not-italic">{monthLabel}</em>
           </div>
-          <h1 className="b-title">
-            {isCurrentMonth ? 'This month' : <em>{monthLabel}</em>}
+          <h1 className="my-1.5 font-serif text-[36px] font-normal leading-none tracking-[-0.03em] text-ink sm:text-[44px] lg:text-[56px]">
+            {isCurrentMonth ? 'This month' : <em className="font-light italic text-accent">{monthLabel}</em>}
           </h1>
-          <p className="b-sub">Your spending, at a glance.</p>
+          <p className="m-0 max-w-[520px] text-[15px] text-ink-2 sm:text-base">
+            Your spending, at a glance.
+          </p>
         </div>
-        <div ref={pickerRef} className="b-month-wrap">
+        <div ref={pickerRef} className="relative">
           <button
             type="button"
             onClick={() => setPickerOpen((v) => !v)}
-            className="b-month-pill"
+            className="flex cursor-pointer items-center gap-2 rounded-full border border-white/80 bg-white/55 px-4 py-2 font-serif text-[15px] italic text-ink shadow-[0_6px_18px_rgba(45,36,24,0.05)] backdrop-blur-xl hover:bg-white/70 sm:px-4.5 sm:text-[17px]"
             aria-haspopup="listbox"
             aria-expanded={pickerOpen}
           >
             <span>{monthLabel}</span>
-            <span className="dot">⌄</span>
+            <span>⌄</span>
           </button>
           {pickerOpen && (
-            <div role="listbox" className="b-month-menu">
+            <div
+              role="listbox"
+              className="absolute right-0 top-[calc(100%+8px)] z-20 min-w-[220px] rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150"
+            >
               {availableMonths.length === 0 ? (
-                <div className="b-month-empty">No months yet</div>
+                <div className="px-3 py-2.5 text-[13px] text-ink-3">No months yet</div>
               ) : (
                 availableMonths.map((m) => {
                   const isSelected = m === month;
@@ -319,10 +321,22 @@ export function DashboardPage() {
                       role="option"
                       aria-selected={isSelected}
                       onClick={() => onPickMonth(m)}
-                      className={`b-month-opt${isSelected ? ' selected' : ''}`}
+                      className={[
+                        'flex w-full cursor-pointer items-center justify-between rounded-xl border-0 px-3 py-2.5 text-left text-sm font-[inherit]',
+                        isSelected ? 'bg-pistachio text-ink' : 'bg-transparent text-ink hover:bg-ink/5',
+                      ].join(' ')}
                     >
                       <span>{formatMonthLabel(m)}</span>
-                      {isCurrent && <span className="b-month-current">current</span>}
+                      {isCurrent && (
+                        <span
+                          className={[
+                            'font-serif text-[11px] italic',
+                            isSelected ? 'text-ink/60' : 'text-ink-3',
+                          ].join(' ')}
+                        >
+                          current
+                        </span>
+                      )}
                     </button>
                   );
                 })
@@ -333,105 +347,114 @@ export function DashboardPage() {
       </header>
 
       {uncategorizedCount > 0 ? (
-        <section className="action-card">
+        <section className="bloom-glass relative grid grid-cols-1 gap-5 overflow-hidden rounded-[36px] p-5 sm:p-7 lg:grid-cols-[1.4fr_1fr] lg:gap-8 lg:p-9">
           <div className="action-bg" />
-          <div className="action-left">
-            <div className="tag tag-warm">⚘ Needs attention</div>
-            <div className="huge-num">
-              {uncategorizedCount}
-              <span className="huge-sub">
-                uncategorized
-                <br />
-                transactions
-              </span>
+          <div className="relative z-[1]">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-peach/80 px-3.5 py-1.5 text-[13px] font-medium text-ink-2">
+              ⚘ Needs attention
             </div>
-            <p className="action-copy">
-              Categorize these to complete the picture for <em>{monthLabel}</em>.
+            <HugeNum value={uncategorizedCount}>
+              uncategorized
+              <br />
+              transactions
+            </HugeNum>
+            <p className="mb-4 mt-0 max-w-[480px] font-serif text-[17px] font-normal leading-[1.5] text-ink-2 sm:text-[19px]">
+              Categorize these to complete the picture for <em className="italic text-accent">{monthLabel}</em>.
             </p>
-            <div className="action-buttons">
-              <Link to="/categorize" className="pill-btn primary">
-                Categorize now <span className="arr">→</span>
+            <div className="flex flex-wrap gap-2.5">
+              <Link to="/categorize" className={PILL_PRIMARY}>
+                Categorize now <Arrow />
               </Link>
-              <Link to={needsReviewHref} className="pill-btn ghost">
+              <Link to={needsReviewHref} className={PILL_GHOST}>
                 Open list
               </Link>
             </div>
           </div>
-          <div className="action-right">
-            <div className="recent-head">Recent uncategorized</div>
+          <div className="relative z-[1] self-center rounded-3xl border border-white/70 bg-white/55 p-4 backdrop-blur-md sm:p-5">
+            <div className="mb-3.5 font-serif text-sm italic text-ink-3">Recent uncategorized</div>
             {recentUncategorized.map((t) => (
-              <div key={t.id} className="recent-row">
-                <span className="r-dot" />
-                <span className="r-date">{formatShortDate(t.date)}</span>
-                <span className="r-name">{prettyName(t.merchant ?? t.description)}</span>
-                <span className="r-amt">{formatMoney(t.amount)}</span>
+              <div
+                key={t.id}
+                className="grid grid-cols-[8px_auto_1fr_auto] items-center gap-2 border-b border-dashed border-ink/10 py-2.5 text-[13px] last:border-b-0 sm:grid-cols-[8px_56px_1fr_auto] sm:gap-2.5 sm:text-sm"
+              >
+                <span className="h-2 w-2 rounded-full bg-[linear-gradient(135deg,#f8d7c0,#c5704a)]" />
+                <span className="text-[11px] text-ink-3 sm:text-xs">{formatShortDate(t.date)}</span>
+                <span className="overflow-hidden truncate whitespace-nowrap font-medium">
+                  {prettyName(t.merchant ?? t.description)}
+                </span>
+                <span className="font-serif text-base font-medium">{formatMoney(t.amount)}</span>
               </div>
             ))}
             {uncategorizedCount > recentUncategorized.length && (
-              <div className="recent-more">
+              <div className="mt-3 text-center font-serif text-[13px] italic text-ink-3">
                 + {uncategorizedCount - recentUncategorized.length} more
               </div>
             )}
           </div>
         </section>
       ) : monthTx === 0 ? (
-        <section className="action-card all-caught">
-          <div className="action-bg" />
-          <div className="action-left">
-            <div className="tag tag-good">↺ No activity</div>
-            <div className="huge-num">
-              —
-              <span className="huge-sub">
-                transactions in
-                <br />
-                this month
-              </span>
-            </div>
-            <p className="action-copy">
-              No transactions were found for <em>{monthLabel}</em>.
-            </p>
-            <div className="action-buttons">
-              <Link to="/transactions" className="pill-btn primary">
-                View all transactions <span className="arr">→</span>
-              </Link>
-            </div>
-          </div>
-        </section>
+        <AllCaughtCard
+          tagClass="bg-pistachio/80 text-[#3d6b1f]"
+          tagText="↺ No activity"
+          mainNum="—"
+          subText={
+            <>
+              transactions in
+              <br />
+              this month
+            </>
+          }
+          copy={
+            <>
+              No transactions were found for <em className="italic text-accent">{monthLabel}</em>.
+            </>
+          }
+          ctaTo="/transactions"
+          ctaLabel="View all transactions"
+        />
       ) : (
-        <section className="action-card all-caught">
-          <div className="action-bg" />
-          <div className="action-left">
-            <div className="tag tag-good">✓ All caught up</div>
-            <div className="huge-num">
-              0
-              <span className="huge-sub">
-                left to
-                <br />
-                categorize
-              </span>
-            </div>
-            <p className="action-copy">
-              Everything for <em>{monthLabel}</em> is sorted.
-            </p>
-            <div className="action-buttons">
-              <Link to={monthTransactionsHref} className="pill-btn primary">
-                View transactions <span className="arr">→</span>
-              </Link>
-            </div>
-          </div>
-        </section>
+        <AllCaughtCard
+          tagClass="bg-pistachio/80 text-[#3d6b1f]"
+          tagText="✓ All caught up"
+          mainNum="0"
+          subText={
+            <>
+              left to
+              <br />
+              categorize
+            </>
+          }
+          copy={
+            <>
+              Everything for <em className="italic text-accent">{monthLabel}</em> is sorted.
+            </>
+          }
+          ctaTo={monthTransactionsHref}
+          ctaLabel="View transactions"
+        />
       )}
 
-      <section className="stat-trio">
-        <div className="stat-card peach">
-          <div className="stat-cap">{isCurrentMonth ? 'Spent this month' : `Spent in ${monthLabel}`}</div>
-          <div className="stat-figure">
-            <span className="ccy">$</span>
-            {splitMoney(totalSpentCents).whole}
-            <span className="cents">.{splitMoney(totalSpentCents).cents}</span>
+      <section className="grid grid-cols-1 gap-5 lg:grid-cols-[1.3fr_1fr_1.1fr]">
+        <StatCard tint="stat-card-peach">
+          <div className="font-serif text-[15px] italic text-ink-2">
+            {isCurrentMonth ? 'Spent this month' : `Spent in ${monthLabel}`}
           </div>
-          <div className="stat-meta">{monthTx} transactions</div>
-          <svg className="wave" viewBox="0 0 200 40" preserveAspectRatio="none">
+          <div
+            className="my-1.5 font-serif text-[44px] font-normal leading-[1.05] tracking-[-0.03em] text-ink lining-nums sm:text-[56px]"
+          >
+            <span className="text-2xl text-ink-3 align-top sm:text-[30px]">$</span>
+            {splitMoney(totalSpentCents).whole}
+            <span className="text-xl text-ink-3 sm:text-[26px]">
+              .{splitMoney(totalSpentCents).cents}
+            </span>
+          </div>
+          <div className="text-[13px] text-ink-2">{monthTx} transactions</div>
+          <svg
+            className="-mx-5.5 -mb-5 mt-3.5 block h-[50px] w-[calc(100%+44px)] sm:-mx-7 sm:-mb-6 sm:w-[calc(100%+56px)]"
+            viewBox="0 0 200 40"
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
             <path
               d="M0 28 Q 25 18 50 22 T 100 24 T 150 16 T 200 22 L 200 40 L 0 40 Z"
               fill="rgba(255,255,255,0.4)"
@@ -443,63 +466,59 @@ export function DashboardPage() {
               fill="none"
             />
           </svg>
-        </div>
+        </StatCard>
 
-        <div className="stat-card pistachio">
-          <div className="stat-cap">Categorized</div>
-          <div className="stat-figure big-pct">
+        <StatCard tint="stat-card-pistachio">
+          <div className="font-serif text-[15px] italic text-ink-2">Categorized</div>
+          <div className="my-1.5 font-serif text-[64px] font-normal leading-[1.05] tracking-[-0.03em] text-ink lining-nums sm:text-[80px]">
             {categorizedPct}
-            <span className="pct-sign">%</span>
+            <span className="ml-1 text-[26px] text-ink-3 sm:text-[32px]">%</span>
           </div>
-          <div className="ring-wrap">
+          <div className="mt-auto flex items-center gap-4">
             <Donut pct={categorizedPct} />
-            <div className="ring-meta">
+            <div className="text-[13px] leading-[1.4]">
               <div>
-                <b>{categorizedCount}</b> sorted
+                <b className="font-serif text-[22px] font-medium">{categorizedCount}</b> sorted
               </div>
-              <div className="dim">{uncategorizedCount} to go</div>
+              <div className="text-xs text-ink-3">{uncategorizedCount} to go</div>
             </div>
           </div>
-        </div>
+        </StatCard>
 
-        <div className="stat-card lavender">
-          <div className="stat-cap">Latest statement</div>
+        <StatCard tint="stat-card-lavender">
+          <div className="font-serif text-[15px] italic text-ink-2">Latest statement</div>
           {latestStatement ? (
             <>
-              <div className="stmt-period">
+              <div className="my-2 mb-3.5 font-serif text-[28px] font-normal tracking-[-0.01em] text-ink">
                 {formatStatementPeriod(latestStatement.periodStart, latestStatement.periodEnd)}
               </div>
-              <div className="stmt-meta-row">
-                <span className="avatar">
+              <div className="flex items-center gap-3 text-[13px]">
+                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f8d7c0,#c5704a)] font-serif text-[17px] text-white shadow-[0_4px_10px_rgba(45,36,24,0.15)]">
                   {latestStatement.uploadedByName?.[0]?.toUpperCase() ?? '?'}
                 </span>
                 <div>
-                  <div className="stmt-uploader">uploaded by {latestStatement.uploadedByName}</div>
-                  <div className="dim">{latestStatement.transactionCount} entries</div>
+                  <div className="text-ink">uploaded by {latestStatement.uploadedByName}</div>
+                  <div className="text-xs text-ink-3">{latestStatement.transactionCount} entries</div>
                 </div>
               </div>
             </>
           ) : (
-            <div className="stmt-period dim">No statements yet</div>
+            <div className="my-2 mb-3.5 font-serif text-lg text-ink-3">No statements yet</div>
           )}
-          <button className="pill-btn small" onClick={() => setUploadOpen(true)}>
+          <button className={PILL_SMALL} onClick={() => setUploadOpen(true)}>
             + Upload next
           </button>
-        </div>
+        </StatCard>
       </section>
 
-      <section className="bottom-grid">
-        <div className="big-card">
-          <div className="bc-head">
-            <h3 className="bc-title">By category</h3>
-            <span className="bc-sub">where your money went</span>
-          </div>
+      <section className="grid grid-cols-1 gap-5.5 lg:grid-cols-[1.2fr_1fr]">
+        <BigCard title="By category" sub="where your money went">
           {categoryRows.length === 0 ? (
-            <p className="bc-empty">No categorized spending yet.</p>
+            <p className="m-0 text-sm text-ink-3">No categorized spending yet.</p>
           ) : (
-            <div className="cat-list">
+            <div className="flex flex-col gap-3.5">
               {categoryRows.slice(0, 8).map((c, i) => (
-                <div key={c.category} className="cat-row">
+                <div key={c.category}>
                   <Link
                     to={
                       c.categoryId
@@ -509,18 +528,20 @@ export function DashboardPage() {
                           }).toString()}`
                         : monthTransactionsHref
                     }
-                    className="cat-name-row cat-link"
+                    className="mb-1.5 flex items-baseline gap-2.5 rounded-xl text-inherit no-underline transition-colors hover:bg-ink/5"
                   >
                     <span
-                      className="cat-bubble"
+                      className="h-2.5 w-2.5 flex-shrink-0 self-center rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]"
                       style={{ background: PALETTE[i % PALETTE.length] }}
                     />
-                    <span className="cat-name">{c.category}</span>
-                    <span className="cat-amt">{formatMoney(c.totalCents, { showCents: false })}</span>
+                    <span className="flex-1 text-[15px] font-medium text-ink">{c.category}</span>
+                    <span className="font-serif text-base font-medium text-ink sm:text-lg">
+                      {formatMoney(c.totalCents, { showCents: false })}
+                    </span>
                   </Link>
-                  <div className="cat-bar-wrap">
+                  <div className="h-3 overflow-hidden rounded-full bg-ink/5">
                     <div
-                      className="cat-bar-fill"
+                      className="h-full rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-[width] duration-[600ms] motion-reduce:transition-none"
                       style={{
                         width: `${(c.totalCents / maxCategoryCents) * 100}%`,
                         background: `linear-gradient(90deg, ${PALETTE[i % PALETTE.length]}, ${
@@ -533,28 +554,24 @@ export function DashboardPage() {
               ))}
             </div>
           )}
-        </div>
+        </BigCard>
 
-        <div className="big-card">
-          <div className="bc-head">
-            <h3 className="bc-title">Top merchants</h3>
-            <span className="bc-sub">your most-visited</span>
-          </div>
+        <BigCard title="Top merchants" sub="your most-visited">
           {merchantRows.length === 0 ? (
-            <p className="bc-empty">No merchant data yet.</p>
+            <p className="m-0 text-sm text-ink-3">No merchant data yet.</p>
           ) : (
-            <ul className="merch-list">
+            <ul className="m-0 flex list-none flex-col gap-3.5 p-0">
               {merchantRows.slice(0, 6).map((m, i) => (
-                <li key={m.merchant} className="merch-li">
+                <li key={m.merchant} className="flex items-center gap-3.5">
                   <Link
                     to={`/transactions?${new URLSearchParams({
                       month,
                       merchant: m.merchant,
                     }).toString()}`}
-                    className="merch-link"
+                    className="-mx-1.5 -my-1 flex w-full items-center gap-3.5 rounded-[14px] px-1.5 py-1 text-inherit no-underline transition-colors hover:bg-ink/5"
                   >
                     <div
-                      className="m-avatar"
+                      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full font-serif text-lg font-medium text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5),0_4px_12px_rgba(45,36,24,0.08)] sm:h-11 sm:w-11 sm:text-xl"
                       style={{
                         background: `linear-gradient(135deg, ${PALETTE[i % PALETTE.length]}, ${
                           PALETTE[(i + 2) % PALETTE.length]
@@ -563,21 +580,27 @@ export function DashboardPage() {
                     >
                       {m.merchant[0]?.toUpperCase() ?? '?'}
                     </div>
-                    <div className="m-main">
-                      <div className="m-name-row">
-                        <span className="m-name">{prettyName(m.merchant)}</span>
-                        <span className="m-amt">{formatMoney(m.totalCents)}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <span className="overflow-hidden truncate whitespace-nowrap text-[15px] font-medium text-ink">
+                          {prettyName(m.merchant)}
+                        </span>
+                        <span className="flex-shrink-0 font-serif text-base font-medium text-ink sm:text-lg">
+                          {formatMoney(m.totalCents)}
+                        </span>
                       </div>
                       {m.transactionCount && m.transactionCount > 0 ? (
-                        <div className="m-visits">
+                        <div className="mt-1 flex items-center gap-[3px]">
                           {Array.from({ length: Math.min(m.transactionCount, 14) }).map((_, k) => (
                             <span
                               key={k}
-                              className="visit-dot"
+                              className="h-[5px] w-[5px] rounded-full opacity-70"
                               style={{ background: PALETTE[i % PALETTE.length] }}
                             />
                           ))}
-                          <span className="m-count">{m.transactionCount} visits</span>
+                          <span className="ml-2 font-serif text-xs italic text-ink-3">
+                            {m.transactionCount} visits
+                          </span>
                         </div>
                       ) : null}
                     </div>
@@ -586,7 +609,7 @@ export function DashboardPage() {
               ))}
             </ul>
           )}
-        </div>
+        </BigCard>
       </section>
 
       <UploadModal
@@ -598,12 +621,115 @@ export function DashboardPage() {
   );
 }
 
+function HugeNum({ value, children }: { value: number | string; children: React.ReactNode }) {
+  return (
+    <div className="my-3 flex flex-wrap items-end gap-3 font-serif text-[84px] font-light leading-[0.9] tracking-[-0.05em] text-ink sm:text-[120px] sm:gap-4 lg:text-[168px] lg:gap-4.5">
+      {value}
+      <span className="pb-1.5 font-sans text-base font-normal leading-[1.25] tracking-normal text-ink-2 sm:pb-3 sm:text-lg lg:pb-4.5">
+        {children}
+      </span>
+    </div>
+  );
+}
+
+function StatCard({
+  tint,
+  children,
+}: {
+  tint: 'stat-card-peach' | 'stat-card-pistachio' | 'stat-card-lavender';
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={[
+        tint,
+        'relative flex min-h-0 flex-col overflow-hidden rounded-[26px] border border-white/80 p-5.5 backdrop-blur-xl backdrop-saturate-150 shadow-[0_12px_36px_-10px_rgba(45,36,24,0.1)] sm:min-h-[200px] sm:rounded-[30px] sm:p-7',
+      ].join(' ')}
+    >
+      {children}
+    </div>
+  );
+}
+
+function BigCard({
+  title,
+  sub,
+  children,
+}: {
+  title: string;
+  sub: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bloom-glass relative rounded-[26px] p-5 sm:rounded-[32px] sm:p-8">
+      <div className="mb-5.5">
+        <h3 className="m-0 font-serif text-[22px] font-normal leading-[1.1] tracking-[-0.02em] text-ink sm:text-[28px]">
+          {title}
+        </h3>
+        <span className="mt-0.5 block font-serif text-sm italic text-ink-3">{sub}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function AllCaughtCard({
+  tagClass,
+  tagText,
+  mainNum,
+  subText,
+  copy,
+  ctaTo,
+  ctaLabel,
+}: {
+  tagClass: string;
+  tagText: string;
+  mainNum: string;
+  subText: React.ReactNode;
+  copy: React.ReactNode;
+  ctaTo: string;
+  ctaLabel: string;
+}) {
+  return (
+    <section className="bloom-glass relative overflow-hidden rounded-[36px] p-5 sm:p-7 lg:p-9">
+      <div className="action-bg all-caught" />
+      <div className="relative z-[1]">
+        <div
+          className={[
+            'inline-flex items-center gap-1.5 rounded-full border border-white/60 px-3.5 py-1.5 text-[13px] font-medium',
+            tagClass,
+          ].join(' ')}
+        >
+          {tagText}
+        </div>
+        <HugeNum value={mainNum}>{subText}</HugeNum>
+        <p className="mb-4 mt-0 max-w-[480px] font-serif text-[17px] font-normal leading-[1.5] text-ink-2 sm:text-[19px]">
+          {copy}
+        </p>
+        <div className="flex flex-wrap gap-2.5">
+          <Link to={ctaTo} className={PILL_PRIMARY}>
+            {ctaLabel} <Arrow />
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Arrow() {
+  return (
+    <span className="transition-transform duration-200 group-hover:translate-x-[3px] motion-reduce:transition-none">
+      →
+    </span>
+  );
+}
+
 function Donut({ pct }: { pct: number }) {
   const r = 30;
   const c = 2 * Math.PI * r;
   const off = c - (c * pct) / 100;
   return (
-    <svg className="donut" viewBox="0 0 80 80" width="80" height="80">
+    <svg viewBox="0 0 80 80" width="80" height="80" role="img" aria-label={`${pct} percent categorized`}>
       <defs>
         <linearGradient id="dash-donut-grad" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stopColor="#5d8a3f" />
@@ -626,544 +752,3 @@ function Donut({ pct }: { pct: number }) {
     </svg>
   );
 }
-
-const DASHBOARD_CSS = `
-.b-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  padding: 12px 4px 0;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-.b-eyebrow {
-  font-size: 13px;
-  color: var(--ink-3);
-  letter-spacing: 0.02em;
-}
-.b-eyebrow em { font-family: 'Fraunces', serif; font-style: italic; color: var(--ink-2); }
-.b-title {
-  font-family: 'Fraunces', serif;
-  font-size: 56px;
-  font-weight: 400;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  margin: 6px 0 6px;
-  color: var(--ink);
-}
-.b-title em { font-style: italic; font-weight: 300; color: var(--accent); }
-.b-sub { color: var(--ink-2); font-size: 16px; margin: 0; max-width: 520px; }
-
-.b-month-wrap { position: relative; }
-.b-month-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 18px;
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(255,255,255,0.8);
-  border-radius: 999px;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-size: 17px;
-  color: var(--ink);
-  box-shadow: 0 6px 18px rgba(45,36,24,0.05);
-  cursor: pointer;
-}
-.b-month-pill:hover { background: rgba(255,255,255,0.7); }
-.b-month-menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 8px);
-  z-index: 20;
-  min-width: 220px;
-  background: rgba(255,253,247,0.92);
-  border: 1px solid rgba(255,255,255,0.8);
-  border-radius: 18px;
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  box-shadow: 0 14px 36px -8px rgba(45,36,24,0.18), inset 0 0 0 1px rgba(255,255,255,0.5);
-  padding: 6px;
-}
-.b-month-empty { padding: 10px 12px; font-size: 13px; color: var(--ink-3); }
-.b-month-opt {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 12px;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--ink);
-  border: 0;
-  font-size: 14px;
-  font-family: inherit;
-  cursor: pointer;
-  text-align: left;
-}
-.b-month-opt:hover { background: rgba(45,36,24,0.06); }
-.b-month-opt.selected { background: var(--ink); color: var(--cream); }
-.b-month-current {
-  font-size: 11px;
-  color: var(--ink-3);
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-}
-.b-month-opt.selected .b-month-current { color: var(--cream); opacity: 0.8; }
-
-.action-card {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 32px;
-  padding: 36px;
-  border-radius: 36px;
-  background: rgba(255,253,247,0.55);
-  border: 1px solid rgba(255,255,255,0.8);
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
-  box-shadow: 0 16px 50px -10px rgba(45,36,24,0.12), inset 0 0 0 1px rgba(255,255,255,0.5);
-  overflow: hidden;
-}
-.action-card.all-caught { grid-template-columns: 1fr; }
-.action-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 10% 100%, rgba(202,224,168,0.5), transparent 40%),
-    radial-gradient(circle at 90% 0%, rgba(248,215,192,0.6), transparent 50%);
-  pointer-events: none;
-}
-.action-card.all-caught .action-bg {
-  background:
-    radial-gradient(circle at 10% 100%, rgba(202,224,168,0.7), transparent 50%),
-    radial-gradient(circle at 90% 0%, rgba(198,227,212,0.6), transparent 50%);
-}
-.action-left, .action-right { position: relative; z-index: 1; }
-.tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: rgba(248,215,192,0.7);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--ink-2);
-  border: 1px solid rgba(255,255,255,0.6);
-}
-.tag-warm { background: rgba(248,215,192,0.8); }
-.tag-good { background: rgba(202,224,168,0.8); color: #3d6b1f; }
-.huge-num {
-  font-family: 'Fraunces', serif;
-  font-size: 168px;
-  font-weight: 300;
-  line-height: 0.9;
-  letter-spacing: -0.05em;
-  margin: 12px 0;
-  display: flex;
-  align-items: flex-end;
-  gap: 18px;
-  color: var(--ink);
-}
-.huge-sub {
-  font-size: 18px;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 400;
-  color: var(--ink-2);
-  line-height: 1.25;
-  padding-bottom: 18px;
-  letter-spacing: 0;
-}
-.action-copy {
-  font-family: 'Fraunces', serif;
-  font-size: 19px;
-  line-height: 1.5;
-  color: var(--ink-2);
-  margin: 0 0 22px;
-  max-width: 480px;
-  font-weight: 400;
-}
-.action-copy em { font-style: italic; color: var(--accent); }
-.action-buttons { display: flex; gap: 10px; }
-.pill-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 22px;
-  border-radius: 999px;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 500;
-  font-size: 15px;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
-  text-decoration: none;
-}
-.pill-btn.primary {
-  background: var(--ink);
-  color: var(--cream);
-  box-shadow: 0 8px 22px -6px rgba(45,36,24,0.4);
-}
-.pill-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 10px 26px -6px rgba(45,36,24,0.5); }
-.pill-btn.primary .arr { transition: transform 0.2s; }
-.pill-btn.primary:hover .arr { transform: translateX(3px); }
-.pill-btn.ghost {
-  background: transparent;
-  color: var(--ink-2);
-  border: 1px solid rgba(45,36,24,0.18);
-}
-.pill-btn.ghost:hover { background: rgba(255,255,255,0.5); }
-.pill-btn.small {
-  padding: 8px 16px;
-  font-size: 13px;
-  background: rgba(45,36,24,0.06);
-  color: var(--ink);
-  margin-top: 14px;
-  align-self: flex-start;
-}
-.pill-btn.small:hover { background: rgba(45,36,24,0.12); }
-
-.action-right {
-  align-self: center;
-  background: rgba(255,255,255,0.55);
-  border: 1px solid rgba(255,255,255,0.7);
-  border-radius: 24px;
-  padding: 22px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.recent-head {
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-size: 14px;
-  color: var(--ink-3);
-  margin-bottom: 14px;
-}
-.recent-row {
-  display: grid;
-  grid-template-columns: 8px 56px 1fr auto;
-  gap: 10px;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px dashed rgba(45,36,24,0.1);
-  font-size: 14px;
-}
-.recent-row:last-of-type { border-bottom: 0; }
-.r-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: linear-gradient(135deg, #f8d7c0, #c5704a);
-}
-.r-date { font-size: 12px; color: var(--ink-3); }
-.r-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.r-amt { font-family: 'Fraunces', serif; font-weight: 500; font-size: 16px; }
-.recent-more {
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-size: 13px;
-  color: var(--ink-3);
-  text-align: center;
-  margin-top: 12px;
-}
-
-.stat-trio {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr 1.1fr;
-  gap: 20px;
-}
-.stat-card {
-  position: relative;
-  border-radius: 30px;
-  padding: 26px 28px 24px;
-  border: 1px solid rgba(255,255,255,0.8);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  box-shadow: 0 12px 36px -10px rgba(45,36,24,0.1);
-  overflow: hidden;
-  min-height: 200px;
-  display: flex;
-  flex-direction: column;
-}
-.stat-card.peach    { background: linear-gradient(135deg, rgba(248,215,192,0.75), rgba(245,227,160,0.55)); }
-.stat-card.pistachio{ background: linear-gradient(135deg, rgba(202,224,168,0.75), rgba(198,227,212,0.55)); }
-.stat-card.lavender { background: linear-gradient(135deg, rgba(220,211,240,0.75), rgba(248,215,192,0.4)); }
-
-.stat-cap {
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-size: 15px;
-  color: var(--ink-2);
-}
-.stat-figure {
-  font-family: 'Fraunces', serif;
-  font-weight: 400;
-  font-size: 56px;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-  margin: 4px 0 8px;
-  font-feature-settings: 'lnum';
-  color: var(--ink);
-}
-.ccy { font-size: 30px; color: var(--ink-3); vertical-align: top; }
-.cents { font-size: 26px; color: var(--ink-3); }
-.big-pct { font-size: 80px; }
-.pct-sign { font-size: 32px; color: var(--ink-3); margin-left: 4px; }
-.stat-meta { font-size: 13px; color: var(--ink-2); }
-.wave {
-  width: calc(100% + 56px);
-  height: 50px;
-  margin: 14px -28px -24px;
-  display: block;
-}
-
-.ring-wrap {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: auto;
-}
-.ring-meta { font-size: 13px; line-height: 1.4; }
-.ring-meta b { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; }
-.ring-meta .dim { color: var(--ink-3); }
-
-.stmt-period {
-  font-family: 'Fraunces', serif;
-  font-size: 28px;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  margin: 6px 0 14px;
-  color: var(--ink);
-}
-.stmt-period.dim { color: var(--ink-3); font-size: 18px; }
-.stmt-meta-row { display: flex; gap: 12px; align-items: center; font-size: 13px; }
-.avatar {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f8d7c0, #c5704a);
-  color: #fff;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Fraunces', serif;
-  font-size: 17px;
-  box-shadow: 0 4px 10px rgba(45,36,24,0.15);
-  flex-shrink: 0;
-}
-.stmt-uploader { color: var(--ink); }
-.dim { color: var(--ink-3); font-size: 12px; }
-
-.bottom-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 22px;
-}
-.big-card {
-  position: relative;
-  border-radius: 32px;
-  padding: 30px 32px 32px;
-  background: rgba(255,253,247,0.55);
-  border: 1px solid rgba(255,255,255,0.8);
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
-  box-shadow: 0 14px 44px -10px rgba(45,36,24,0.1), inset 0 0 0 1px rgba(255,255,255,0.45);
-}
-.bc-head { margin-bottom: 22px; }
-.bc-title {
-  font-family: 'Fraunces', serif;
-  font-size: 28px;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  margin: 0;
-  line-height: 1.1;
-  color: var(--ink);
-}
-.bc-sub {
-  display: block;
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-size: 14px;
-  color: var(--ink-3);
-  margin-top: 2px;
-}
-.bc-empty {
-  font-size: 14px;
-  color: var(--ink-3);
-  margin: 0;
-}
-
-.cat-list { display: flex; flex-direction: column; gap: 14px; }
-.cat-name-row {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-.cat-link {
-  text-decoration: none;
-  color: inherit;
-  border-radius: 10px;
-  transition: background 0.15s ease;
-}
-.cat-link:hover { background: rgba(45,36,24,0.05); }
-.cat-bubble {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  align-self: center;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
-}
-.cat-name { flex: 1; font-weight: 500; font-size: 15px; color: var(--ink); }
-.cat-amt { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; color: var(--ink); }
-.cat-bar-wrap {
-  height: 12px;
-  background: rgba(45,36,24,0.06);
-  border-radius: 999px;
-  overflow: hidden;
-}
-.cat-bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
-  transition: width 0.6s ease;
-}
-
-.merch-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 14px; }
-.merch-li { display: flex; gap: 14px; align-items: center; }
-.merch-link {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  text-decoration: none;
-  color: inherit;
-  border-radius: 14px;
-  padding: 4px 6px;
-  margin: -4px -6px;
-  transition: background 0.15s ease;
-}
-.merch-link:hover { background: rgba(45,36,24,0.05); }
-.m-avatar {
-  width: 44px; height: 44px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Fraunces', serif;
-  font-size: 20px;
-  font-weight: 500;
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5), 0 4px 12px rgba(45,36,24,0.08);
-}
-.m-main { flex: 1; min-width: 0; }
-.m-name-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.m-name {
-  font-weight: 500;
-  font-size: 15px;
-  color: var(--ink);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.m-amt { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 500; color: var(--ink); flex-shrink: 0; }
-.m-visits { display: flex; align-items: center; gap: 3px; margin-top: 4px; }
-.visit-dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  opacity: 0.7;
-}
-.m-count {
-  margin-left: 8px;
-  font-size: 12px;
-  color: var(--ink-3);
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-}
-
-.dash-error {
-  padding: 20px 24px;
-  border-radius: 24px;
-  background: rgba(245,180,160,0.4);
-  border: 1px solid rgba(197,112,74,0.4);
-  color: #6b3a1f;
-  font-size: 15px;
-}
-
-.dash-skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-.dash-skeleton .sk-header,
-.dash-skeleton .sk-action,
-.dash-skeleton .sk-card {
-  background: rgba(255,253,247,0.5);
-  border: 1px solid rgba(255,255,255,0.6);
-  border-radius: 28px;
-  animation: bloom-pulse 1.4s ease-in-out infinite;
-}
-.dash-skeleton .sk-header { height: 100px; }
-.dash-skeleton .sk-action { height: 280px; }
-.dash-skeleton .sk-trio { display: grid; grid-template-columns: 1.3fr 1fr 1.1fr; gap: 20px; }
-.dash-skeleton .sk-card { height: 200px; }
-@keyframes bloom-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 0.9; }
-}
-
-.dash-empty {
-  text-align: center;
-  padding: 60px 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-}
-.dash-empty-mark {
-  position: relative;
-  width: 64px; height: 64px;
-  margin-bottom: 8px;
-}
-.dash-empty-mark .petal {
-  position: absolute;
-  width: 26px; height: 40px;
-  border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
-  left: 19px; top: 0;
-  transform-origin: 50% 100%;
-}
-.dash-empty-mark .p1 { transform: rotate(0deg); background: #cae0a8; }
-.dash-empty-mark .p2 { transform: rotate(120deg); background: #f8d7c0; }
-.dash-empty-mark .p3 { transform: rotate(240deg); background: #dcd3f0; }
-.dash-empty-mark .brand-core {
-  position: absolute;
-  width: 18px; height: 18px;
-  background: #fdf9f0;
-  border-radius: 50%;
-  left: 23px; top: 23px;
-  border: 2px solid var(--ink);
-  z-index: 2;
-}
-.dash-empty h2 {
-  font-family: 'Fraunces', serif;
-  font-size: 36px;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  margin: 0;
-  color: var(--ink);
-}
-.dash-empty p {
-  max-width: 460px;
-  color: var(--ink-2);
-  font-size: 15px;
-  margin: 0;
-}
-.dash-empty-buttons { display: flex; gap: 10px; margin-top: 8px; }
-
-@media (max-width: 980px) {
-  .action-card { grid-template-columns: 1fr; }
-  .stat-trio { grid-template-columns: 1fr; }
-  .bottom-grid { grid-template-columns: 1fr; }
-  .huge-num { font-size: 120px; }
-  .b-title { font-size: 44px; }
-}
-`;

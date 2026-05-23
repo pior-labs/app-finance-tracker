@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { BrandMark } from '@/components/BrandMark';
 
 const mainNav = [
   { name: 'Dashboard', path: '/', icon: '◐' },
@@ -18,6 +19,7 @@ export function AppShell() {
   const location = useLocation();
   const [uncategorizedTotal, setUncategorizedTotal] = useState(0);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,6 +37,24 @@ export function AppShell() {
   }, [location.pathname]);
 
   useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileNavOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [mobileNavOpen]);
+
+  useEffect(() => {
     if (!profileMenuOpen) return;
     const onDocClick = (e: MouseEvent) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
@@ -46,81 +66,127 @@ export function AppShell() {
   }, [profileMenuOpen]);
 
   return (
-    <div className="bloom-root">
-      <style>{BLOOM_SHELL_CSS}</style>
-
-      <div className="mesh">
-        <div className="blob b1" />
-        <div className="blob b2" />
-        <div className="blob b3" />
-        <div className="blob b4" />
-        <div className="blob b5" />
+    <div className="bloom-root relative min-h-screen bg-cream text-ink font-sans text-[15px] leading-[1.55]">
+      <div className="bloom-mesh">
+        <div className="bloom-blob b1" />
+        <div className="bloom-blob b2" />
+        <div className="bloom-blob b3" />
+        <div className="bloom-blob b4" />
+        <div className="bloom-blob b5" />
       </div>
-      <div className="grain" />
+      <div className="bloom-grain" />
 
-      <div className="bloom-frame">
-        <aside className="bloom-side">
-          <Link to="/" className="brand">
-            <span className="brand-mark">
-              <span className="petal p1" />
-              <span className="petal p2" />
-              <span className="petal p3" />
-              <span className="brand-core" />
-            </span>
-            <span className="brand-text">finlens</span>
+      <header className="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-white/70 bg-[rgba(255,252,244,0.85)] px-4 py-3 backdrop-blur-xl backdrop-saturate-150 md:hidden [padding-top:max(0.75rem,env(safe-area-inset-top))]">
+        <Link to="/" className="flex items-center gap-2.5 text-inherit no-underline">
+          <BrandMark size={28} />
+          <span className="font-serif text-[19px] font-medium italic tracking-tight">finlens</span>
+        </Link>
+        <button
+          type="button"
+          aria-label={mobileNavOpen ? 'Close navigation' : 'Open navigation'}
+          aria-expanded={mobileNavOpen}
+          aria-controls="bloom-mobile-nav"
+          onClick={() => setMobileNavOpen((v) => !v)}
+          className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-white/80 bg-white/60 p-0 shadow-[inset_0_0_0_1px_rgba(45,36,24,0.04)] hover:bg-white/85"
+        >
+          <BurgerBars open={mobileNavOpen} />
+        </button>
+      </header>
+
+      {mobileNavOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation"
+          onClick={() => setMobileNavOpen(false)}
+          className="fixed inset-0 z-40 cursor-pointer border-0 bg-ink/40 p-0 animate-bloom-scrim-in motion-reduce:animate-none backdrop-blur-[2px] md:hidden"
+        />
+      )}
+
+      <div className="relative z-[2] mx-auto grid max-w-[1320px] grid-cols-1 gap-0 px-4 pt-4 pb-12 md:grid-cols-[220px_1fr] md:gap-7 md:px-8 md:pt-6 md:pb-15">
+        <aside
+          id="bloom-mobile-nav"
+          className={[
+            'flex flex-col gap-1.5 rounded-[32px] border border-white/80 bg-[rgba(255,252,244,0.55)] p-[22px_16px_18px] shadow-[0_8px_32px_rgba(45,36,24,0.07),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150',
+            'fixed left-0 top-0 bottom-0 z-50 w-[min(86vw,320px)] max-h-none rounded-l-none -translate-x-[105%] transition-transform duration-250 motion-reduce:transition-none [padding-top:max(1.375rem,env(safe-area-inset-top))] [padding-bottom:max(1.125rem,env(safe-area-inset-bottom))]',
+            mobileNavOpen ? 'translate-x-0 shadow-[24px_0_60px_-20px_rgba(45,36,24,0.3)]' : '',
+            'md:sticky md:top-6 md:left-auto md:bottom-auto md:z-auto md:w-auto md:max-h-[calc(100vh-52px)] md:translate-x-0 md:self-start md:overflow-y-auto md:rounded-[32px] md:py-[22px] md:pb-[18px]',
+          ].join(' ')}
+        >
+          <Link
+            to="/"
+            className="mb-2 flex items-center gap-3 border-b border-dashed border-ink/10 px-2 pb-3.5 text-inherit no-underline max-md:hidden"
+          >
+            <BrandMark size={34} />
+            <span className="font-serif text-[22px] font-medium italic tracking-tight">finlens</span>
           </Link>
 
-          <nav className="bloom-nav">
+          <nav className="flex flex-col gap-0.5">
             {mainNav.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
                 end={item.path === '/'}
-                className={({ isActive }) => `bn${isActive ? ' active' : ''}`}
+                className={({ isActive }) => navLinkClass(isActive)}
               >
-                <span className="bn-icon">{item.icon}</span>
-                <span className="bn-label">{item.name}</span>
-                {item.badgeKey === 'uncategorized' && uncategorizedTotal > 0 && (
-                  <span className="bn-badge">{uncategorizedTotal}</span>
+                {({ isActive }) => (
+                  <>
+                    <NavIcon active={isActive}>{item.icon}</NavIcon>
+                    <span className="flex-1">{item.name}</span>
+                    {item.badgeKey === 'uncategorized' && uncategorizedTotal > 0 && (
+                      <span className="ml-auto rounded-full bg-[linear-gradient(135deg,#f8d7c0,#f5b893)] px-2.5 py-px font-serif text-xs font-semibold text-[#6b3a1f] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+                        {uncategorizedTotal}
+                      </span>
+                    )}
+                  </>
                 )}
               </NavLink>
             ))}
           </nav>
 
-          <div className="nav-section-label">Admin</div>
-          <nav className="bloom-nav">
+          <div className="px-3 pt-3 pb-1 font-serif text-xs italic tracking-wide text-ink-3">Admin</div>
+          <nav className="flex flex-col gap-0.5">
             {adminNav.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
-                className={({ isActive }) => `bn${isActive ? ' active' : ''}`}
+                className={({ isActive }) => navLinkClass(isActive)}
               >
-                <span className="bn-icon">{item.icon}</span>
-                <span className="bn-label">{item.name}</span>
+                {({ isActive }) => (
+                  <>
+                    <NavIcon active={isActive}>{item.icon}</NavIcon>
+                    <span className="flex-1">{item.name}</span>
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>
 
-          <div className="side-spacer" />
+          <div className="min-h-3 flex-1" />
 
-          <div ref={profileMenuRef} className="profile-wrap">
+          <div ref={profileMenuRef} className="relative border-t border-dashed border-ink/10 pt-3">
             <button
               type="button"
               onClick={() => setProfileMenuOpen((v) => !v)}
               aria-haspopup="menu"
               aria-expanded={profileMenuOpen}
-              className={`profile-card${profileMenuOpen ? ' open' : ''}`}
+              className={[
+                'flex w-full cursor-pointer items-center gap-2.5 rounded-2xl border-0 bg-transparent p-[8px_10px] text-left font-[inherit] transition-colors hover:bg-white/50',
+                profileMenuOpen ? 'bg-white/70' : '',
+              ].join(' ')}
             >
-              <span className="profile-avatar">
+              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#dcd3f0,#f8d7c0)] font-serif text-[15px] text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]">
                 {user?.name?.[0]?.toUpperCase() ?? '?'}
               </span>
-              <span className="profile-info">
-                <span className="profile-name">{user?.name ?? 'Account'}</span>
-                <span className="profile-meta">Account ⌄</span>
+              <span className="flex min-w-0 flex-1 flex-col leading-[1.15]">
+                <span className="truncate font-serif text-[15px] text-ink">{user?.name ?? 'Account'}</span>
+                <span className="text-[11px] text-ink-3">Account ⌄</span>
               </span>
             </button>
             {profileMenuOpen && (
-              <div role="menu" className="profile-menu">
+              <div
+                role="menu"
+                className="absolute bottom-full left-0 right-0 z-20 mb-2 rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150"
+              >
                 <button
                   type="button"
                   role="menuitem"
@@ -128,7 +194,7 @@ export function AppShell() {
                     setProfileMenuOpen(false);
                     void logout();
                   }}
-                  className="profile-menu-item"
+                  className="w-full cursor-pointer rounded-xl border-0 bg-transparent px-3 py-2.5 text-left font-[inherit] text-[13px] text-ink hover:bg-ink/5"
                 >
                   Sign out
                 </button>
@@ -137,7 +203,7 @@ export function AppShell() {
           </div>
         </aside>
 
-        <main className="bloom-main">
+        <main className="flex min-w-0 flex-col gap-6">
           <Outlet />
         </main>
       </div>
@@ -145,267 +211,43 @@ export function AppShell() {
   );
 }
 
-const BLOOM_SHELL_CSS = `
-.bloom-root {
-  --cream: #fdf9f0;
-  --pistachio: #cae0a8;
-  --peach: #f8d7c0;
-  --lavender: #dcd3f0;
-  --ink: #2d2418;
-  --ink-2: #574532;
-  --ink-3: #9c8a73;
-  --accent: #c5704a;
-  min-height: 100vh;
-  background: var(--cream);
-  color: var(--ink);
-  font-family: 'Outfit', system-ui, sans-serif;
-  font-size: 15px;
-  line-height: 1.55;
-  position: relative;
-}
-.bloom-root .mesh {
-  position: fixed; inset: 0;
-  z-index: 0;
-  filter: blur(60px);
-  pointer-events: none;
-  opacity: 0.8;
-  overflow: hidden;
-}
-.bloom-root .blob {
-  position: absolute;
-  border-radius: 50%;
-  mix-blend-mode: multiply;
-}
-.bloom-root .b1 { width: 50vw; height: 50vw; top: -10vw; left: -10vw; background: #cae0a8; animation: bloom-drift 22s ease-in-out infinite alternate; }
-.bloom-root .b2 { width: 45vw; height: 45vw; top: 10vw; right: -15vw; background: #f8d7c0; animation: bloom-drift 28s ease-in-out infinite alternate-reverse; }
-.bloom-root .b3 { width: 40vw; height: 40vw; bottom: -10vw; left: 15vw; background: #dcd3f0; animation: bloom-drift 26s ease-in-out infinite alternate; }
-.bloom-root .b4 { width: 30vw; height: 30vw; top: 40vw; left: 30vw; background: #f5e3a0; animation: bloom-drift 32s ease-in-out infinite alternate-reverse; opacity: 0.7; }
-.bloom-root .b5 { width: 28vw; height: 28vw; bottom: 5vw; right: 10vw; background: #c6e3d4; animation: bloom-drift 30s ease-in-out infinite alternate; }
-@keyframes bloom-drift {
-  0%   { transform: translate(0,0) scale(1); }
-  100% { transform: translate(40px, -50px) scale(1.08); }
+function navLinkClass(isActive: boolean) {
+  const base =
+    'flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm font-medium no-underline transition-colors';
+  return isActive
+    ? `${base} bg-pistachio text-ink shadow-[0_6px_18px_-8px_rgba(93,138,63,0.45)] ring-1 ring-inset ring-white/60`
+    : `${base} text-ink-2 hover:bg-white/50 hover:text-ink`;
 }
 
-.bloom-root .grain {
-  position: fixed; inset: 0; z-index: 1; pointer-events: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  opacity: 0.45;
-  mix-blend-mode: multiply;
+function NavIcon({ active, children }: { active: boolean; children: React.ReactNode }) {
+  return (
+    <span
+      className={[
+        'inline-flex h-5.5 w-5.5 flex-shrink-0 items-center justify-center rounded-full text-xs shadow-[inset_0_0_0_1px_rgba(45,36,24,0.08)]',
+        active ? 'bg-cream text-ink shadow-[inset_0_0_0_1px_rgba(45,36,24,0.08)]' : 'bg-white/70 text-ink-2',
+      ].join(' ')}
+      style={{ width: 22, height: 22 }}
+    >
+      {children}
+    </span>
+  );
 }
 
-.bloom-frame {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 28px;
-  padding: 26px 32px 60px;
-  max-width: 1320px;
-  margin: 0 auto;
+function BurgerBars({ open }: { open: boolean }) {
+  return (
+    <span className="relative inline-block h-3.5 w-[18px]">
+      <span
+        className="absolute left-0 right-0 h-0.5 rounded-sm bg-ink transition-[transform,opacity,top] duration-200"
+        style={{ top: open ? 6 : 0, transform: open ? 'rotate(45deg)' : 'none' }}
+      />
+      <span
+        className="absolute left-0 right-0 h-0.5 rounded-sm bg-ink transition-[transform,opacity,top] duration-200"
+        style={{ top: 6, opacity: open ? 0 : 1 }}
+      />
+      <span
+        className="absolute left-0 right-0 h-0.5 rounded-sm bg-ink transition-[transform,opacity,top] duration-200"
+        style={{ top: open ? 6 : 12, transform: open ? 'rotate(-45deg)' : 'none' }}
+      />
+    </span>
+  );
 }
-
-.bloom-side {
-  position: sticky;
-  top: 26px;
-  align-self: start;
-  max-height: calc(100vh - 52px);
-  overflow-y: auto;
-  background: rgba(255, 252, 244, 0.55);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  border: 1px solid rgba(255,255,255,0.8);
-  border-radius: 32px;
-  padding: 22px 16px 18px;
-  box-shadow: 0 8px 32px rgba(45,36,24,0.07), inset 0 0 0 1px rgba(255,255,255,0.5);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.bloom-side .brand {
-  display: flex; align-items: center; gap: 12px;
-  padding: 0 8px 14px;
-  border-bottom: 1px dashed rgba(45,36,24,0.12);
-  text-decoration: none;
-  color: inherit;
-  margin-bottom: 8px;
-}
-.bloom-side .brand-mark {
-  position: relative;
-  width: 34px; height: 34px;
-  flex-shrink: 0;
-}
-.bloom-side .brand-mark .petal {
-  position: absolute;
-  width: 14px; height: 22px;
-  border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
-  background: var(--pistachio);
-  left: 10px; top: 0;
-  transform-origin: 50% 100%;
-}
-.bloom-side .brand-mark .p1 { transform: rotate(0deg); background: #cae0a8; }
-.bloom-side .brand-mark .p2 { transform: rotate(120deg); background: #f8d7c0; }
-.bloom-side .brand-mark .p3 { transform: rotate(240deg); background: #dcd3f0; }
-.bloom-side .brand-core {
-  position: absolute;
-  width: 10px; height: 10px;
-  background: #fdf9f0;
-  border-radius: 50%;
-  left: 12px; top: 12px;
-  border: 1.5px solid var(--ink);
-  z-index: 2;
-}
-.bloom-side .brand-text {
-  font-family: 'Fraunces', serif;
-  font-size: 22px;
-  font-weight: 500;
-  letter-spacing: -0.02em;
-  font-style: italic;
-}
-
-.bloom-side .bloom-nav { display: flex; flex-direction: column; gap: 2px; }
-.bloom-side .bn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--ink-2);
-  transition: background 0.2s, color 0.2s;
-  text-decoration: none;
-}
-.bloom-side .bn:hover { background: rgba(255,255,255,0.5); color: var(--ink); }
-.bloom-side .bn.active {
-  background: var(--ink);
-  color: var(--cream);
-  box-shadow: 0 6px 18px -6px rgba(45,36,24,0.35);
-}
-.bloom-side .bn-icon {
-  display: inline-flex;
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.7);
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  color: var(--ink-2);
-  box-shadow: inset 0 0 0 1px rgba(45,36,24,0.08);
-  flex-shrink: 0;
-}
-.bloom-side .bn.active .bn-icon {
-  background: var(--pistachio);
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4);
-}
-.bloom-side .bn-label { flex: 1; }
-.bloom-side .bn-badge {
-  margin-left: auto;
-  background: linear-gradient(135deg, #f8d7c0, #f5b893);
-  color: #6b3a1f;
-  font-family: 'Fraunces', serif;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 1px 9px;
-  border-radius: 999px;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
-}
-
-.bloom-side .nav-section-label {
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-size: 12px;
-  color: var(--ink-3);
-  padding: 12px 12px 4px;
-  letter-spacing: 0.02em;
-}
-
-.bloom-side .side-spacer { flex: 1; min-height: 12px; }
-
-.bloom-side .profile-wrap {
-  position: relative;
-  padding-top: 12px;
-  border-top: 1px dashed rgba(45,36,24,0.12);
-}
-.bloom-side .profile-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  width: 100%;
-  background: transparent;
-  border: 0;
-  border-radius: 16px;
-  cursor: pointer;
-  font-family: inherit;
-  text-align: left;
-  transition: background 0.15s;
-}
-.bloom-side .profile-card:hover { background: rgba(255,255,255,0.5); }
-.bloom-side .profile-card.open { background: rgba(255,255,255,0.7); }
-.bloom-side .profile-avatar {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #dcd3f0, #f8d7c0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: 'Fraunces', serif;
-  font-size: 15px;
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
-  flex-shrink: 0;
-}
-.bloom-side .profile-info {
-  line-height: 1.15;
-  min-width: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-.bloom-side .profile-name {
-  font-family: 'Fraunces', serif;
-  font-size: 15px;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.bloom-side .profile-meta { font-size: 11px; color: var(--ink-3); }
-
-.bloom-side .profile-menu {
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  right: 0;
-  margin-bottom: 8px;
-  background: rgba(255,253,247,0.92);
-  backdrop-filter: blur(20px) saturate(140%);
-  -webkit-backdrop-filter: blur(20px) saturate(140%);
-  border: 1px solid rgba(255,255,255,0.8);
-  border-radius: 18px;
-  padding: 6px;
-  box-shadow: 0 14px 36px -8px rgba(45,36,24,0.18), inset 0 0 0 1px rgba(255,255,255,0.5);
-  z-index: 20;
-}
-.bloom-side .profile-menu-item {
-  width: 100%;
-  background: transparent;
-  border: 0;
-  padding: 9px 12px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-family: inherit;
-  color: var(--ink);
-  cursor: pointer;
-  text-align: left;
-}
-.bloom-side .profile-menu-item:hover { background: rgba(45,36,24,0.06); }
-
-.bloom-main {
-  display: flex;
-  flex-direction: column;
-  gap: 26px;
-  min-width: 0;
-}
-`;

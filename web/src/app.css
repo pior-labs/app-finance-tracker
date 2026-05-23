@@ -1,7 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  /* Warm sketch palette — from FinLens wireframes */
+  /* Bloom palette — current design system */
+  --cream: #fdf9f0;
+  --pistachio: #cae0a8;
+  --peach: #f8d7c0;
+  --lavender: #dcd3f0;
+  --ink: #2d2418;
+  --ink-2: #574532;
+  --ink-3: #9c8a73;
+  --accent: #c5704a;
+
+  /* Sketch palette — legacy, retained for components/ui base */
   --background: #f0eee9;
   --foreground: #2a251f;
   --card: #fdfbf6;
@@ -13,7 +23,6 @@
   --primary: #c96442;
   --primary-foreground: #fdfbf6;
   --primary-soft: #f3d9cf;
-  --accent: #c98e42;
   --accent-foreground: #2a251f;
   --accent-soft: #f3e3cf;
   --destructive: #c96442;
@@ -34,6 +43,17 @@
 }
 
 @theme inline {
+  /* Bloom palette */
+  --color-cream: var(--cream);
+  --color-pistachio: var(--pistachio);
+  --color-peach: var(--peach);
+  --color-lavender: var(--lavender);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-accent: var(--accent);
+
+  /* Sketch palette */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -45,7 +65,6 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-soft: var(--primary-soft);
-  --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-soft: var(--accent-soft);
   --color-destructive: var(--destructive);
@@ -53,11 +72,34 @@
   --color-good-soft: var(--good-soft);
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
+
   --radius-sketch: var(--radius);
   --radius-sketch-sm: var(--radius-sm);
   --shadow-sketch: 2px 3px 0 0 var(--border);
   --shadow-sketch-sm: 1.5px 2px 0 0 var(--border);
   --shadow-sketch-xs: 1px 1.5px 0 0 var(--border);
+
+  /* Fonts (Bloom) */
+  --font-serif: "Fraunces", serif;
+  --font-sans: "Outfit", system-ui, sans-serif;
+
+  /* Animations (Bloom) */
+  --animate-bloom-drift: bloom-drift 22s ease-in-out infinite alternate;
+  --animate-bloom-pulse: bloom-pulse 1.4s ease-in-out infinite;
+  --animate-bloom-scrim-in: bloom-scrim-in 0.18s ease-out;
+}
+
+@keyframes bloom-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(40px, -50px) scale(1.08); }
+}
+@keyframes bloom-pulse {
+  0%, 100% { opacity: 0.6; }
+  50%      { opacity: 0.9; }
+}
+@keyframes bloom-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 * {
@@ -120,4 +162,78 @@ a {
   background:
     linear-gradient(135deg, transparent 48%, var(--border-soft) 48% 52%, transparent 52%) 0 0 / 12px 12px,
     var(--muted);
+}
+
+/* ---------- Bloom shared helpers ---------- */
+
+/* Animated soft-blob mesh background */
+.bloom-mesh { position: fixed; inset: 0; z-index: 0; filter: blur(60px); pointer-events: none; opacity: 0.8; overflow: hidden; }
+.bloom-blob { position: absolute; border-radius: 9999px; mix-blend-mode: multiply; animation: var(--animate-bloom-drift); }
+.bloom-blob.b1 { width: 50vw; height: 50vw; top: -10vw; left: -10vw; background: #cae0a8; }
+.bloom-blob.b2 { width: 45vw; height: 45vw; top: 10vw; right: -15vw; background: #f8d7c0; animation-direction: alternate-reverse; animation-duration: 28s; }
+.bloom-blob.b3 { width: 40vw; height: 40vw; bottom: -10vw; left: 15vw; background: #dcd3f0; animation-duration: 26s; }
+.bloom-blob.b4 { width: 30vw; height: 30vw; top: 40vw; left: 30vw; background: #f5e3a0; opacity: 0.7; animation-direction: alternate-reverse; animation-duration: 32s; }
+.bloom-blob.b5 { width: 28vw; height: 28vw; bottom: 5vw; right: 10vw; background: #c6e3d4; animation-duration: 30s; }
+
+/* Grain overlay (SVG noise) */
+.bloom-grain {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.45;
+  mix-blend-mode: multiply;
+}
+
+/* Flower / brand-mark petal arrangement; sizes via parent width */
+.bloom-flower { position: relative; }
+.bloom-flower .petal {
+  position: absolute;
+  width: 41%; height: 65%;
+  left: 29.5%; top: 0;
+  border-radius: 50% 50% 50% 50% / 80% 80% 20% 20%;
+  transform-origin: 50% 100%;
+}
+.bloom-flower .p1 { transform: rotate(0deg);   background: #cae0a8; }
+.bloom-flower .p2 { transform: rotate(120deg); background: #f8d7c0; }
+.bloom-flower .p3 { transform: rotate(240deg); background: #dcd3f0; }
+.bloom-flower .brand-core {
+  position: absolute;
+  width: 30%; height: 30%;
+  left: 35%; top: 35%;
+  background: var(--cream);
+  border: 1.5px solid var(--ink);
+  border-radius: 9999px;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bloom-blob { animation: none; }
+}
+
+/* Glass card surface (Bloom) */
+.bloom-glass {
+  background: rgba(255,253,247,0.55);
+  border: 1px solid rgba(255,255,255,0.8);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  box-shadow: 0 14px 44px -10px rgba(45,36,24,0.1), inset 0 0 0 1px rgba(255,255,255,0.45);
+}
+
+/* Stat card tint variants */
+.stat-card-peach     { background: linear-gradient(135deg, rgba(248,215,192,0.75), rgba(245,227,160,0.55)); }
+.stat-card-pistachio { background: linear-gradient(135deg, rgba(202,224,168,0.75), rgba(198,227,212,0.55)); }
+.stat-card-lavender  { background: linear-gradient(135deg, rgba(220,211,240,0.75), rgba(248,215,192,0.4)); }
+
+/* Action-card radial background overlay */
+.action-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 10% 100%, rgba(202,224,168,0.5), transparent 40%),
+    radial-gradient(circle at 90% 0%, rgba(248,215,192,0.6), transparent 50%);
+}
+.action-bg.all-caught {
+  background:
+    radial-gradient(circle at 10% 100%, rgba(202,224,168,0.7), transparent 50%),
+    radial-gradient(circle at 90% 0%, rgba(198,227,212,0.6), transparent 50%);
 }

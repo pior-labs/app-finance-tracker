@@ -411,9 +411,9 @@ export function TransactionsPage() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-5">
       {/* ─── Header ─── */}
-      <header className="flex flex-wrap items-end justify-between gap-6 px-1 pt-3">
-        <div>
-          <div className="text-[13px] tracking-wide" style={{ color: 'var(--ink-3)' }}>
+      <header className="flex flex-col gap-4 px-1 pt-1 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-6 sm:pt-3">
+        <div className="min-w-0">
+          <div className="truncate text-[12px] tracking-wide sm:text-[13px]" style={{ color: 'var(--ink-3)' }}>
             {filterParts.length > 0 ? (
               <>
                 Filtered ·{' '}
@@ -431,42 +431,42 @@ export function TransactionsPage() {
             )}
           </div>
           <h1
-            className="m-0 my-1.5 text-[52px] font-normal leading-none tracking-tight"
+            className="m-0 my-1.5 text-[34px] font-normal leading-[1.05] tracking-tight sm:text-[42px] sm:leading-none md:text-[52px]"
             style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
           >
             Transactions
           </h1>
         </div>
         {/* Summary pills */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
           {needsReviewCount > 0 && (
             <span
-              className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
+              className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs"
               style={{
                 background: 'linear-gradient(135deg, rgba(248,215,192,0.7), rgba(245,227,160,0.5))',
                 borderColor: 'rgba(255,255,255,0.6)',
                 color: 'var(--ink-2)',
               }}
             >
-              ⚘ {needsReviewCount} needs review
+              <span aria-hidden="true">⚘</span> {needsReviewCount} needs review
             </span>
           )}
           <span
-            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold"
+            className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs"
             style={{
               background: 'linear-gradient(135deg, rgba(202,224,168,0.7), rgba(198,227,212,0.5))',
               borderColor: 'rgba(255,255,255,0.6)',
               color: '#3d6b1f',
             }}
           >
-            ✓ {completePct}% sorted
+            <span aria-hidden="true">✓</span> {completePct}% sorted
           </span>
         </div>
       </header>
 
       {/* ─── Filter bar ─── */}
       <div
-        className="flex flex-wrap items-center gap-2.5 rounded-full border px-4 py-2.5"
+        className="flex flex-col gap-2 rounded-[28px] border p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2.5 sm:rounded-full sm:px-4 sm:py-2.5"
         style={{
           background: 'rgba(255,253,247,0.55)',
           borderColor: 'rgba(255,255,255,0.8)',
@@ -476,7 +476,7 @@ export function TransactionsPage() {
         }}
       >
         {/* Search */}
-        <div className="relative">
+        <div className="relative w-full sm:w-auto">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -500,52 +500,53 @@ export function TransactionsPage() {
             }}
             placeholder="Search merchant…"
             aria-label="Search by merchant"
-            className="h-9 w-44 rounded-full border-0 bg-white/50 pl-8 pr-3 text-sm outline-none transition-colors placeholder:text-[var(--ink-3)] focus:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30"
+            inputMode="search"
+            className="h-11 w-full rounded-full border-0 bg-white/50 pl-9 pr-3 text-[15px] outline-none transition-colors placeholder:text-[var(--ink-3)] focus:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-9 sm:w-44 sm:pl-8 sm:text-sm"
             style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
           />
         </div>
 
-        {/* Divider */}
-        <div className="h-5 w-px bg-[rgba(45,36,24,0.1)]" />
+        {/* Divider — desktop only */}
+        <div className="hidden h-5 w-px bg-[rgba(45,36,24,0.1)] sm:block" />
 
-        {/* Month filter */}
-        <select
-          value={month}
-          onChange={(e) => onFilterChange('month', e.target.value)}
-          aria-label="Filter by month"
-          className="h-9 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-sm outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30"
-          style={{ fontFamily: "'Outfit', sans-serif", color: month === 'all' ? 'var(--ink-3)' : 'var(--ink)' }}
-        >
-          {monthOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+        {/* Filter selects — grid on mobile, inline on sm+ */}
+        <div className="grid grid-cols-1 gap-2 sm:contents">
+          <select
+            value={month}
+            onChange={(e) => onFilterChange('month', e.target.value)}
+            aria-label="Filter by month"
+            className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-9 sm:text-sm"
+            style={{ fontFamily: "'Outfit', sans-serif", color: month === 'all' ? 'var(--ink-3)' : 'var(--ink)', touchAction: 'manipulation' }}
+          >
+            {monthOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
 
-        {/* Category filter */}
-        <select
-          value={category}
-          onChange={(e) => onFilterChange('category', e.target.value)}
-          aria-label="Filter by category"
-          className="h-9 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-sm outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30"
-          style={{ fontFamily: "'Outfit', sans-serif", color: category === 'all' ? 'var(--ink-3)' : 'var(--ink)' }}
-        >
-          {categoryFilterOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+          <select
+            value={category}
+            onChange={(e) => onFilterChange('category', e.target.value)}
+            aria-label="Filter by category"
+            className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-9 sm:text-sm"
+            style={{ fontFamily: "'Outfit', sans-serif", color: category === 'all' ? 'var(--ink-3)' : 'var(--ink)', touchAction: 'manipulation' }}
+          >
+            {categoryFilterOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
 
-        {/* Status filter */}
-        <select
-          value={status}
-          onChange={(e) => onFilterChange('status', e.target.value)}
-          aria-label="Filter by status"
-          className="h-9 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-sm outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30"
-          style={{ fontFamily: "'Outfit', sans-serif", color: status === 'all' ? 'var(--ink-3)' : 'var(--ink)' }}
-        >
-          {statusOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+          <select
+            value={status}
+            onChange={(e) => onFilterChange('status', e.target.value)}
+            aria-label="Filter by status"
+            className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-9 sm:text-sm"
+            style={{ fontFamily: "'Outfit', sans-serif", color: status === 'all' ? 'var(--ink-3)' : 'var(--ink)', touchAction: 'manipulation' }}
+          >
+            {statusOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       {error && (
@@ -561,10 +562,10 @@ export function TransactionsPage() {
         </p>
       )}
 
-      {/* ─── Table ─── */}
+      {/* ─── Table (desktop) ─── */}
       <div
         ref={tableViewportRef}
-        className="min-h-0 flex-1 overflow-hidden rounded-[28px] border"
+        className="hidden min-h-0 flex-1 overflow-hidden rounded-[28px] border md:block"
         style={{
           background: 'rgba(255,253,247,0.55)',
           borderColor: 'rgba(255,255,255,0.8)',
@@ -771,9 +772,200 @@ export function TransactionsPage() {
         </div>
       </div>
 
+      {/* ─── Card list (mobile) ─── */}
+      <div className="flex flex-col gap-2.5 md:hidden">
+        {loading ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-[20px] border p-4"
+              style={{
+                background: 'rgba(255,253,247,0.55)',
+                borderColor: 'rgba(255,255,255,0.8)',
+                backdropFilter: 'blur(20px) saturate(140%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+              }}
+            >
+              <div
+                className="h-3.5 animate-pulse rounded-full motion-reduce:animate-none"
+                style={{
+                  background: 'rgba(45,36,24,0.06)',
+                  width: `${60 + (i % 3) * 12}%`,
+                  animationDelay: `${i * 0.08}s`,
+                }}
+              />
+              <div
+                className="mt-2.5 h-3 w-1/2 animate-pulse rounded-full motion-reduce:animate-none"
+                style={{ background: 'rgba(45,36,24,0.05)', animationDelay: `${i * 0.08 + 0.05}s` }}
+              />
+            </div>
+          ))
+        ) : transactions.length === 0 ? (
+          <div
+            className="rounded-[24px] border px-5 py-12 text-center"
+            style={{
+              background: 'rgba(255,253,247,0.55)',
+              borderColor: 'rgba(255,255,255,0.8)',
+              backdropFilter: 'blur(20px) saturate(140%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+            }}
+          >
+            <p className="m-0 text-[15px] italic" style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}>
+              No transactions found.
+            </p>
+          </div>
+        ) : (
+          transactions.map((tx) => {
+            const isUpdating = updatingTransactionIds.includes(tx.id);
+            const isDeleting = deletingTransactionIds.includes(tx.id);
+            const isBusy = isUpdating || isDeleting;
+            const catColor = tx.categoryId ? categoryColorMap.get(tx.categoryId) : undefined;
+            const isFocused = focusedRowId === tx.id;
+            return (
+              <article
+                key={tx.id}
+                ref={(node) => {
+                  if (node) rowRefs.current.set(tx.id, node as unknown as HTMLTableRowElement);
+                  else rowRefs.current.delete(tx.id);
+                }}
+                className={`flex flex-col gap-3 rounded-[22px] border p-4 transition-colors motion-reduce:transition-none ${
+                  isFocused ? 'bg-(--accent)/15' : ''
+                }`}
+                style={{
+                  background: isFocused ? undefined : 'rgba(255,253,247,0.55)',
+                  borderColor: 'rgba(255,255,255,0.8)',
+                  backdropFilter: 'blur(20px) saturate(140%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+                  boxShadow: '0 6px 22px -10px rgba(45,36,24,0.08)',
+                }}
+              >
+                {/* Top row: date + amount */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[11px] tracking-wide" style={{ color: 'var(--ink-3)' }}>
+                      {formatShortDate(tx.date)}
+                    </div>
+                    <h3
+                      className="m-0 mt-1 text-[18px] font-normal leading-tight tracking-tight"
+                      style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
+                    >
+                      {prettyName(tx.merchant ?? tx.description)}
+                    </h3>
+                  </div>
+                  <div
+                    className="shrink-0 text-right text-[19px] font-medium tabular-nums"
+                    style={{
+                      fontFamily: "'Fraunces', serif",
+                      color: tx.type === 'credit' ? '#3d6b1f' : 'var(--ink)',
+                      fontFeatureSettings: "'lnum', 'tnum'",
+                    }}
+                    aria-label={`${tx.type === 'credit' ? 'Credit' : 'Debit'} ${formatAmount(tx.amount)}`}
+                  >
+                    {tx.type === 'credit' ? '+' : ''}
+                    {formatAmount(tx.amount)}
+                  </div>
+                </div>
+
+                {/* Description (only if distinct from merchant title) */}
+                {tx.merchant && tx.description && tx.description !== tx.merchant && (
+                  <p
+                    className="m-0 line-clamp-2 text-[12px] leading-snug"
+                    style={{ color: 'var(--ink-3)' }}
+                    title={tx.description}
+                  >
+                    {tx.description}
+                  </p>
+                )}
+
+                {/* Category + status row */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative inline-flex min-w-0 flex-1 items-center">
+                    {catColor && (
+                      <span
+                        aria-hidden="true"
+                        className="pointer-events-none absolute left-3 h-2 w-2 rounded-full"
+                        style={{ background: catColor, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.5)' }}
+                      />
+                    )}
+                    <select
+                      value={tx.categoryId === null ? 'uncategorized' : String(tx.categoryId)}
+                      disabled={isBusy}
+                      onChange={(e) => void onCategoryAssign(tx, e.target.value)}
+                      aria-label={`Set category for transaction ${tx.id}`}
+                      className="h-11 w-full min-w-0 cursor-pointer appearance-none rounded-full border border-white/70 bg-white/50 pr-7 text-[13px] font-medium outline-none transition-colors hover:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 disabled:cursor-default disabled:opacity-50"
+                      style={{
+                        fontFamily: "'Outfit', sans-serif",
+                        color: tx.categoryId === null ? 'var(--ink-3)' : 'var(--ink)',
+                        paddingLeft: catColor ? '1.5rem' : '0.875rem',
+                        boxShadow: '0 2px 8px -2px rgba(45,36,24,0.06)',
+                        touchAction: 'manipulation',
+                      }}
+                    >
+                      {rowCategoryOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  {tx.status === 'confirmed' ? (
+                    <span
+                      className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                      style={{
+                        background: 'rgba(202,224,168,0.6)',
+                        color: '#3d6b1f',
+                        border: '1px solid rgba(255,255,255,0.5)',
+                      }}
+                    >
+                      <span aria-hidden="true">✓</span> confirmed
+                    </span>
+                  ) : (
+                    <span
+                      className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                      style={{
+                        background: 'rgba(248,215,192,0.6)',
+                        color: 'var(--ink-2)',
+                        border: '1px solid rgba(255,255,255,0.5)',
+                      }}
+                    >
+                      needs review
+                    </span>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div
+                  className="-mx-1 flex items-center justify-end gap-1 border-t border-dashed pt-2"
+                  style={{ borderColor: 'rgba(45,36,24,0.1)' }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => void onEditTransaction(tx)}
+                    disabled={isBusy}
+                    aria-label="Edit transaction"
+                    className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-white/60 disabled:opacity-50"
+                    style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', touchAction: 'manipulation' }}
+                  >
+                    <span aria-hidden="true">✎</span> Edit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void onDeleteTransaction(tx)}
+                    disabled={isBusy}
+                    aria-label="Delete transaction"
+                    className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:opacity-50"
+                    style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--accent)', touchAction: 'manipulation' }}
+                  >
+                    <span aria-hidden="true">✕</span> Delete
+                  </button>
+                </div>
+              </article>
+            );
+          })
+        )}
+      </div>
+
       {/* ─── Pagination ─── */}
-      <div className="flex items-center justify-between px-1">
-        <span className="text-[13px]" style={{ color: 'var(--ink-3)' }}>
+      <div className="flex flex-col-reverse items-stretch gap-3 px-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <span className="text-center text-[12px] sm:text-left sm:text-[13px]" style={{ color: 'var(--ink-3)' }}>
           {total > 0 && (
             <>
               Showing{' '}
@@ -787,41 +979,47 @@ export function TransactionsPage() {
             </>
           )}
         </span>
-        <div className="flex items-center gap-2.5">
-          {canGoPrevious && (
+        <div className="flex items-center justify-between gap-2 sm:justify-end sm:gap-2.5">
+          {canGoPrevious ? (
             <button
               onClick={() => setOffset((p) => Math.max(0, p - PAGE_SIZE))}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50"
+              className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50"
               style={{
                 fontFamily: "'Outfit', sans-serif",
                 color: 'var(--ink-2)',
                 borderColor: 'rgba(45,36,24,0.15)',
                 background: 'transparent',
+                touchAction: 'manipulation',
               }}
             >
               ← prev
             </button>
+          ) : (
+            <span aria-hidden="true" className="min-h-11 sm:hidden" />
           )}
           <span
-            className="text-[13px] italic"
+            className="shrink-0 text-[13px] italic"
             style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}
           >
             {pageNumber} of {totalPages}
           </span>
-          {canGoNext && (
+          {canGoNext ? (
             <button
               onClick={() => setOffset((p) => p + PAGE_SIZE)}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-transform hover:-translate-y-px"
+              className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0"
               style={{
                 fontFamily: "'Outfit', sans-serif",
                 background: 'var(--ink)',
                 color: 'var(--cream)',
                 border: 0,
                 boxShadow: '0 6px 18px -6px rgba(45,36,24,0.35)',
+                touchAction: 'manipulation',
               }}
             >
               next →
             </button>
+          ) : (
+            <span aria-hidden="true" className="min-h-11 sm:hidden" />
           )}
         </div>
       </div>

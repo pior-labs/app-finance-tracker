@@ -217,7 +217,9 @@ export function CategoriesPage() {
           key={swatch}
           type="button"
           onClick={() => onSelect(swatch)}
-          className="h-7 w-7 cursor-pointer rounded-full border-2 transition-transform hover:scale-110"
+          aria-label={`Use color ${swatch}`}
+          aria-pressed={swatch.toLowerCase() === selectedColor.toLowerCase()}
+          className="h-9 w-9 cursor-pointer rounded-full border-2 transition-transform hover:scale-110 motion-reduce:transform-none sm:h-7 sm:w-7"
           style={{
             background: swatch,
             borderColor: swatch.toLowerCase() === selectedColor.toLowerCase()
@@ -226,8 +228,8 @@ export function CategoriesPage() {
             boxShadow: swatch.toLowerCase() === selectedColor.toLowerCase()
               ? `0 0 0 3px ${lighten(swatch, 0.6)}`
               : '0 2px 6px -2px rgba(45,36,24,0.15)',
+            touchAction: 'manipulation',
           }}
-          title="Choose color"
         />
       ))}
       <input
@@ -236,17 +238,19 @@ export function CategoriesPage() {
         onKeyDown={(e) => { if (e.key === 'Enter') onSave(); }}
         placeholder="#6b8db5"
         maxLength={7}
-        className="h-7 w-24 rounded-full border bg-white/50 px-2.5 text-center text-xs uppercase outline-none transition-colors focus:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30"
+        aria-label="Custom color"
+        className="h-9 w-24 rounded-full border bg-white/50 px-2.5 text-center text-xs uppercase outline-none transition-colors focus:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-7"
         style={{ borderColor: 'rgba(255,255,255,0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
       />
       <button
         onClick={onSave}
-        className="inline-flex cursor-pointer items-center rounded-full border-0 px-3.5 py-1.5 text-xs font-medium transition-transform hover:-translate-y-px"
+        className="inline-flex min-h-11 cursor-pointer items-center rounded-full border-0 px-4 py-1.5 text-[13px] font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 sm:min-h-0 sm:px-3.5 sm:text-xs"
         style={{
           fontFamily: "'Outfit', sans-serif",
           background: 'var(--ink)',
           color: 'var(--cream)',
           boxShadow: '0 4px 12px -4px rgba(45,36,24,0.3)',
+          touchAction: 'manipulation',
         }}
       >
         Save
@@ -263,7 +267,7 @@ export function CategoriesPage() {
     return (
       <div
         key={cat.id}
-        className="group rounded-[22px] border p-4 transition-shadow hover:shadow-lg"
+        className="group rounded-[22px] border p-4 transition-shadow hover:shadow-lg motion-reduce:transition-none"
         style={{
           background: `linear-gradient(135deg, ${lighten(color, 0.88)}, rgba(255,253,247,0.55))`,
           borderColor: 'rgba(255,255,255,0.8)',
@@ -275,6 +279,7 @@ export function CategoriesPage() {
         <div className="flex items-center gap-3.5">
           {/* Color swatch */}
           <span
+            aria-hidden="true"
             className="h-9 w-9 shrink-0 rounded-full"
             style={{
               background: `linear-gradient(135deg, ${color}, ${lighten(color, 0.3)})`,
@@ -285,33 +290,37 @@ export function CategoriesPage() {
           {/* Name / Edit */}
           <div className="min-w-0 flex-1">
             {isEditing ? (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') void renameCategory(cat.id); if (e.key === 'Escape') setEditingId(null); }}
                   autoFocus
-                  className="h-8 flex-1 rounded-full border bg-white/60 px-3 text-sm outline-none transition-colors focus:bg-white/90 focus:ring-2 focus:ring-[var(--accent)]/30"
+                  aria-label="Category name"
+                  className="h-11 w-full min-w-0 rounded-full border bg-white/60 px-3.5 text-[15px] outline-none transition-colors focus:bg-white/90 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-8 sm:flex-1 sm:text-sm"
                   style={{ borderColor: 'rgba(255,255,255,0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
                 />
-                <button
-                  onClick={() => void renameCategory(cat.id)}
-                  className="inline-flex cursor-pointer items-center rounded-full border-0 px-3 py-1.5 text-xs font-medium transition-transform hover:-translate-y-px"
-                  style={{ background: 'var(--ink)', color: 'var(--cream)', fontFamily: "'Outfit', sans-serif", boxShadow: '0 4px 12px -4px rgba(45,36,24,0.3)' }}
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => setEditingId(null)}
-                  className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
-                  style={{ color: 'var(--ink-3)' }}
-                >
-                  ✕
-                </button>
+                <div className="flex shrink-0 items-center gap-2">
+                  <button
+                    onClick={() => void renameCategory(cat.id)}
+                    className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-full border-0 px-4 py-1.5 text-[13px] font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 sm:min-h-0 sm:flex-none sm:px-3 sm:text-xs"
+                    style={{ background: 'var(--ink)', color: 'var(--cream)', fontFamily: "'Outfit', sans-serif", boxShadow: '0 4px 12px -4px rgba(45,36,24,0.3)', touchAction: 'manipulation' }}
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditingId(null)}
+                    aria-label="Cancel rename"
+                    className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-sm transition-colors hover:bg-white/80 sm:h-6 sm:w-6 sm:text-xs"
+                    style={{ color: 'var(--ink-3)', touchAction: 'manipulation' }}
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
             ) : (
               <span
-                className="text-lg font-medium"
+                className="block truncate text-base font-medium sm:text-lg"
                 style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
               >
                 {cat.name}
@@ -319,10 +328,11 @@ export function CategoriesPage() {
             )}
           </div>
 
-          {/* Hotkey badge */}
+          {/* Hotkey badge (desktop only — keyboard-only affordance) */}
           {hotkey && !isEditing && (
             <span
-              className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-medium"
+              aria-hidden="true"
+              className="hidden h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-medium md:inline-flex"
               style={{
                 fontFamily: "'Fraunces', serif",
                 background: 'rgba(255,255,255,0.6)',
@@ -335,12 +345,14 @@ export function CategoriesPage() {
             </span>
           )}
 
-          {/* Actions */}
+          {/* Desktop actions — inline, hover-fade */}
           {!isEditing && (
-            <div className="flex shrink-0 items-center gap-1 opacity-60 transition-opacity group-hover:opacity-100">
+            <div className="hidden shrink-0 items-center gap-1 opacity-60 transition-opacity group-hover:opacity-100 motion-reduce:transition-none md:flex">
               <button
                 onClick={() => void toggleFavorite(cat)}
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 text-sm transition-all hover:scale-110"
+                aria-label={cat.isFavorite ? 'Unfavorite' : 'Favorite'}
+                aria-pressed={!!cat.isFavorite}
+                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 text-sm transition-all hover:scale-110 motion-reduce:transform-none"
                 style={{
                   background: cat.isFavorite ? 'rgba(248,215,192,0.7)' : 'rgba(255,255,255,0.4)',
                   color: cat.isFavorite ? 'var(--accent)' : 'var(--ink-3)',
@@ -351,6 +363,7 @@ export function CategoriesPage() {
               </button>
               <button
                 onClick={() => { setEditingId(cat.id); setEditName(cat.name); setColorEditingId(null); }}
+                aria-label="Rename"
                 className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
                 style={{ color: 'var(--ink-2)' }}
                 title="Rename"
@@ -368,6 +381,8 @@ export function CategoriesPage() {
                   setColorEditValue(cat.color ?? DEFAULT_COLOR);
                   setEditingId(null);
                 }}
+                aria-label="Edit color"
+                aria-expanded={isColorEditing}
                 className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
                 style={{ color: 'var(--ink-2)' }}
                 title="Edit color"
@@ -376,6 +391,7 @@ export function CategoriesPage() {
               </button>
               <button
                 onClick={() => { setEditingId(cat.id); setEditName(cat.name); }}
+                aria-label="Merge into another category"
                 className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
                 style={{ color: 'var(--ink-2)' }}
                 title="Merge into…"
@@ -384,6 +400,7 @@ export function CategoriesPage() {
               </button>
               <button
                 onClick={() => setCategoryPendingDelete(cat)}
+                aria-label="Delete"
                 className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
                 style={{ color: 'var(--accent)' }}
                 title="Delete"
@@ -393,6 +410,64 @@ export function CategoriesPage() {
             </div>
           )}
         </div>
+
+        {/* Mobile actions — full-width bar with 44px touch targets */}
+        {!isEditing && (
+          <div
+            className="-mx-1 mt-3 flex items-center justify-around gap-1 border-t border-dashed pt-2 md:hidden"
+            style={{ borderColor: 'rgba(45,36,24,0.1)' }}
+          >
+            <button
+              onClick={() => void toggleFavorite(cat)}
+              aria-label={cat.isFavorite ? 'Unfavorite' : 'Favorite'}
+              aria-pressed={!!cat.isFavorite}
+              className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 text-[13px] font-medium transition-colors"
+              style={{
+                background: cat.isFavorite ? 'rgba(248,215,192,0.7)' : 'transparent',
+                color: cat.isFavorite ? 'var(--accent)' : 'var(--ink-3)',
+                fontFamily: "'Outfit', sans-serif",
+                touchAction: 'manipulation',
+              }}
+            >
+              <span aria-hidden="true">★</span>
+              <span>{cat.isFavorite ? 'Saved' : 'Favorite'}</span>
+            </button>
+            <button
+              onClick={() => { setEditingId(cat.id); setEditName(cat.name); setColorEditingId(null); }}
+              aria-label="Rename"
+              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60"
+              style={{ color: 'var(--ink-2)', touchAction: 'manipulation' }}
+            >
+              <span aria-hidden="true">✎</span>
+            </button>
+            <button
+              onClick={() => {
+                if (colorEditingId === cat.id) {
+                  setColorEditingId(null);
+                  setColorEditValue(DEFAULT_COLOR);
+                  return;
+                }
+                setColorEditingId(cat.id);
+                setColorEditValue(cat.color ?? DEFAULT_COLOR);
+                setEditingId(null);
+              }}
+              aria-label="Edit color"
+              aria-expanded={isColorEditing}
+              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60"
+              style={{ color: 'var(--ink-2)', touchAction: 'manipulation' }}
+            >
+              <span aria-hidden="true">●</span>
+            </button>
+            <button
+              onClick={() => setCategoryPendingDelete(cat)}
+              aria-label="Delete"
+              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-[rgba(248,215,192,0.7)]"
+              style={{ color: 'var(--accent)', touchAction: 'manipulation' }}
+            >
+              <span aria-hidden="true">✕</span>
+            </button>
+          </div>
+        )}
 
         {/* Color editing row */}
         {isColorEditing && (
@@ -413,16 +488,16 @@ export function CategoriesPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* ─── Header ─── */}
-      <header className="flex flex-wrap items-end justify-between gap-6 px-1 pt-3">
-        <div>
-          <div className="text-[13px] tracking-wide" style={{ color: 'var(--ink-3)' }}>
+      <header className="flex flex-col gap-4 px-1 pt-1 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-6 sm:pt-3">
+        <div className="min-w-0">
+          <div className="text-[12px] tracking-wide sm:text-[13px]" style={{ color: 'var(--ink-3)' }}>
             Manage ·{' '}
             <em style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}>
               {categories.length} categories
             </em>
           </div>
           <h1
-            className="m-0 my-1.5 text-[52px] font-normal leading-none tracking-tight"
+            className="m-0 my-1.5 text-[34px] font-normal leading-[1.05] tracking-tight sm:text-[42px] sm:leading-none md:text-[52px]"
             style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
           >
             Categories
@@ -430,12 +505,13 @@ export function CategoriesPage() {
         </div>
         <button
           onClick={() => setShowNewForm(true)}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-full border-0 px-5 py-3 text-[15px] font-medium transition-transform hover:-translate-y-px"
+          className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border-0 px-5 py-3 text-[15px] font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 sm:w-auto"
           style={{
             fontFamily: "'Outfit', sans-serif",
             background: 'var(--ink)',
             color: 'var(--cream)',
             boxShadow: '0 8px 22px -6px rgba(45,36,24,0.4)',
+            touchAction: 'manipulation',
           }}
         >
           + New category
@@ -458,7 +534,7 @@ export function CategoriesPage() {
       {/* ─── New category form ─── */}
       {showNewForm && (
         <div
-          className="rounded-[24px] border p-6"
+          className="rounded-[24px] border p-4 sm:p-6"
           style={{
             background: 'linear-gradient(135deg, rgba(245,227,160,0.3), rgba(255,253,247,0.55))',
             borderColor: 'rgba(255,255,255,0.8)',
@@ -468,70 +544,76 @@ export function CategoriesPage() {
           }}
         >
           <div
-            className="mb-4 text-sm italic"
+            className="mb-3 text-sm italic sm:mb-4"
             style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}
           >
             New category
           </div>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="e.g. Coffee shops"
               onKeyDown={(e) => { if (e.key === 'Enter') void createCategory(); }}
               autoFocus
-              className="h-10 w-56 rounded-full border bg-white/60 px-4 text-sm outline-none transition-colors placeholder:text-[var(--ink-3)] focus:bg-white/90 focus:ring-2 focus:ring-[var(--accent)]/30"
+              aria-label="Category name"
+              className="h-11 w-full rounded-full border bg-white/60 px-4 text-[15px] outline-none transition-colors placeholder:text-[var(--ink-3)] focus:bg-white/90 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-10 sm:w-56 sm:text-sm"
               style={{ borderColor: 'rgba(255,255,255,0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
             />
-            {/* Swatches */}
-            <div className="flex items-center gap-2">
+            {/* Swatches + hex */}
+            <div className="flex flex-wrap items-center gap-2">
               {PRESET_COLORS.map((swatch) => (
                 <button
                   key={swatch}
                   type="button"
                   onClick={() => setNewColor(swatch)}
-                  className="h-8 w-8 cursor-pointer rounded-full border-2 transition-transform hover:scale-110"
+                  aria-label={`Use color ${swatch}`}
+                  aria-pressed={newColor === swatch}
+                  className="h-9 w-9 cursor-pointer rounded-full border-2 transition-transform hover:scale-110 motion-reduce:transform-none sm:h-8 sm:w-8"
                   style={{
                     background: swatch,
                     borderColor: newColor === swatch ? 'var(--ink)' : 'rgba(255,255,255,0.6)',
                     boxShadow: newColor === swatch
                       ? `0 0 0 3px ${lighten(swatch, 0.6)}`
                       : '0 2px 6px -2px rgba(45,36,24,0.15)',
+                    touchAction: 'manipulation',
                   }}
-                  title="Choose color"
                 />
               ))}
+              <input
+                value={newColor}
+                onChange={(e) => setNewColor(e.target.value)}
+                placeholder="#6b8db5"
+                maxLength={7}
+                aria-label="Custom category color"
+                className="h-9 w-24 rounded-full border bg-white/50 px-2.5 text-center text-xs uppercase outline-none transition-colors focus:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-8"
+                style={{ borderColor: 'rgba(255,255,255,0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
+              />
             </div>
-            <input
-              value={newColor}
-              onChange={(e) => setNewColor(e.target.value)}
-              placeholder="#6b8db5"
-              maxLength={7}
-              aria-label="Custom category color"
-              className="h-8 w-24 rounded-full border bg-white/50 px-2.5 text-center text-xs uppercase outline-none transition-colors focus:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30"
-              style={{ borderColor: 'rgba(255,255,255,0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
-            />
-            <div className="flex-1" />
-            <button
-              onClick={() => { setShowNewForm(false); setNewName(''); setNewColor(DEFAULT_COLOR); }}
-              className="cursor-pointer rounded-full border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50"
-              style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)' }}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => void createCategory()}
-              disabled={creating || !newName.trim()}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full border-0 px-5 py-2 text-sm font-medium transition-transform hover:-translate-y-px disabled:cursor-default disabled:opacity-50"
-              style={{
-                fontFamily: "'Outfit', sans-serif",
-                background: 'var(--ink)',
-                color: 'var(--cream)',
-                boxShadow: '0 6px 18px -6px rgba(45,36,24,0.35)',
-              }}
-            >
-              Add →
-            </button>
+            <div className="hidden sm:block sm:flex-1" />
+            <div className="flex items-center gap-2.5 sm:gap-3">
+              <button
+                onClick={() => { setShowNewForm(false); setNewName(''); setNewColor(DEFAULT_COLOR); }}
+                className="min-h-11 flex-1 cursor-pointer rounded-full border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50 sm:flex-none"
+                style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)', touchAction: 'manipulation' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void createCategory()}
+                disabled={creating || !newName.trim()}
+                className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 px-5 py-2 text-sm font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 disabled:cursor-default disabled:opacity-50 sm:flex-none"
+                style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  background: 'var(--ink)',
+                  color: 'var(--cream)',
+                  boxShadow: '0 6px 18px -6px rgba(45,36,24,0.35)',
+                  touchAction: 'manipulation',
+                }}
+              >
+                {creating ? 'Adding…' : 'Add →'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -607,7 +689,7 @@ export function CategoriesPage() {
 
       {/* ─── Warning footer ─── */}
       <div
-        className="flex items-center gap-2.5 rounded-[20px] border px-5 py-3.5 text-[13px]"
+        className="flex items-start gap-2.5 rounded-[20px] border px-4 py-3 text-[12px] leading-snug sm:items-center sm:px-5 sm:py-3.5 sm:text-[13px]"
         style={{
           background: 'rgba(255,253,247,0.45)',
           borderColor: 'rgba(255,255,255,0.7)',
@@ -616,7 +698,7 @@ export function CategoriesPage() {
           color: 'var(--ink-3)',
         }}
       >
-        <span>⚠</span>
+        <span aria-hidden="true" className="shrink-0">⚠</span>
         <span>
           Deleting a category moves its transactions to <strong style={{ color: 'var(--ink-2)' }}>Other</strong>. Merging keeps history.
         </span>
@@ -624,14 +706,20 @@ export function CategoriesPage() {
 
       {/* ─── Delete confirmation modal ─── */}
       {categoryPendingDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-category-title"
+          className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+        >
           <div
             className="absolute inset-0"
             style={{ background: 'rgba(45,36,24,0.3)', backdropFilter: 'blur(6px)' }}
             onClick={() => { if (!deleting) setCategoryPendingDelete(null); }}
+            aria-hidden="true"
           />
           <div
-            className="relative w-full max-w-md rounded-[28px] border p-7"
+            className="relative w-full max-w-md rounded-t-[28px] border p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[28px] sm:p-7 sm:pb-7"
             style={{
               background: 'rgba(255,253,247,0.94)',
               borderColor: 'rgba(255,255,255,0.8)',
@@ -640,9 +728,10 @@ export function CategoriesPage() {
               boxShadow: '0 24px 60px -12px rgba(45,36,24,0.25), inset 0 0 0 1px rgba(255,255,255,0.5)',
             }}
           >
-            <div className="mb-5 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
               <h2
-                className="m-0 text-2xl font-normal"
+                id="delete-category-title"
+                className="m-0 text-[22px] font-normal sm:text-2xl"
                 style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
               >
                 Delete category?
@@ -650,9 +739,9 @@ export function CategoriesPage() {
               <button
                 onClick={() => setCategoryPendingDelete(null)}
                 disabled={deleting}
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80 disabled:opacity-50"
-                style={{ color: 'var(--ink-3)' }}
-                title="Close"
+                aria-label="Close"
+                className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-sm transition-colors hover:bg-white/80 disabled:opacity-50 sm:h-7 sm:w-7 sm:text-xs"
+                style={{ color: 'var(--ink-3)', touchAction: 'manipulation' }}
               >
                 ✕
               </button>
@@ -664,24 +753,25 @@ export function CategoriesPage() {
             <p className="mt-2 text-xs" style={{ color: 'var(--ink-3)' }}>
               Transactions in this category will be moved to <strong>Other</strong>.
             </p>
-            <div className="mt-6 flex justify-end gap-2.5">
+            <div className="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
               <button
                 onClick={() => setCategoryPendingDelete(null)}
                 disabled={deleting}
-                className="cursor-pointer rounded-full border bg-transparent px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/50 disabled:opacity-50"
-                style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)' }}
+                className="min-h-11 cursor-pointer rounded-full border bg-transparent px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/50 disabled:opacity-50"
+                style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)', touchAction: 'manipulation' }}
               >
                 Cancel
               </button>
               <button
                 onClick={() => void deleteCategory()}
                 disabled={deleting}
-                className="inline-flex cursor-pointer items-center rounded-full border-0 px-5 py-2.5 text-sm font-medium transition-transform hover:-translate-y-px disabled:cursor-default disabled:opacity-50"
+                className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border-0 px-5 py-2.5 text-sm font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 disabled:cursor-default disabled:opacity-50"
                 style={{
                   fontFamily: "'Outfit', sans-serif",
                   background: 'var(--accent)',
                   color: 'white',
                   boxShadow: '0 6px 18px -6px rgba(197,112,74,0.4)',
+                  touchAction: 'manipulation',
                 }}
               >
                 {deleting ? 'Deleting…' : 'Yes, delete'}

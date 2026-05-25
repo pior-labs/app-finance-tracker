@@ -126,6 +126,29 @@
   opacity: 0;
 }
 
+/* Categorize: inner-content cross-fade (card shell stays visible) */
+@keyframes categorize-content-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.categorize-content {
+  animation: categorize-content-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: opacity 180ms ease-in, transform 180ms ease-in;
+}
+.categorize-content[data-leaving="true"] {
+  animation: none;
+  opacity: 0;
+  transform: translateY(-8px);
+}
+@media (prefers-reduced-motion: reduce) {
+  .categorize-content,
+  .categorize-content[data-leaving="true"] {
+    animation: none;
+    transition: opacity 80ms linear;
+    transform: none;
+  }
+}
+
 @layer base {
   * {
     box-sizing: border-box;

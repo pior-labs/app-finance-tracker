@@ -184,7 +184,7 @@ export function CategorizePage() {
     setTimeout(() => {
       setQueue((prev) => prev.slice(1));
       setAssigningId(null);
-    }, 280);
+    }, 200);
 
     try {
       const response = await fetch(`/api/transactions/${current.id}`, {
@@ -510,16 +510,13 @@ export function CategorizePage() {
       {/* ─── Hero transaction card ─── */}
       {current && (
         <div
-          className="relative z-30 rounded-[28px] border transition-all duration-300 motion-reduce:transition-none sm:rounded-[36px]"
+          className="relative z-30 rounded-[28px] border sm:rounded-[36px]"
           style={{
             background: 'rgba(255,253,247,0.6)',
             borderColor: 'rgba(255,255,255,0.85)',
             backdropFilter: 'blur(28px) saturate(150%)',
             WebkitBackdropFilter: 'blur(28px) saturate(150%)',
             boxShadow: '0 20px 60px -15px rgba(45,36,24,0.14), inset 0 0 0 1px rgba(255,255,255,0.5)',
-            ...(assigningId === current.id
-              ? { transform: 'translateY(-12px) scale(0.98)', opacity: 0 }
-              : {}),
           }}
         >
           {/* Gradient background */}
@@ -532,50 +529,58 @@ export function CategorizePage() {
             }}
           />
 
-          {/* Top: meta + amount — stacked on mobile, side-by-side from sm */}
-          <div className="relative z-[1] flex flex-col gap-3 px-5 pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-7 sm:pt-8 md:px-9">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-[13px]" style={{ color: 'var(--ink-3)' }}>
-                {formatShortDate(current.date)}
-              </span>
-              <span
-                className="inline-flex rounded-full border px-3 py-1 text-xs font-medium"
-                style={{
-                  borderColor: 'rgba(255,255,255,0.6)',
-                  background: isCredit ? 'rgba(202,224,168,0.7)' : 'rgba(248,215,192,0.7)',
-                  color: isCredit ? '#3d6b1f' : 'var(--ink-2)',
-                }}
+          {/* Tx-specific content — fades out on assign, fades in on next tx */}
+          <div
+            key={current.id}
+            className="categorize-content relative z-1"
+            data-leaving={isAssigning ? 'true' : undefined}
+            aria-live="polite"
+          >
+            {/* Top: meta + amount — stacked on mobile, side-by-side from sm */}
+            <div className="flex flex-col gap-3 px-5 pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-6 sm:px-7 sm:pt-8 md:px-9">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="text-[13px]" style={{ color: 'var(--ink-3)' }}>
+                  {formatShortDate(current.date)}
+                </span>
+                <span
+                  className="inline-flex rounded-full border px-3 py-1 text-xs font-medium"
+                  style={{
+                    borderColor: 'rgba(255,255,255,0.6)',
+                    background: isCredit ? 'rgba(202,224,168,0.7)' : 'rgba(248,215,192,0.7)',
+                    color: isCredit ? '#3d6b1f' : 'var(--ink-2)',
+                  }}
+                >
+                  {isCredit ? '↑ credit' : '↓ debit'}
+                </span>
+              </div>
+              <div
+                className="text-[44px] font-normal leading-none tracking-tight tabular-nums sm:text-[52px] md:text-[64px]"
+                style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)', fontFeatureSettings: "'lnum', 'tnum'" }}
+                aria-label={`${isCredit ? 'Credit' : 'Debit'} ${formatMoney(current.amount)}`}
               >
-                {isCredit ? '↑ credit' : '↓ debit'}
-              </span>
+                <span className="align-top text-[26px] sm:text-[30px] md:text-4xl" style={{ color: 'var(--ink-3)' }}>
+                  {isCredit ? '+' : '−'}
+                </span>
+                <span className="align-top text-[22px] sm:text-[26px] md:text-[32px]" style={{ color: 'var(--ink-3)' }}>$</span>
+                {whole}
+                <span className="text-[20px] sm:text-[24px] md:text-[28px]" style={{ color: 'var(--ink-3)' }}>.{centsPart}</span>
+              </div>
             </div>
-            <div
-              className="text-[44px] font-normal leading-none tracking-tight tabular-nums sm:text-[52px] md:text-[64px]"
-              style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)', fontFeatureSettings: "'lnum', 'tnum'" }}
-              aria-label={`${isCredit ? 'Credit' : 'Debit'} ${formatMoney(current.amount)}`}
-            >
-              <span className="align-top text-[26px] sm:text-[30px] md:text-4xl" style={{ color: 'var(--ink-3)' }}>
-                {isCredit ? '+' : '−'}
-              </span>
-              <span className="align-top text-[22px] sm:text-[26px] md:text-[32px]" style={{ color: 'var(--ink-3)' }}>$</span>
-              {whole}
-              <span className="text-[20px] sm:text-[24px] md:text-[28px]" style={{ color: 'var(--ink-3)' }}>.{centsPart}</span>
-            </div>
-          </div>
 
-          {/* Merchant name */}
-          <div className="relative z-[1] px-5 pb-5 pt-4 sm:px-7 sm:pb-6 sm:pt-5 md:px-9 md:pb-7">
-            <h2
-              className="m-0 text-[26px] font-normal leading-tight tracking-tight sm:text-[32px] md:text-[38px]"
-              style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
-            >
-              {prettyName(current.merchant ?? current.description)}
-            </h2>
-            {current.merchant && (
-              <p className="m-0 mt-1.5 max-w-[500px] truncate text-[13px] sm:text-sm" style={{ color: 'var(--ink-3)' }}>
-                {current.description}
-              </p>
-            )}
+            {/* Merchant name */}
+            <div className="px-5 pb-5 pt-4 sm:px-7 sm:pb-6 sm:pt-5 md:px-9 md:pb-7">
+              <h2
+                className="m-0 text-[26px] font-normal leading-tight tracking-tight sm:text-[32px] md:text-[38px]"
+                style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
+              >
+                {prettyName(current.merchant ?? current.description)}
+              </h2>
+              {current.merchant && (
+                <p className="m-0 mt-1.5 max-w-[500px] truncate text-[13px] sm:text-sm" style={{ color: 'var(--ink-3)' }}>
+                  {current.description}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Category selection */}
@@ -781,43 +786,45 @@ export function CategorizePage() {
               </span>
             )}
           </div>
-          {upNextPreview.length === 0 ? (
-            <p className="py-4 text-center text-[13px] leading-relaxed" style={{ color: 'var(--ink-3)' }}>
-              That's the last one in the queue.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-1">
-              {upNextPreview.map((tx) => (
-                <div
-                  key={tx.id}
-                  className="grid items-center gap-2.5 rounded-xl px-1.5 py-2"
-                  style={{ gridTemplateColumns: '8px 1fr auto' }}
-                >
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{
-                      background: tx.type === 'credit' ? '#cae0a8' : '#f8d7c0',
-                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.6)',
-                    }}
-                  />
-                  <div className="flex min-w-0 flex-col">
-                    <span className="truncate text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
-                      {prettyName(tx.merchant ?? tx.description)}
-                    </span>
-                    <span className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
-                      {formatShortDate(tx.date)}
+          <div className="flex min-h-55 flex-col">
+            {upNextPreview.length === 0 ? (
+              <p className="m-auto py-4 text-center text-[13px] leading-relaxed" style={{ color: 'var(--ink-3)' }}>
+                That's the last one in the queue.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {upNextPreview.map((tx) => (
+                  <div
+                    key={tx.id}
+                    className="grid items-center gap-2.5 rounded-xl px-1.5 py-2"
+                    style={{ gridTemplateColumns: '8px 1fr auto' }}
+                  >
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{
+                        background: tx.type === 'credit' ? '#cae0a8' : '#f8d7c0',
+                        boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.6)',
+                      }}
+                    />
+                    <div className="flex min-w-0 flex-col">
+                      <span className="truncate text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
+                        {prettyName(tx.merchant ?? tx.description)}
+                      </span>
+                      <span className="text-[11px]" style={{ color: 'var(--ink-3)' }}>
+                        {formatShortDate(tx.date)}
+                      </span>
+                    </div>
+                    <span
+                      className="shrink-0 text-sm font-medium"
+                      style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}
+                    >
+                      {tx.type === 'credit' ? '+' : '−'}{formatMoney(tx.amount)}
                     </span>
                   </div>
-                  <span
-                    className="shrink-0 text-sm font-medium"
-                    style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}
-                  >
-                    {tx.type === 'credit' ? '+' : '−'}{formatMoney(tx.amount)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Just confirmed */}
@@ -857,52 +864,51 @@ export function CategorizePage() {
               undo
             </button>
           </div>
-          {confirmedTop.length === 0 ? (
-            <p className="py-4 text-center text-[13px] leading-relaxed" style={{ color: 'var(--ink-3)' }}>
-              Assign a category to see confirmations here.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-1">
-              {confirmedTop.map((item, i) => (
-                <div
-                  key={`${item.txId}-${i}`}
-                  className="grid items-center gap-2 rounded-xl px-1.5 py-2 transition-opacity"
-                  style={{
-                    gridTemplateColumns: '18px 1fr auto',
-                    opacity: 1 - i * 0.18,
-                  }}
-                >
-                  <span
-                    className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                    style={{ background: `linear-gradient(135deg, ${lighten(item.categoryColor, 0.3)}, ${item.categoryColor})` }}
+          <div className="flex min-h-55 flex-col">
+            {confirmedTop.length === 0 ? (
+              <p className="m-auto py-4 text-center text-[13px] leading-relaxed" style={{ color: 'var(--ink-3)' }}>
+                Assign a category to see confirmations here.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-1">
+                {confirmedTop.map((item, i) => (
+                  <div
+                    key={`${item.txId}-${i}`}
+                    className="grid items-center gap-2 rounded-xl px-1.5 py-2"
+                    style={{ gridTemplateColumns: '18px 1fr auto' }}
                   >
-                    <Check aria-hidden="true" className="h-2.5 w-2.5" strokeWidth={2.8} />
-                  </span>
-                  <div className="min-w-0">
-                    <div className="truncate text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
-                      {prettyName(item.merchant)}
-                    </div>
-                    <div
-                      className="flex items-center gap-1.5 text-[11px] italic"
-                      style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}
+                    <span
+                      className="flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                      style={{ background: `linear-gradient(135deg, ${lighten(item.categoryColor, 0.3)}, ${item.categoryColor})` }}
                     >
-                      <span
-                        className="inline-block h-1.5 w-1.5 rounded-full"
-                        style={{ background: item.categoryColor }}
-                      />
-                      {item.category}
+                      <Check aria-hidden="true" className="h-2.5 w-2.5" strokeWidth={2.8} />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="truncate text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
+                        {prettyName(item.merchant)}
+                      </div>
+                      <div
+                        className="flex items-center gap-1.5 text-[11px] italic"
+                        style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-3)' }}
+                      >
+                        <span
+                          className="inline-block h-1.5 w-1.5 rounded-full"
+                          style={{ background: item.categoryColor }}
+                        />
+                        {item.category}
+                      </div>
                     </div>
+                    <span
+                      className="text-sm font-medium"
+                      style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}
+                    >
+                      {item.type === 'credit' ? '+' : '−'}{formatMoney(item.amount)}
+                    </span>
                   </div>
-                  <span
-                    className="text-sm font-medium"
-                    style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}
-                  >
-                    {item.type === 'credit' ? '+' : '−'}{formatMoney(item.amount)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </>

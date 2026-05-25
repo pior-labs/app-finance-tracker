@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Check, ChevronLeft, ChevronRight, Flower2, Pencil, RotateCcw, Trash2 } from 'lucide-react';
+import { AlertCircle, Check, ChevronLeft, ChevronRight, Flower2, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Category {
@@ -100,6 +100,48 @@ function formatShortDate(dateStr: string): string {
 function prettyName(s: string | null | undefined): string {
   if (!s) return '';
   return s.replace(/\b\w+/g, (w) => w[0] + w.slice(1).toLowerCase());
+}
+
+function TransactionStatusPill({
+  status,
+  mobile = false,
+}: {
+  status: 'needs_review' | 'confirmed';
+  mobile?: boolean;
+}) {
+  const className = mobile
+    ? 'inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold'
+    : 'inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold';
+
+  if (status === 'confirmed') {
+    return (
+      <span
+        className={className}
+        style={{
+          background: 'rgba(202,224,168,0.6)',
+          color: '#3d6b1f',
+          border: '1px solid rgba(255,255,255,0.5)',
+        }}
+      >
+        <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.6} />
+        Confirmed
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={className}
+      style={{
+        background: 'rgba(248,215,192,0.6)',
+        color: 'var(--ink-2)',
+        border: '1px solid rgba(255,255,255,0.5)',
+      }}
+    >
+      <AlertCircle aria-hidden="true" className="h-3 w-3" strokeWidth={2.4} />
+      {mobile ? 'Needs review' : 'Review'}
+    </span>
+  );
 }
 
 export function TransactionsPage() {
@@ -619,13 +661,13 @@ export function TransactionsPage() {
                   borderColor: 'rgba(45,36,24,0.08)',
                 }}
               >
-                <th className="h-11 px-5 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Date</th>
-                <th className="h-11 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Merchant</th>
-                <th className="h-11 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Description</th>
-                <th className="h-11 px-4 text-right text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Amount</th>
-                <th className="h-11 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Category</th>
-                <th className="h-11 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Status</th>
-                <th className="h-11 px-5 text-right text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Actions</th>
+                <th className="h-11 w-20 px-5 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Date</th>
+                <th className="h-11 w-52 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Merchant</th>
+                <th className="h-11 w-72 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Description</th>
+                <th className="h-11 w-32 px-4 text-right text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Amount</th>
+                <th className="h-11 w-64 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Category</th>
+                <th className="h-11 w-40 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Status</th>
+                <th className="h-11 w-28 px-5 text-right text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -693,11 +735,7 @@ export function TransactionsPage() {
                       </td>
 
                       {/* Description */}
-                      <td
-                        className="max-w-72 truncate px-4 py-1.5 text-[12px]"
-                        style={{ color: 'var(--ink-3)' }}
-                        title={tx.description}
-                      >
+                      <td className="px-4 py-1.5 text-[12px]" style={{ color: 'var(--ink-3)' }}>
                         {tx.description}
                       </td>
 
@@ -749,31 +787,8 @@ export function TransactionsPage() {
                       </td>
 
                       {/* Status */}
-                      <td className="px-4 py-1.5">
-                        {tx.status === 'confirmed' ? (
-                          <span
-                            className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                            style={{
-                              background: 'rgba(202,224,168,0.6)',
-                              color: '#3d6b1f',
-                              border: '1px solid rgba(255,255,255,0.5)',
-                            }}
-                          >
-                            <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.6} />
-                            confirmed
-                          </span>
-                        ) : (
-                          <span
-                            className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
-                            style={{
-                              background: 'rgba(248,215,192,0.6)',
-                              color: 'var(--ink-2)',
-                              border: '1px solid rgba(255,255,255,0.5)',
-                            }}
-                          >
-                            needs review
-                          </span>
-                        )}
+                      <td className="whitespace-nowrap px-4 py-1.5">
+                        <TransactionStatusPill status={tx.status} />
                       </td>
 
                       {/* Actions */}
@@ -953,30 +968,7 @@ export function TransactionsPage() {
                       ))}
                     </select>
                   </div>
-                  {tx.status === 'confirmed' ? (
-                    <span
-                      className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                      style={{
-                        background: 'rgba(202,224,168,0.6)',
-                        color: '#3d6b1f',
-                        border: '1px solid rgba(255,255,255,0.5)',
-                      }}
-                    >
-                      <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.6} />
-                      confirmed
-                    </span>
-                  ) : (
-                    <span
-                      className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-                      style={{
-                        background: 'rgba(248,215,192,0.6)',
-                        color: 'var(--ink-2)',
-                        border: '1px solid rgba(255,255,255,0.5)',
-                      }}
-                    >
-                      needs review
-                    </span>
-                  )}
+                  <TransactionStatusPill status={tx.status} mobile />
                 </div>
 
                 {/* Actions */}

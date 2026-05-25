@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Check, ChevronLeft, ChevronRight, Flower2, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 interface Category {
@@ -60,6 +61,7 @@ interface StatsResponse {
 }
 
 const PAGE_SIZE = 15;
+const MERCHANT_DEBOUNCE_MS = 300;
 
 const statusOptions: SelectOption[] = [
   { value: 'all', label: 'All statuses' },
@@ -114,6 +116,7 @@ export function TransactionsPage() {
     return raw && ['all', 'needs_review', 'confirmed'].includes(raw) ? raw : 'all';
   });
   const [merchant, setMerchant] = useState(() => searchParams.get('merchant') ?? '');
+  const [debouncedMerchant, setDebouncedMerchant] = useState(() => searchParams.get('merchant') ?? '');
   const [offset, setOffset] = useState(0);
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -131,38 +134,47 @@ export function TransactionsPage() {
   const rowRefs = useRef<Map<number, HTMLTableRowElement>>(new Map());
   const [focusedRowId, setFocusedRowId] = useState<number | null>(null);
 
-  useEffect(() => {
-    const fetchFilterData = async () => {
-      try {
-        const [categoriesResponse, statsResponse] = await Promise.all([
-          fetch('/api/categories', { credentials: 'include' }),
-          fetch('/api/transactions/stats', { credentials: 'include' }),
-        ]);
-        if (!categoriesResponse.ok) throw new Error(`Failed to load categories (${categoriesResponse.status})`);
-        if (!statsResponse.ok) throw new Error(`Failed to load months (${statsResponse.status})`);
+  const fetchFilterData = useCallback(async () => {
+    try {
+      const [categoriesResponse, statsResponse] = await Promise.all([
+        fetch('/api/categories', { credentials: 'include' }),
+        fetch('/api/transactions/stats', { credentials: 'include' }),
+      ]);
+      if (!categoriesResponse.ok) throw new Error(`Failed to load categories (${categoriesResponse.status})`);
+      if (!statsResponse.ok) throw new Error(`Failed to load months (${statsResponse.status})`);
 
-        const categoriesPayload = (await categoriesResponse.json()) as CategoryResponse;
-        const statsPayload = (await statsResponse.json()) as StatsResponse;
-        setCategories(categoriesPayload.data);
-        const monthSet = new Set<string>([statsPayload.meta.month, ...statsPayload.meta.availableMonths, getCurrentMonth()]);
-        setAvailableMonths(Array.from(monthSet).sort((a, b) => b.localeCompare(a)));
-      } catch (fetchError) {
-        setError(fetchError instanceof Error ? fetchError.message : 'Failed to load filters');
-      }
-    };
-    void fetchFilterData();
+      const categoriesPayload = (await categoriesResponse.json()) as CategoryResponse;
+      const statsPayload = (await statsResponse.json()) as StatsResponse;
+      setCategories(categoriesPayload.data);
+      const monthSet = new Set<string>([statsPayload.meta.month, ...statsPayload.meta.availableMonths, getCurrentMonth()]);
+      setAvailableMonths(Array.from(monthSet).sort((a, b) => b.localeCompare(a)));
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : 'Failed to load filters');
+    }
   }, []);
+
+  useEffect(() => {
+    void fetchFilterData();
+  }, [fetchFilterData]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setDebouncedMerchant(merchant);
+    }, MERCHANT_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [merchant]);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (month !== 'all') params.set('month', month);
     if (category !== 'all') params.set('category', category);
     if (status !== 'all') params.set('status', status);
-    if (merchant.trim()) params.set('merchant', merchant.trim());
+    if (debouncedMerchant.trim()) params.set('merchant', debouncedMerchant.trim());
     const focusParam = searchParams.get('focus');
     if (focusParam) params.set('focus', focusParam);
     if (params.toString() !== searchParams.toString()) setSearchParams(params, { replace: true });
-  }, [month, category, status, merchant, searchParams, setSearchParams]);
+  }, [month, category, status, debouncedMerchant, searchParams, setSearchParams]);
 
   useEffect(() => {
     const focusParam = searchParams.get('focus');
@@ -184,35 +196,36 @@ export function TransactionsPage() {
     }
   }, [loading, transactions, searchParams, setSearchParams]);
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const params = new URLSearchParams();
-        params.set('limit', String(PAGE_SIZE));
-        params.set('offset', String(offset));
-        if (month !== 'all') params.set('month', month);
-        if (category !== 'all') params.set('category', category);
-        if (status !== 'all') params.set('status', status);
-        if (merchant.trim()) params.set('merchant', merchant.trim());
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', String(PAGE_SIZE));
+      params.set('offset', String(offset));
+      if (month !== 'all') params.set('month', month);
+      if (category !== 'all') params.set('category', category);
+      if (status !== 'all') params.set('status', status);
+      if (debouncedMerchant.trim()) params.set('merchant', debouncedMerchant.trim());
 
-        const response = await fetch(`/api/transactions?${params.toString()}`, { credentials: 'include' });
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({}));
-          throw new Error((payload as { error?: string }).error ?? `Failed to load transactions (${response.status})`);
-        }
-        const payload = (await response.json()) as TransactionsResponse;
-        setTransactions(payload.data);
-        setTotal(payload.pagination.total);
-      } catch (fetchError) {
-        setError(fetchError instanceof Error ? fetchError.message : 'Failed to load transactions');
-      } finally {
-        setLoading(false);
+      const response = await fetch(`/api/transactions?${params.toString()}`, { credentials: 'include' });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Failed to load transactions (${response.status})`);
       }
-    };
+      const payload = (await response.json()) as TransactionsResponse;
+      setTransactions(payload.data);
+      setTotal(payload.pagination.total);
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : 'Failed to load transactions');
+    } finally {
+      setLoading(false);
+    }
+  }, [month, category, status, debouncedMerchant, offset]);
+
+  useEffect(() => {
     void fetchTransactions();
-  }, [month, category, status, merchant, offset, reloadToken]);
+  }, [fetchTransactions, reloadToken]);
 
   useEffect(() => {
     const updateRowHeight = () => {
@@ -229,7 +242,7 @@ export function TransactionsPage() {
       const headerHeight = headerElement.getBoundingClientRect().height;
       const availableBodyHeight = Math.max(0, viewportHeight - headerHeight);
       const visibleRows = Math.min(PAGE_SIZE, transactions.length);
-      const nextRowHeight = Math.max(40, Math.floor(availableBodyHeight / Math.max(visibleRows, 1)));
+      const nextRowHeight = Math.max(48, Math.floor(availableBodyHeight / Math.max(visibleRows, 1)));
 
       setRowHeightPx((prev) => (prev === nextRowHeight ? prev : nextRowHeight));
     };
@@ -389,6 +402,10 @@ export function TransactionsPage() {
   const needsReviewCount = transactions.filter((t) => t.status === 'needs_review').length;
   const confirmedCount = transactions.filter((t) => t.status === 'confirmed').length;
   const completePct = transactions.length > 0 ? Math.round((confirmedCount / transactions.length) * 100) : 0;
+  const retryAll = () => {
+    setError(null);
+    void Promise.all([fetchFilterData(), fetchTransactions()]);
+  };
 
   // Active filters summary for eyebrow
   const filterParts: string[] = [];
@@ -400,7 +417,7 @@ export function TransactionsPage() {
     filterParts.push(catLabel);
   }
   if (status !== 'all') filterParts.push(status === 'needs_review' ? 'Needs review' : 'Confirmed');
-  if (merchant.trim()) filterParts.push(`"${merchant.trim()}"`);
+  if (debouncedMerchant.trim()) filterParts.push(`"${debouncedMerchant.trim()}"`);
 
   const categoryColorMap = useMemo(() => {
     const map = new Map<number, string>();
@@ -409,7 +426,12 @@ export function TransactionsPage() {
   }, [categories]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-5">
+    <div className="flex h-full min-h-0 flex-col gap-5" aria-busy={loading}>
+      {loading && (
+        <div role="status" aria-live="polite" className="sr-only">
+          Loading transactions…
+        </div>
+      )}
       {/* ─── Header ─── */}
       <header className="flex flex-col gap-4 px-1 pt-1 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-6 sm:pt-3">
         <div className="min-w-0">
@@ -448,7 +470,7 @@ export function TransactionsPage() {
                 color: 'var(--ink-2)',
               }}
             >
-              <span aria-hidden="true">⚘</span> {needsReviewCount} needs review
+              <Flower2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} /> {needsReviewCount} needs review
             </span>
           )}
           <span
@@ -459,7 +481,7 @@ export function TransactionsPage() {
               color: '#3d6b1f',
             }}
           >
-            <span aria-hidden="true">✓</span> {completePct}% sorted
+            <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} /> {completePct}% sorted
           </span>
         </div>
       </header>
@@ -550,21 +572,34 @@ export function TransactionsPage() {
       </div>
 
       {error && (
-        <p
-          className="rounded-2xl border px-5 py-3 text-sm"
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border px-5 py-3 text-sm"
           style={{
             background: 'rgba(245,180,160,0.4)',
             borderColor: 'rgba(197,112,74,0.4)',
             color: '#6b3a1f',
           }}
         >
-          {error}
-        </p>
+          <div className="min-w-0 flex-1">
+            <div className="font-serif text-base font-medium">Couldn't load transactions</div>
+            <div className="mt-0.5 text-[13px] text-[#7a4b2f]/85">{error}</div>
+          </div>
+          <button
+            type="button"
+            onClick={retryAll}
+            className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border-0 bg-[#6b3a1f] px-4 py-2 text-[13px] font-medium text-cream shadow-[0_6px_18px_-6px_rgba(107,58,31,0.45)] transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6b3a1f]/40 motion-reduce:hover:translate-y-0"
+          >
+            <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
+            Try again
+          </button>
+        </div>
       )}
 
       {/* ─── Table (desktop) ─── */}
       <div
         ref={tableViewportRef}
+        aria-busy={loading}
         className="hidden min-h-0 flex-1 overflow-hidden rounded-[28px] border md:block"
         style={{
           background: 'rgba(255,253,247,0.55)',
@@ -597,7 +632,7 @@ export function TransactionsPage() {
               {loading ? (
                 Array.from({ length: 6 }).map((_, i) => (
                   <tr key={i} className="border-b border-dashed" style={{ borderColor: 'rgba(45,36,24,0.08)' }}>
-                    <td colSpan={7} className="px-5 py-3">
+                    <td colSpan={7} className="px-5 py-3" aria-hidden="true">
                       <div
                         className="h-4 rounded-full animate-pulse"
                         style={{
@@ -698,7 +733,7 @@ export function TransactionsPage() {
                             }}
                             onChange={(e) => void onCategoryAssign(tx, e.target.value)}
                             aria-label={`Set category for transaction ${tx.id}`}
-                            className="h-7 cursor-pointer appearance-none rounded-full border border-white/70 bg-white/50 pr-6 text-xs font-medium outline-none transition-colors hover:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 disabled:cursor-default disabled:opacity-50"
+                            className="h-9 cursor-pointer appearance-none rounded-full border border-white/70 bg-white/50 pr-6 text-[13px] font-medium outline-none transition-colors hover:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 disabled:cursor-default disabled:opacity-50"
                             style={{
                               fontFamily: "'Outfit', sans-serif",
                               color: tx.categoryId === null ? 'var(--ink-3)' : 'var(--ink)',
@@ -724,7 +759,8 @@ export function TransactionsPage() {
                               border: '1px solid rgba(255,255,255,0.5)',
                             }}
                           >
-                            ✓ confirmed
+                            <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.6} />
+                            confirmed
                           </span>
                         ) : (
                           <span
@@ -744,22 +780,26 @@ export function TransactionsPage() {
                       <td className="px-5 py-1.5">
                         <div className="flex justify-end gap-1">
                           <button
+                            type="button"
                             onClick={() => void onEditTransaction(tx)}
                             disabled={isBusy}
-                            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
+                            aria-label={`Edit transaction ${tx.id}`}
+                            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
                             style={{ color: 'var(--ink-2)' }}
                             title="Edit"
                           >
-                            ✎
+                            <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
                           </button>
                           <button
+                            type="button"
                             onClick={() => void onDeleteTransaction(tx)}
                             disabled={isBusy}
-                            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-lg border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
+                            aria-label={`Delete transaction ${tx.id}`}
+                            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
                             style={{ color: 'var(--accent)' }}
                             title="Delete"
                           >
-                            ✕
+                            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.2} />
                           </button>
                         </div>
                       </td>
@@ -773,11 +813,18 @@ export function TransactionsPage() {
       </div>
 
       {/* ─── Card list (mobile) ─── */}
-      <div className="flex flex-col gap-2.5 md:hidden">
+      <div
+        className="flex flex-col gap-2.5 md:hidden"
+        role={loading ? 'status' : undefined}
+        aria-live={loading ? 'polite' : undefined}
+        aria-busy={loading}
+      >
+        {loading && <span className="sr-only">Loading transactions…</span>}
         {loading ? (
           Array.from({ length: 5 }).map((_, i) => (
             <div
               key={i}
+              aria-hidden="true"
               className="rounded-[20px] border p-4"
               style={{
                 background: 'rgba(255,253,247,0.55)',
@@ -915,7 +962,8 @@ export function TransactionsPage() {
                         border: '1px solid rgba(255,255,255,0.5)',
                       }}
                     >
-                      <span aria-hidden="true">✓</span> confirmed
+                      <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.6} />
+                      confirmed
                     </span>
                   ) : (
                     <span
@@ -944,7 +992,8 @@ export function TransactionsPage() {
                     className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-white/60 disabled:opacity-50"
                     style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', touchAction: 'manipulation' }}
                   >
-                    <span aria-hidden="true">✎</span> Edit
+                    <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.3} />
+                    Edit
                   </button>
                   <button
                     type="button"
@@ -954,7 +1003,8 @@ export function TransactionsPage() {
                     className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:opacity-50"
                     style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--accent)', touchAction: 'manipulation' }}
                   >
-                    <span aria-hidden="true">✕</span> Delete
+                    <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.2} />
+                    Delete
                   </button>
                 </div>
               </article>
@@ -992,7 +1042,8 @@ export function TransactionsPage() {
                 touchAction: 'manipulation',
               }}
             >
-              ← prev
+              <ChevronLeft aria-hidden="true" className="h-4 w-4" strokeWidth={2.4} />
+              prev
             </button>
           ) : (
             <span aria-hidden="true" className="min-h-11 sm:hidden" />
@@ -1016,7 +1067,8 @@ export function TransactionsPage() {
                 touchAction: 'manipulation',
               }}
             >
-              next →
+              next
+              <ChevronRight aria-hidden="true" className="h-4 w-4" strokeWidth={2.4} />
             </button>
           ) : (
             <span aria-hidden="true" className="min-h-11 sm:hidden" />

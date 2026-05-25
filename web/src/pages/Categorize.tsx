@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowRight, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePublishCategorizeStats } from '@/hooks/useCategorizeStats';
+import { useToast } from '@/hooks/useToast';
 
 interface Category {
   id: number;
@@ -25,7 +27,13 @@ interface ConfirmedItem {
   category: string;
   categoryColor: string;
   amount: number;
+  type: 'debit' | 'credit';
   at: number;
+}
+
+interface UndoAction {
+  txId: number;
+  categoryId: number;
 }
 
 function formatMoney(cents: number): string {
@@ -63,22 +71,34 @@ function lighten(hex: string, amount = 0.75): string {
   return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
 }
 
+function removeFirstMatch<T>(items: T[], predicate: (item: T) => boolean): T[] {
+  const index = items.findIndex(predicate);
+  if (index === -1) return items;
+  return [...items.slice(0, index), ...items.slice(index + 1)];
+}
+
 export function CategorizePage() {
+  const { pushToast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [queue, setQueue] = useState<Transaction[]>([]);
   const [totalUncategorized, setTotalUncategorized] = useState(0);
   const [totalTransactions, setTotalTransactions] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [confirmedList, setConfirmedList] = useState<ConfirmedItem[]>([]);
-  const [lastAction, setLastAction] = useState<{ txId: number; categoryId: number } | null>(null);
+  const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
   const [isCategoryMenuOpen, setIsCategoryMenuOpen] = useState(false);
+  const [categoryMenuActiveIndex, setCategoryMenuActiveIndex] = useState(0);
   const categoryMenuRef = useRef<HTMLDivElement | null>(null);
+  const categoryMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const categoryMenuOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [assigningId, setAssigningId] = useState<number | null>(null);
 
   const categorizedCount = totalTransactions - totalUncategorized + confirmedList.length;
   const remaining = Math.max(0, totalUncategorized - confirmedList.length);
   const positionInBatch = confirmedList.length + 1;
   const current = queue[0] ?? null;
+  const isAssigning = assigningId !== null;
   const upNext = queue.slice(1);
   const progressPct = totalUncategorized > 0
     ? Math.round((confirmedList.length / totalUncategorized) * 100)
@@ -104,25 +124,35 @@ export function CategorizePage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const [catRes, txRes, statsRes] = await Promise.all([
         fetch('/api/categories', { credentials: 'include' }),
         fetch('/api/transactions?status=needs_review&limit=20', { credentials: 'include' }),
         fetch('/api/transactions/stats', { credentials: 'include' }),
       ]);
-      if (catRes.ok) {
-        const cats = (await catRes.json()) as { data: Category[] };
-        setCategories(cats.data);
+      if (!catRes.ok) {
+        const payload = await catRes.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Failed to load categories (${catRes.status})`);
       }
-      if (txRes.ok) {
-        const txPayload = (await txRes.json()) as { data: Transaction[]; pagination: { total: number } };
-        setQueue(txPayload.data);
-        setTotalUncategorized(txPayload.pagination.total);
+      if (!txRes.ok) {
+        const payload = await txRes.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Failed to load transactions (${txRes.status})`);
       }
-      if (statsRes.ok) {
-        const statsPayload = (await statsRes.json()) as { data: { totalTransactionCount: number } };
-        setTotalTransactions(statsPayload.data.totalTransactionCount);
+      if (!statsRes.ok) {
+        const payload = await statsRes.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Failed to load stats (${statsRes.status})`);
       }
+
+      const cats = (await catRes.json()) as { data: Category[] };
+      const txPayload = (await txRes.json()) as { data: Transaction[]; pagination: { total: number } };
+      const statsPayload = (await statsRes.json()) as { data: { totalTransactionCount: number } };
+      setCategories(cats.data);
+      setQueue(txPayload.data);
+      setTotalUncategorized(txPayload.pagination.total);
+      setTotalTransactions(statsPayload.data.totalTransactionCount);
+    } catch (fetchError) {
+      setError(fetchError instanceof Error ? fetchError.message : 'Failed to load categorize page');
     } finally {
       setLoading(false);
     }
@@ -133,11 +163,11 @@ export function CategorizePage() {
   }, [fetchData]);
 
   const assignCategory = async (categoryId: number) => {
-    if (!current) return;
+    if (!current || isAssigning) return;
     const category = categories.find((c) => c.id === categoryId);
 
     setAssigningId(current.id);
-    setLastAction({ txId: current.id, categoryId });
+    setUndoStack((prev) => [{ txId: current.id, categoryId }, ...prev]);
     setConfirmedList((prev) => [
       {
         txId: current.id,
@@ -145,6 +175,7 @@ export function CategorizePage() {
         category: category?.name ?? 'Unknown',
         categoryColor: category?.color ?? '#9c8a73',
         amount: current.amount,
+        type: current.type,
         at: Date.now(),
       },
       ...prev,
@@ -163,14 +194,14 @@ export function CategorizePage() {
         body: JSON.stringify({ category_id: categoryId, status: 'confirmed' }),
       });
       if (!response.ok) {
-        setQueue((prev) => [current, ...prev]);
-        setConfirmedList((prev) => prev.slice(1));
-        setLastAction(null);
+        setQueue((prev) => (prev.some((tx) => tx.id === current.id) ? prev : [current, ...prev]));
+        setConfirmedList((prev) => removeFirstMatch(prev, (item) => item.txId === current.id));
+        setUndoStack((prev) => removeFirstMatch(prev, (action) => action.txId === current.id && action.categoryId === categoryId));
       }
     } catch {
-      setQueue((prev) => [current, ...prev]);
-      setConfirmedList((prev) => prev.slice(1));
-      setLastAction(null);
+      setQueue((prev) => (prev.some((tx) => tx.id === current.id) ? prev : [current, ...prev]));
+      setConfirmedList((prev) => removeFirstMatch(prev, (item) => item.txId === current.id));
+      setUndoStack((prev) => removeFirstMatch(prev, (action) => action.txId === current.id && action.categoryId === categoryId));
     }
 
     if (queue.length <= 3) {
@@ -199,19 +230,100 @@ export function CategorizePage() {
   };
 
   const undo = async () => {
+    const [lastAction, ...rest] = undoStack;
     if (!lastAction) return;
+    setUndoStack(rest);
     try {
-      await fetch(`/api/transactions/${lastAction.txId}`, {
+      const response = await fetch(`/api/transactions/${lastAction.txId}`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category_id: null, status: 'needs_review' }),
       });
-      setConfirmedList((prev) => prev.slice(1));
-      setLastAction(null);
+      if (!response.ok) {
+        setUndoStack((prev) => [lastAction, ...prev]);
+        pushToast({
+          variant: 'error',
+          title: 'Undo failed',
+          description: `We couldn't uncategorize this transaction. Please try again.`,
+        });
+        return;
+      }
+      setConfirmedList((prev) => removeFirstMatch(prev, (item) => item.txId === lastAction.txId));
       void fetchData();
     } catch {
-      // ignore
+      setUndoStack((prev) => [lastAction, ...prev]);
+      pushToast({
+        variant: 'error',
+        title: 'Undo failed',
+        description: `We couldn't uncategorize this transaction. Please try again.`,
+      });
+    }
+  };
+
+  const closeCategoryMenuAndReturnFocus = () => {
+    setIsCategoryMenuOpen(false);
+    categoryMenuTriggerRef.current?.focus();
+  };
+
+  const openCategoryMenu = (focus: 'first' | 'last' | 'current' = 'current') => {
+    const last = categories.length - 1;
+    if (last < 0) {
+      setCategoryMenuActiveIndex(0);
+    } else if (focus === 'first') {
+      setCategoryMenuActiveIndex(0);
+    } else if (focus === 'last') {
+      setCategoryMenuActiveIndex(last);
+    } else {
+      setCategoryMenuActiveIndex((idx) => Math.max(0, Math.min(idx, last)));
+    }
+    setIsCategoryMenuOpen(true);
+  };
+
+  const onCategoryTriggerKeyDown = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
+    if (isAssigning) return;
+    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openCategoryMenu('first');
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      openCategoryMenu('last');
+    }
+  };
+
+  const onCategoryListboxKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (isAssigning) return;
+    if (categories.length === 0) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeCategoryMenuAndReturnFocus();
+      }
+      return;
+    }
+    const last = categories.length - 1;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setCategoryMenuActiveIndex((i) => (i >= last ? 0 : i + 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setCategoryMenuActiveIndex((i) => (i <= 0 ? last : i - 1));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setCategoryMenuActiveIndex(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setCategoryMenuActiveIndex(last);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeCategoryMenuAndReturnFocus();
+    } else if (e.key === 'Tab') {
+      setIsCategoryMenuOpen(false);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const category = categories[categoryMenuActiveIndex];
+      if (!category) return;
+      void assignCategory(category.id);
+      closeCategoryMenuAndReturnFocus();
     }
   };
 
@@ -225,11 +337,17 @@ export function CategorizePage() {
       }
       if (e.key === 'ArrowLeft' && current) goBack();
       if (e.key === 'ArrowRight' && current) skip();
-      if ((e.key === 'u' || e.key === 'U') && lastAction) void undo();
+      if ((e.key === 'u' || e.key === 'U') && undoStack.length > 0) void undo();
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [current, favoriteCategories, lastAction]);
+  }, [current, favoriteCategories, undoStack, isAssigning]);
+
+  useEffect(() => {
+    if (!isCategoryMenuOpen) return;
+    const node = categoryMenuOptionRefs.current[categoryMenuActiveIndex];
+    if (node) node.focus();
+  }, [isCategoryMenuOpen, categoryMenuActiveIndex]);
 
   useEffect(() => {
     const onClickOutside = (event: MouseEvent) => {
@@ -245,14 +363,36 @@ export function CategorizePage() {
   /* ─── Loading ─── */
   if (loading) {
     return (
-      <div className="flex flex-col gap-6">
-        <div className="h-24 animate-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)]" />
-        <div className="h-[420px] animate-pulse rounded-[36px] border border-white/60 bg-[rgba(255,253,247,0.5)]" />
-        <div className="flex gap-3">
+      <div role="status" aria-live="polite" aria-busy="true" className="flex flex-col gap-6">
+        <span className="sr-only">Loading categorize queue…</span>
+        <div aria-hidden="true" className="h-24 animate-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)]" />
+        <div aria-hidden="true" className="h-[420px] animate-pulse rounded-[36px] border border-white/60 bg-[rgba(255,253,247,0.5)]" />
+        <div aria-hidden="true" className="flex gap-3">
           {[1, 2, 3, 4].map((k) => (
             <div key={k} className="h-10 flex-1 animate-pulse rounded-full border border-white/60 bg-[rgba(255,253,247,0.5)]" />
           ))}
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div
+        role="alert"
+        className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-[rgba(197,112,74,0.4)] bg-[rgba(245,180,160,0.4)] px-6 py-5 text-[15px] text-[#6b3a1f]"
+      >
+        <div className="min-w-0 flex-1">
+          <div className="font-serif text-base font-medium">Couldn't load categorize queue</div>
+          <div className="mt-0.5 text-[13px] text-[#7a4b2f]/85">{error}</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => void fetchData()}
+          className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border-0 bg-[#6b3a1f] px-4 py-2 text-[13px] font-medium text-cream shadow-[0_6px_18px_-6px_rgba(107,58,31,0.45)] transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6b3a1f]/40 motion-reduce:hover:translate-y-0"
+        >
+          Try again
+        </button>
       </div>
     );
   }
@@ -281,7 +421,7 @@ export function CategorizePage() {
               boxShadow: '0 6px 20px rgba(93,138,63,0.3)',
             }}
           >
-            ✓
+            <Check aria-hidden="true" className="h-5 w-5" strokeWidth={2.8} />
           </span>
         </div>
         <h2
@@ -304,7 +444,7 @@ export function CategorizePage() {
               boxShadow: '0 8px 22px -6px rgba(45,36,24,0.4)',
             }}
           >
-            See dashboard <span>→</span>
+            See dashboard <ArrowRight aria-hidden="true" className="h-4 w-4" strokeWidth={2.3} />
           </Link>
           <Link
             to="/transactions"
@@ -450,8 +590,9 @@ export function CategorizePage() {
               {favoriteCategories.map((cat, i) => (
                 <button
                   key={cat.id}
+                  disabled={isAssigning}
                   onClick={() => void assignCategory(cat.id)}
-                  className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border px-4 py-2 text-[15px] font-medium transition-all hover:-translate-y-0.5 hover:scale-[1.03] active:translate-y-0 active:scale-[0.98] sm:min-h-0 sm:text-sm motion-reduce:transform-none motion-reduce:transition-none"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 py-2 text-[15px] font-medium transition-all enabled:cursor-pointer enabled:hover:-translate-y-0.5 enabled:hover:scale-[1.03] enabled:active:translate-y-0 enabled:active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 sm:min-h-0 sm:text-sm motion-reduce:transform-none motion-reduce:transition-none"
                   style={{
                     fontFamily: "'Outfit', sans-serif",
                     color: 'var(--ink)',
@@ -486,11 +627,15 @@ export function CategorizePage() {
             {/* All categories dropdown */}
             <div className="relative mt-4" ref={categoryMenuRef}>
               <button
+                ref={categoryMenuTriggerRef}
                 type="button"
+                disabled={isAssigning}
                 aria-haspopup="listbox"
                 aria-expanded={isCategoryMenuOpen}
-                onClick={() => setIsCategoryMenuOpen((prev) => !prev)}
-                className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-full border px-5 py-2.5 text-sm italic transition-colors hover:bg-white/75"
+                aria-controls="categorize-category-listbox"
+                onClick={() => (isCategoryMenuOpen ? closeCategoryMenuAndReturnFocus() : openCategoryMenu('current'))}
+                onKeyDown={onCategoryTriggerKeyDown}
+                className="flex min-h-11 w-full items-center justify-between rounded-full border px-5 py-2.5 text-sm italic transition-colors enabled:cursor-pointer enabled:hover:bg-white/75 disabled:cursor-not-allowed disabled:opacity-55"
                 style={{
                   fontFamily: "'Fraunces', serif",
                   color: 'var(--ink-3)',
@@ -501,11 +646,20 @@ export function CategorizePage() {
                 }}
               >
                 <span>All {categories.length} categories</span>
-                <span aria-hidden="true" className="not-italic text-[13px]">{isCategoryMenuOpen ? '⌃' : '⌄'}</span>
+                {isCategoryMenuOpen ? (
+                  <ChevronUp aria-hidden="true" className="h-4 w-4" strokeWidth={2.2} />
+                ) : (
+                  <ChevronDown aria-hidden="true" className="h-4 w-4" strokeWidth={2.2} />
+                )}
               </button>
               {isCategoryMenuOpen && (
                 <div
-                  className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 max-h-[260px] overflow-y-auto rounded-[22px] border p-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  id="categorize-category-listbox"
+                  role="listbox"
+                  aria-label="Choose category"
+                  tabIndex={-1}
+                  onKeyDown={onCategoryListboxKeyDown}
+                  className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 max-h-[260px] overflow-y-auto rounded-[22px] border p-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none"
                   style={{
                     background: 'rgba(255,253,247,0.94)',
                     borderColor: 'rgba(255,255,255,0.8)',
@@ -513,15 +667,23 @@ export function CategorizePage() {
                     boxShadow: '0 16px 44px -10px rgba(45,36,24,0.2), inset 0 0 0 1px rgba(255,255,255,0.5)',
                   }}
                 >
-                  {categories.map((cat) => (
+                  {categories.map((cat, idx) => (
                     <button
                       key={cat.id}
+                      ref={(node) => {
+                        categoryMenuOptionRefs.current[idx] = node;
+                      }}
                       type="button"
-                      className="flex min-h-11 w-full cursor-pointer items-center gap-2.5 rounded-[14px] border-0 bg-transparent px-3.5 py-2.5 text-left text-sm transition-colors hover:bg-[rgba(45,36,24,0.06)]"
+                      role="option"
+                      aria-selected={categoryMenuActiveIndex === idx}
+                      tabIndex={categoryMenuActiveIndex === idx ? 0 : -1}
+                      onFocus={() => setCategoryMenuActiveIndex(idx)}
+                      disabled={isAssigning}
+                      className="flex min-h-11 w-full items-center gap-2.5 rounded-[14px] border-0 bg-transparent px-3.5 py-2.5 text-left text-sm transition-colors enabled:cursor-pointer enabled:hover:bg-[rgba(45,36,24,0.06)] disabled:cursor-not-allowed disabled:opacity-55"
                       style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)', touchAction: 'manipulation' }}
                       onClick={() => {
                         void assignCategory(cat.id);
-                        setIsCategoryMenuOpen(false);
+                        closeCategoryMenuAndReturnFocus();
                       }}
                     >
                       <span
@@ -581,7 +743,7 @@ export function CategorizePage() {
                   boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)',
                 }}
               >
-                →
+                <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
               </span>
             </button>
           </div>
@@ -634,7 +796,7 @@ export function CategorizePage() {
                   <span
                     className="h-2 w-2 rounded-full"
                     style={{
-                      background: isCredit ? '#cae0a8' : '#f8d7c0',
+                      background: tx.type === 'credit' ? '#cae0a8' : '#f8d7c0',
                       boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.6)',
                     }}
                   />
@@ -680,9 +842,9 @@ export function CategorizePage() {
             </span>
             <button
               onClick={() => void undo()}
-              disabled={!lastAction}
+              disabled={undoStack.length === 0}
               aria-label="Undo last categorization"
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1 text-[12px] not-italic transition-all enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:bg-white/90 disabled:cursor-default disabled:opacity-35 motion-reduce:enabled:hover:translate-y-0 sm:text-[11px]"
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12px] not-italic transition-all enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:bg-white/90 disabled:cursor-default disabled:opacity-35 motion-reduce:enabled:hover:translate-y-0 sm:text-[11px]"
               style={{
                 fontFamily: "'Outfit', sans-serif",
                 color: 'var(--ink-2)',
@@ -714,7 +876,7 @@ export function CategorizePage() {
                     className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white"
                     style={{ background: `linear-gradient(135deg, ${lighten(item.categoryColor, 0.3)}, ${item.categoryColor})` }}
                   >
-                    ✓
+                    <Check aria-hidden="true" className="h-2.5 w-2.5" strokeWidth={2.8} />
                   </span>
                   <div className="min-w-0">
                     <div className="truncate text-[13px] font-medium" style={{ color: 'var(--ink)' }}>
@@ -735,7 +897,7 @@ export function CategorizePage() {
                     className="text-sm font-medium"
                     style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink-2)' }}
                   >
-                    −{formatMoney(item.amount)}
+                    {item.type === 'credit' ? '+' : '−'}{formatMoney(item.amount)}
                   </span>
                 </div>
               ))}

@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import type { LucideIcon } from 'lucide-react';
+import { FolderTree, LayoutDashboard, ReceiptText, ScanSearch, Tags } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { BrandMark } from '@/components/BrandMark';
 import { ToastViewport } from '@/hooks/useToast';
 
 const mainNav = [
-  { name: 'Dashboard', path: '/', icon: '◐' },
-  { name: 'Categorize', path: '/categorize', icon: '✦', badgeKey: 'uncategorized' as const },
+  { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+  { name: 'Categorize', path: '/categorize', icon: ScanSearch, badgeKey: 'uncategorized' as const },
 ];
 
 const adminNav = [
-  { name: 'Transactions', path: '/transactions', icon: '≡' },
-  { name: 'Categories', path: '/categories', icon: '❀' },
-  { name: 'Statements', path: '/statements', icon: '▤' },
+  { name: 'Transactions', path: '/transactions', icon: ReceiptText },
+  { name: 'Categories', path: '/categories', icon: FolderTree },
+  { name: 'Statements', path: '/statements', icon: Tags },
 ];
 
 export function AppShell() {
@@ -163,7 +165,7 @@ export function AppShell() {
               >
                 {({ isActive }) => (
                   <>
-                    <NavIcon active={isActive}>{item.icon}</NavIcon>
+                    <NavIcon active={isActive} icon={item.icon} />
                     <span className="flex-1">{item.name}</span>
                     {item.badgeKey === 'uncategorized' && uncategorizedTotal > 0 && (
                       <span className="ml-auto rounded-full bg-[linear-gradient(135deg,#f8d7c0,#f5b893)] px-2.5 py-px font-serif text-xs font-semibold text-[#6b3a1f] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
@@ -186,7 +188,7 @@ export function AppShell() {
               >
                 {({ isActive }) => (
                   <>
-                    <NavIcon active={isActive}>{item.icon}</NavIcon>
+                    <NavIcon active={isActive} icon={item.icon} />
                     <span className="flex-1">{item.name}</span>
                   </>
                 )}
@@ -253,7 +255,7 @@ function navLinkClass(isActive: boolean) {
     : `${base} text-ink-2 hover:bg-white/50 hover:text-ink`;
 }
 
-function NavIcon({ active, children }: { active: boolean; children: React.ReactNode }) {
+function NavIcon({ active, icon: Icon }: { active: boolean; icon: LucideIcon }) {
   return (
     <span
       className={[
@@ -262,7 +264,7 @@ function NavIcon({ active, children }: { active: boolean; children: React.ReactN
       ].join(' ')}
       style={{ width: 22, height: 22 }}
     >
-      {children}
+      <Icon aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.1} />
     </span>
   );
 }

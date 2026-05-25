@@ -780,9 +780,9 @@ function BigCard({
   return (
     <div className="bloom-glass relative rounded-[26px] p-5 sm:rounded-[32px] sm:p-8">
       <div className="mb-5.5">
-        <h3 className="m-0 font-serif text-[22px] font-normal leading-[1.1] tracking-[-0.02em] text-ink sm:text-[28px]">
+        <h2 className="m-0 font-serif text-[22px] font-normal leading-[1.1] tracking-[-0.02em] text-ink sm:text-[28px]">
           {title}
-        </h3>
+        </h2>
         <span className="mt-0.5 block font-serif text-sm italic text-ink-3">{sub}</span>
       </div>
       {children}

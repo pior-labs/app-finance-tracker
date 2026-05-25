@@ -17,6 +17,24 @@ const adminNav = [
   { name: 'Statements', path: '/statements', icon: Tags },
 ];
 
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'textarea:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ');
+
+function getFocusableElements(container: HTMLElement) {
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter((el) => {
+    if (el.hasAttribute('disabled')) return false;
+    if (el.getAttribute('aria-hidden') === 'true') return false;
+    if (el.tabIndex < 0) return false;
+    return true;
+  });
+}
+
 export function AppShell() {
   const { user, logout } = useAuth();
   const location = useLocation();
@@ -25,6 +43,9 @@ export function AppShell() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileNavRef = useRef<HTMLDivElement>(null);
+  const mobileNavTriggerRef = useRef<HTMLButtonElement>(null);
+  const lastFocusedBeforeMobileNavRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -53,15 +74,71 @@ export function AppShell() {
 
   useEffect(() => {
     if (!mobileNavOpen) return;
+    lastFocusedBeforeMobileNavRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    const dialog = mobileNavRef.current;
+    if (!dialog) return;
+
+    const hadTabIndex = dialog.hasAttribute('tabindex');
+    if (!hadTabIndex) dialog.setAttribute('tabindex', '-1');
+
+    const focusInitialElement = () => {
+      const focusables = getFocusableElements(dialog);
+      const closeButton = focusables.find((el) => el.getAttribute('data-mobile-nav-close') === 'true');
+      (closeButton ?? focusables[0] ?? dialog).focus();
+    };
+    const rafId = window.requestAnimationFrame(focusInitialElement);
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMobileNavOpen(false);
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setMobileNavOpen(false);
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      const focusables = getFocusableElements(dialog);
+      if (focusables.length === 0) {
+        e.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (!active || !dialog.contains(active)) {
+        e.preventDefault();
+        first.focus();
+        return;
+      }
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+        return;
+      }
+      if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
+      window.cancelAnimationFrame(rafId);
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prevOverflow;
+      if (!hadTabIndex) dialog.removeAttribute('tabindex');
+
+      const target =
+        mobileNavTriggerRef.current ??
+        (lastFocusedBeforeMobileNavRef.current?.isConnected
+          ? lastFocusedBeforeMobileNavRef.current
+          : null);
+      target?.focus();
     };
   }, [mobileNavOpen]);
 
@@ -78,6 +155,12 @@ export function AppShell() {
 
   return (
     <div className="bloom-root relative min-h-screen bg-cream text-ink font-sans text-[15px] leading-[1.55]">
+      <a
+        href="#main-content"
+        className="absolute left-3 top-3 z-[70] -translate-y-20 rounded-full border border-ink/20 bg-cream px-4 py-2 text-sm font-medium text-ink shadow-[0_10px_24px_-10px_rgba(45,36,24,0.35)] transition-transform focus:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+      >
+        Skip to main content
+      </a>
       <div className="bloom-mesh">
         <div className="bloom-blob b1" />
         <div className="bloom-blob b2" />
@@ -108,7 +191,7 @@ export function AppShell() {
             to="/"
             style={{ transition: 'opacity 300ms ease-out' }}
             className={[
-              'flex items-center gap-2.5 text-inherit no-underline',
+              'flex items-center gap-2.5 text-inherit no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
               scrolled ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100',
             ].join(' ')}
             aria-hidden={scrolled}
@@ -118,12 +201,13 @@ export function AppShell() {
             <span className="font-serif text-[19px] font-medium italic tracking-tight">finlens</span>
           </Link>
           <button
+            ref={mobileNavTriggerRef}
             type="button"
             aria-label="Open navigation"
             aria-expanded={mobileNavOpen}
             aria-controls="bloom-mobile-nav"
             onClick={() => setMobileNavOpen(true)}
-            className="pointer-events-auto inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-ink/10 bg-ink p-0 text-cream shadow-[0_8px_22px_-6px_rgba(45,36,24,0.4)] transition-[transform,box-shadow,background-color] duration-300 ease-out hover:-translate-y-px hover:bg-ink/95 hover:shadow-[0_10px_26px_-6px_rgba(45,36,24,0.5)] motion-reduce:hover:translate-y-0"
+            className="pointer-events-auto inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-ink/10 bg-ink p-0 text-cream shadow-[0_8px_22px_-6px_rgba(45,36,24,0.4)] transition-[transform,box-shadow,background-color] duration-300 ease-out hover:-translate-y-px hover:bg-ink/95 hover:shadow-[0_10px_26px_-6px_rgba(45,36,24,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream motion-reduce:hover:translate-y-0"
           >
             <BurgerBars open={false} />
           </button>
@@ -132,6 +216,7 @@ export function AppShell() {
 
       {mobileNavOpen && (
         <MobileNavOverlay
+          navRef={mobileNavRef}
           uncategorizedTotal={uncategorizedTotal}
           userName={user?.name}
           onClose={() => setMobileNavOpen(false)}
@@ -149,13 +234,13 @@ export function AppShell() {
         >
           <Link
             to="/"
-            className="mb-2 flex items-center gap-3 border-b border-dashed border-ink/10 px-2 pb-3.5 text-inherit no-underline"
+            className="mb-2 flex items-center gap-3 border-b border-dashed border-ink/10 px-2 pb-3.5 text-inherit no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
           >
             <BrandMark size={34} />
             <span className="font-serif text-[22px] font-medium italic tracking-tight">finlens</span>
           </Link>
 
-          <nav className="flex flex-col gap-0.5">
+          <nav aria-label="Primary" className="flex flex-col gap-0.5">
             {mainNav.map((item) => (
               <NavLink
                 key={item.path}
@@ -178,8 +263,8 @@ export function AppShell() {
             ))}
           </nav>
 
-          <div className="px-3 pt-3 pb-1 font-serif text-xs italic tracking-wide text-ink-3">Admin</div>
-          <nav className="flex flex-col gap-0.5">
+          <div className="px-3 pt-3 pb-1 font-serif text-xs italic tracking-wide text-ink-2">Admin</div>
+          <nav aria-label="Admin" className="flex flex-col gap-0.5">
             {adminNav.map((item) => (
               <NavLink
                 key={item.path}
@@ -205,7 +290,7 @@ export function AppShell() {
               aria-haspopup="menu"
               aria-expanded={profileMenuOpen}
               className={[
-                'flex w-full cursor-pointer items-center gap-2.5 rounded-2xl border-0 bg-transparent p-[8px_10px] text-left font-[inherit] transition-colors hover:bg-white/50',
+                'flex w-full cursor-pointer items-center gap-2.5 rounded-2xl border-0 bg-transparent p-[8px_10px] text-left font-[inherit] transition-colors hover:bg-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
                 profileMenuOpen ? 'bg-white/70' : '',
               ].join(' ')}
             >
@@ -214,7 +299,7 @@ export function AppShell() {
               </span>
               <span className="flex min-w-0 flex-1 flex-col leading-[1.15]">
                 <span className="truncate font-serif text-[15px] text-ink">{user?.name ?? 'Account'}</span>
-                <span className="text-[11px] text-ink-3">Account ⌄</span>
+                <span className="text-[11px] text-ink-2">Account ⌄</span>
               </span>
             </button>
             {profileMenuOpen && (
@@ -229,7 +314,7 @@ export function AppShell() {
                     setProfileMenuOpen(false);
                     void logout();
                   }}
-                  className="w-full cursor-pointer rounded-xl border-0 bg-transparent px-3 py-2.5 text-left font-[inherit] text-[13px] text-ink hover:bg-ink/5"
+                  className="w-full cursor-pointer rounded-xl border-0 bg-transparent px-3 py-2.5 text-left font-[inherit] text-[13px] text-ink hover:bg-ink/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                 >
                   Sign out
                 </button>
@@ -238,7 +323,7 @@ export function AppShell() {
           </div>
         </aside>
 
-        <main className="flex min-w-0 flex-col gap-6">
+        <main id="main-content" tabIndex={-1} className="flex min-w-0 flex-col gap-6">
           <Outlet />
         </main>
       </div>
@@ -249,7 +334,7 @@ export function AppShell() {
 
 function navLinkClass(isActive: boolean) {
   const base =
-    'flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm font-medium no-underline transition-colors';
+    'flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm font-medium no-underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream';
   return isActive
     ? `${base} bg-ink text-cream shadow-[0_6px_18px_-6px_rgba(45,36,24,0.35)]`
     : `${base} text-ink-2 hover:bg-white/50 hover:text-ink`;
@@ -270,19 +355,21 @@ function NavIcon({ active, icon: Icon }: { active: boolean; icon: LucideIcon }) 
 }
 
 type MobileNavOverlayProps = {
+  navRef: { current: HTMLDivElement | null };
   uncategorizedTotal: number;
   userName: string | undefined;
   onClose: () => void;
   onSignOut: () => void;
 };
 
-function MobileNavOverlay({ uncategorizedTotal, userName, onClose, onSignOut }: MobileNavOverlayProps) {
+function MobileNavOverlay({ navRef, uncategorizedTotal, userName, onClose, onSignOut }: MobileNavOverlayProps) {
   const allItems = [
     ...mainNav.map((item) => ({ ...item, group: 'main' as const })),
     ...adminNav.map((item) => ({ ...item, group: 'admin' as const, badgeKey: undefined as undefined })),
   ];
   return (
     <div
+      ref={navRef}
       id="bloom-mobile-nav"
       role="dialog"
       aria-modal="true"
@@ -296,27 +383,32 @@ function MobileNavOverlay({ uncategorizedTotal, userName, onClose, onSignOut }: 
       </div>
 
       <div className="relative flex items-center justify-between gap-3 px-5 pb-3 pt-[max(0.875rem,env(safe-area-inset-top))]">
-        <Link to="/" onClick={onClose} className="flex items-center gap-2.5 text-inherit no-underline">
+        <Link
+          to="/"
+          onClick={onClose}
+          className="flex items-center gap-2.5 text-inherit no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+        >
           <BrandMark size={30} />
           <span className="font-serif text-[20px] font-medium italic tracking-tight">finlens</span>
         </Link>
         <button
+          data-mobile-nav-close="true"
           type="button"
           aria-label="Close navigation"
           onClick={onClose}
-          className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-ink/10 bg-white/60 p-0 text-ink shadow-[0_4px_14px_-4px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-md transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-px hover:bg-white/80 motion-reduce:hover:translate-y-0"
+          className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-ink/10 bg-white/60 p-0 text-ink shadow-[0_4px_14px_-4px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-md transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-px hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream motion-reduce:hover:translate-y-0"
         >
           <CloseIcon />
         </button>
       </div>
 
-      <nav className="relative flex flex-1 flex-col gap-1 overflow-y-auto px-6 pb-6 pt-6">
+      <nav aria-label="Mobile navigation" className="relative flex flex-1 flex-col gap-1 overflow-y-auto px-6 pb-6 pt-6">
         {allItems.map((item, idx) => {
           const showAdminHeader = item.group === 'admin' && allItems[idx - 1]?.group !== 'admin';
           return (
             <div key={item.path} style={{ animationDelay: `${120 + idx * 70}ms` }} className="bloom-overlay-item-anim motion-reduce:animate-none">
               {showAdminHeader && (
-                <div className="mb-2 mt-5 font-serif text-xs italic tracking-[0.18em] uppercase text-ink-3">Admin</div>
+                <div className="mb-2 mt-5 font-serif text-xs italic tracking-[0.18em] uppercase text-ink-2">Admin</div>
               )}
               <NavLink
                 to={item.path}
@@ -325,6 +417,7 @@ function MobileNavOverlay({ uncategorizedTotal, userName, onClose, onSignOut }: 
                 className={({ isActive }) =>
                   [
                     'group flex items-baseline gap-3 border-b border-dashed border-ink/10 py-3.5 text-left no-underline transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
                     isActive ? 'text-ink' : 'text-ink-2 hover:text-ink',
                   ].join(' ')
                 }
@@ -335,7 +428,7 @@ function MobileNavOverlay({ uncategorizedTotal, userName, onClose, onSignOut }: 
                       aria-hidden="true"
                       className={[
                         'font-serif text-[13px] italic w-6 shrink-0',
-                        isActive ? 'text-ink' : 'text-ink-3',
+                        isActive ? 'text-ink' : 'text-ink-2',
                       ].join(' ')}
                     >
                       {String(idx + 1).padStart(2, '0')}
@@ -373,13 +466,13 @@ function MobileNavOverlay({ uncategorizedTotal, userName, onClose, onSignOut }: 
           </span>
           <span className="flex min-w-0 flex-col leading-[1.15]">
             <span className="truncate font-serif text-[15px] text-ink">{userName ?? 'Account'}</span>
-            <span className="text-[11px] text-ink-3">Signed in</span>
+            <span className="text-[11px] text-ink-2">Signed in</span>
           </span>
         </div>
         <button
           type="button"
           onClick={onSignOut}
-          className="cursor-pointer rounded-full border border-ink/15 bg-transparent px-4 py-2 font-serif text-[13px] italic text-ink transition-colors hover:bg-ink/5"
+          className="inline-flex min-h-11 cursor-pointer items-center rounded-full border border-ink/15 bg-transparent px-4 py-2 font-serif text-[13px] italic text-ink transition-colors hover:bg-ink/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           Sign out
         </button>

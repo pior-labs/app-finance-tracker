@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, ArrowRight, Check, Eye, RefreshCw, Trash2, Upload } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { UploadModal } from '@/components/UploadModal';
 
 interface StatementListItem {
@@ -23,6 +25,13 @@ interface StatementsResponse {
   data: StatementListItem[];
 }
 
+interface StatementTransactionsResponse {
+  data: Array<{
+    id: number;
+    date: string;
+  }>;
+}
+
 function formatDate(value: string): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
@@ -35,10 +44,14 @@ function formatPeriod(start: string | null, end: string | null): string {
 }
 
 export function StatementsPage() {
+  const navigate = useNavigate();
   const [statements, setStatements] = useState<StatementListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [viewingStatementIds, setViewingStatementIds] = useState<number[]>([]);
+  const [reparsingStatementIds, setReparsingStatementIds] = useState<number[]>([]);
+  const [deletingStatementIds, setDeletingStatementIds] = useState<number[]>([]);
 
   const fetchStatements = async () => {
     setLoading(true);
@@ -69,8 +82,71 @@ export function StatementsPage() {
 
   const totalTx = statements.reduce((sum, s) => sum + s.transactionCount, 0);
 
+  const pendingStatementIds = useMemo(
+    () => new Set([...viewingStatementIds, ...reparsingStatementIds, ...deletingStatementIds]),
+    [viewingStatementIds, reparsingStatementIds, deletingStatementIds]
+  );
+
+  const withPendingStatementId = (setIds: Dispatch<SetStateAction<number[]>>, id: number) => {
+    setIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+  };
+
+  const clearPendingStatementId = (setIds: Dispatch<SetStateAction<number[]>>, id: number) => {
+    setIds((prev) => prev.filter((statementId) => statementId !== id));
+  };
+
+  const viewStatementTransactions = async (statementId: number) => {
+    setError(null);
+    withPendingStatementId(setViewingStatementIds, statementId);
+    try {
+      const res = await fetch(`/api/statements/${statementId}/transactions`, { credentials: 'include' });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Failed to load statement transactions (${res.status})`);
+      }
+
+      const payload = (await res.json()) as StatementTransactionsResponse;
+      const firstTransaction = payload.data[0];
+      if (!firstTransaction) {
+        throw new Error('No transactions found for this statement.');
+      }
+
+      const month = firstTransaction.date.slice(0, 7);
+      const params = new URLSearchParams({ focus: String(firstTransaction.id) });
+      if (/^\d{4}-\d{2}$/.test(month)) {
+        params.set('month', month);
+      }
+      navigate(`/transactions?${params.toString()}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to view statement transactions');
+    } finally {
+      clearPendingStatementId(setViewingStatementIds, statementId);
+    }
+  };
+
+  const reparseStatement = async (statementId: number) => {
+    setError(null);
+    withPendingStatementId(setReparsingStatementIds, statementId);
+    try {
+      const res = await fetch(`/api/statements/${statementId}/reparse`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const payload = await res.json().catch(() => ({}));
+        throw new Error((payload as { error?: string }).error ?? `Failed to re-parse statement (${res.status})`);
+      }
+      await fetchStatements();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to re-parse statement');
+    } finally {
+      clearPendingStatementId(setReparsingStatementIds, statementId);
+    }
+  };
+
   const deleteStatement = async (id: number) => {
     setError(null);
+    withPendingStatementId(setDeletingStatementIds, id);
     try {
       const res = await fetch(`/api/statements/${id}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) {
@@ -80,6 +156,8 @@ export function StatementsPage() {
       await fetchStatements();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete statement');
+    } finally {
+      clearPendingStatementId(setDeletingStatementIds, id);
     }
   };
 
@@ -102,6 +180,7 @@ export function StatementsPage() {
           </h1>
         </div>
         <button
+          type="button"
           onClick={() => setUploadOpen(true)}
           className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border-0 px-5 py-3 text-[15px] font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 sm:w-auto"
           style={{
@@ -112,26 +191,39 @@ export function StatementsPage() {
             touchAction: 'manipulation',
           }}
         >
-          + Upload statement
+          <Upload aria-hidden="true" className="h-4 w-4" />
+          Upload statement
         </button>
       </header>
 
       {error && (
-        <p
-          className="rounded-2xl border px-5 py-3 text-sm"
+        <div
+          role="alert"
+          className="flex flex-col items-start gap-3 rounded-2xl border px-5 py-3 sm:flex-row sm:items-center sm:justify-between"
           style={{
             background: 'rgba(245,180,160,0.4)',
             borderColor: 'rgba(197,112,74,0.4)',
             color: '#6b3a1f',
           }}
         >
-          {error}
-        </p>
+          <p className="m-0 text-sm">{error}</p>
+          <button
+            type="button"
+            onClick={() => void fetchStatements()}
+            disabled={loading}
+            className="inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-full border-0 px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+            style={{ fontFamily: "'Outfit', sans-serif", background: 'rgba(255,255,255,0.65)', color: 'var(--ink)' }}
+          >
+            <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
+            Retry
+          </button>
+        </div>
       )}
 
       {/* ─── Table (desktop) ─── */}
       <div
         className="hidden overflow-hidden rounded-[28px] border md:block"
+        aria-busy={loading}
         style={{
           background: 'rgba(255,253,247,0.55)',
           borderColor: 'rgba(255,255,255,0.8)',
@@ -161,20 +253,29 @@ export function StatementsPage() {
             </thead>
             <tbody>
               {loading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <tr key={i} className="border-b border-dashed" style={{ borderColor: 'rgba(45,36,24,0.08)' }}>
-                    <td colSpan={7} className="px-5 py-4">
-                      <div
-                        className="h-4 animate-pulse rounded-full"
-                        style={{
-                          background: 'rgba(255,253,247,0.6)',
-                          width: `${60 + (i % 3) * 15}%`,
-                          animationDelay: `${i * 0.1}s`,
-                        }}
-                      />
+                <>
+                  <tr className="sr-only">
+                    <td colSpan={7}>
+                      <span role="status" aria-live="polite">
+                        Loading statements...
+                      </span>
                     </td>
                   </tr>
-                ))
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <tr key={i} className="border-b border-dashed" style={{ borderColor: 'rgba(45,36,24,0.08)' }}>
+                      <td colSpan={7} className="px-5 py-4">
+                        <div
+                          className="h-4 animate-pulse rounded-full"
+                          style={{
+                            background: 'rgba(255,253,247,0.6)',
+                            width: `${60 + (i % 3) * 15}%`,
+                            animationDelay: `${i * 0.1}s`,
+                          }}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </>
               ) : sortedStatements.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-20">
@@ -207,6 +308,7 @@ export function StatementsPage() {
                         Upload your first bank statement and we'll import your transactions automatically.
                       </p>
                       <button
+                        type="button"
                         onClick={() => setUploadOpen(true)}
                         className="mt-1 inline-flex cursor-pointer items-center gap-2 rounded-full border-0 px-5 py-2.5 text-sm font-medium transition-transform hover:-translate-y-px"
                         style={{
@@ -216,7 +318,9 @@ export function StatementsPage() {
                           boxShadow: '0 6px 18px -6px rgba(45,36,24,0.35)',
                         }}
                       >
-                        Upload statement →
+                        <Upload aria-hidden="true" className="h-4 w-4" />
+                        Upload statement
+                        <ArrowRight aria-hidden="true" className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
@@ -224,6 +328,10 @@ export function StatementsPage() {
               ) : (
                 sortedStatements.map((s) => {
                   const isFailed = s.status === 'failed' || s.transactionCount === 0;
+                  const isViewing = viewingStatementIds.includes(s.id);
+                  const isReparsing = reparsingStatementIds.includes(s.id);
+                  const isDeleting = deletingStatementIds.includes(s.id);
+                  const isRowPending = pendingStatementIds.has(s.id);
                   return (
                     <tr
                       key={s.id}
@@ -319,7 +427,8 @@ export function StatementsPage() {
                               border: '1px solid rgba(255,255,255,0.5)',
                             }}
                           >
-                            ✓ imported
+                            <Check aria-hidden="true" className="h-3 w-3" />
+                            imported
                           </span>
                         )}
                       </td>
@@ -328,26 +437,37 @@ export function StatementsPage() {
                       <td className="px-5 py-3">
                         <div className="flex justify-end gap-1">
                           <button
-                            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
+                            type="button"
+                            onClick={() => void viewStatementTransactions(s.id)}
+                            aria-label="View transactions"
+                            disabled={isRowPending}
+                            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 transition-colors hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-55"
                             style={{ color: 'var(--ink-2)' }}
                             title="View transactions"
                           >
-                            👁
+                            <Eye aria-hidden="true" className={`h-4 w-4 ${isViewing ? 'animate-pulse' : ''}`} />
                           </button>
                           <button
-                            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
+                            type="button"
+                            onClick={() => void reparseStatement(s.id)}
+                            aria-label="Re-parse statement"
+                            disabled={isRowPending}
+                            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 transition-colors hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-55"
                             style={{ color: 'var(--ink-2)' }}
                             title="Re-parse"
                           >
-                            ↻
+                            <RefreshCw aria-hidden="true" className={`h-4 w-4 ${isReparsing ? 'animate-spin' : ''}`} />
                           </button>
                           <button
+                            type="button"
                             onClick={() => void deleteStatement(s.id)}
-                            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
+                            aria-label="Delete statement"
+                            disabled={isRowPending}
+                            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-not-allowed disabled:opacity-55"
                             style={{ color: 'var(--accent)' }}
                             title="Delete"
                           >
-                            ✕
+                            <Trash2 aria-hidden="true" className={`h-4 w-4 ${isDeleting ? 'animate-pulse' : ''}`} />
                           </button>
                         </div>
                       </td>
@@ -361,33 +481,38 @@ export function StatementsPage() {
       </div>
 
       {/* ─── Card list (mobile) ─── */}
-      <div className="flex flex-col gap-2.5 md:hidden">
+      <div className="flex flex-col gap-2.5 md:hidden" aria-busy={loading}>
         {loading ? (
-          Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-[20px] border p-4"
-              style={{
-                background: 'rgba(255,253,247,0.55)',
-                borderColor: 'rgba(255,255,255,0.8)',
-                backdropFilter: 'blur(20px) saturate(140%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(140%)',
-              }}
-            >
+          <>
+            <span role="status" aria-live="polite" className="sr-only">
+              Loading statements...
+            </span>
+            {Array.from({ length: 4 }).map((_, i) => (
               <div
-                className="h-3.5 animate-pulse rounded-full motion-reduce:animate-none"
+                key={i}
+                className="rounded-[20px] border p-4"
                 style={{
-                  background: 'rgba(45,36,24,0.06)',
-                  width: `${55 + (i % 3) * 14}%`,
-                  animationDelay: `${i * 0.1}s`,
+                  background: 'rgba(255,253,247,0.55)',
+                  borderColor: 'rgba(255,255,255,0.8)',
+                  backdropFilter: 'blur(20px) saturate(140%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(140%)',
                 }}
-              />
-              <div
-                className="mt-2.5 h-3 w-2/3 animate-pulse rounded-full motion-reduce:animate-none"
-                style={{ background: 'rgba(45,36,24,0.05)', animationDelay: `${i * 0.1 + 0.05}s` }}
-              />
-            </div>
-          ))
+              >
+                <div
+                  className="h-3.5 animate-pulse rounded-full motion-reduce:animate-none"
+                  style={{
+                    background: 'rgba(45,36,24,0.06)',
+                    width: `${55 + (i % 3) * 14}%`,
+                    animationDelay: `${i * 0.1}s`,
+                  }}
+                />
+                <div
+                  className="mt-2.5 h-3 w-2/3 animate-pulse rounded-full motion-reduce:animate-none"
+                  style={{ background: 'rgba(45,36,24,0.05)', animationDelay: `${i * 0.1 + 0.05}s` }}
+                />
+              </div>
+            ))}
+          </>
         ) : sortedStatements.length === 0 ? (
           <div
             className="rounded-[24px] border p-8 text-center"
@@ -428,6 +553,7 @@ export function StatementsPage() {
                 Upload your first bank statement and we'll import your transactions automatically.
               </p>
               <button
+                type="button"
                 onClick={() => setUploadOpen(true)}
                 className="mt-1 inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border-0 px-5 py-2.5 text-sm font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0"
                 style={{
@@ -438,13 +564,19 @@ export function StatementsPage() {
                   touchAction: 'manipulation',
                 }}
               >
-                Upload statement →
+                <Upload aria-hidden="true" className="h-4 w-4" />
+                Upload statement
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
               </button>
             </div>
           </div>
         ) : (
           sortedStatements.map((s) => {
             const isFailed = s.status === 'failed' || s.transactionCount === 0;
+            const isViewing = viewingStatementIds.includes(s.id);
+            const isReparsing = reparsingStatementIds.includes(s.id);
+            const isDeleting = deletingStatementIds.includes(s.id);
+            const isRowPending = pendingStatementIds.has(s.id);
             return (
               <article
                 key={s.id}
@@ -490,7 +622,8 @@ export function StatementsPage() {
                         border: '1px solid rgba(255,255,255,0.5)',
                       }}
                     >
-                      <span aria-hidden="true">✓</span> imported
+                      <Check aria-hidden="true" className="h-3 w-3" />
+                      imported
                     </span>
                   )}
                 </div>
@@ -540,7 +673,7 @@ export function StatementsPage() {
                       {s.transactionCount > 0 ? s.transactionCount : '—'}
                     </span>
                     <span className="ml-1 text-[11px]" style={{ color: 'var(--ink-3)' }}>
-                      {s.transactionCount === 1 ? 'tx' : 'tx'}
+                      {s.transactionCount === 1 ? 'tx' : 'txs'}
                     </span>
                   </div>
                 </div>
@@ -552,28 +685,34 @@ export function StatementsPage() {
                 >
                   <button
                     type="button"
+                    onClick={() => void viewStatementTransactions(s.id)}
                     aria-label="View transactions"
-                    className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60"
+                    disabled={isRowPending}
+                    className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60 disabled:cursor-not-allowed disabled:opacity-55"
                     style={{ color: 'var(--ink-2)', touchAction: 'manipulation' }}
                   >
-                    <span aria-hidden="true">👁</span>
+                    <Eye aria-hidden="true" className={`h-4 w-4 ${isViewing ? 'animate-pulse' : ''}`} />
                   </button>
                   <button
                     type="button"
+                    onClick={() => void reparseStatement(s.id)}
                     aria-label="Re-parse statement"
-                    className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60"
+                    disabled={isRowPending}
+                    className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60 disabled:cursor-not-allowed disabled:opacity-55"
                     style={{ color: 'var(--ink-2)', touchAction: 'manipulation' }}
                   >
-                    <span aria-hidden="true">↻</span>
+                    <RefreshCw aria-hidden="true" className={`h-4 w-4 ${isReparsing ? 'animate-spin' : ''}`} />
                   </button>
                   <button
                     type="button"
                     onClick={() => void deleteStatement(s.id)}
                     aria-label="Delete statement"
-                    className="inline-flex h-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-[rgba(248,215,192,0.7)]"
+                    disabled={isRowPending}
+                    className="inline-flex h-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-not-allowed disabled:opacity-55"
                     style={{ color: 'var(--accent)', fontFamily: "'Outfit', sans-serif", touchAction: 'manipulation' }}
                   >
-                    <span aria-hidden="true">✕</span> Delete
+                    <Trash2 aria-hidden="true" className={`h-4 w-4 ${isDeleting ? 'animate-pulse' : ''}`} />
+                    Delete
                   </button>
                 </div>
               </article>
@@ -593,7 +732,7 @@ export function StatementsPage() {
           color: 'var(--ink-3)',
         }}
       >
-        <span aria-hidden="true" className="shrink-0">⚠</span>
+        <AlertTriangle aria-hidden="true" className="h-4 w-4 shrink-0" />
         <span>
           Deleting a statement removes its transactions too.{' '}
           <strong style={{ color: 'var(--ink-2)' }}>Re-parse</strong> tries again with the latest parser — non-destructive.

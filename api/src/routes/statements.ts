@@ -239,3 +239,88 @@ statementsRouter.post('/upload', async (c) => {
     201
   );
 });
+
+statementsRouter.delete('/:id', async (c) => {
+  const statementId = Number(c.req.param('id'));
+
+  if (!Number.isFinite(statementId) || statementId <= 0) {
+    return c.json({ error: 'Invalid statement id' }, 400);
+  }
+
+  const statement = await db.query.statements.findFirst({
+    where: eq(schema.statements.id, statementId)
+  });
+
+  if (!statement) {
+    return c.json({ error: 'Statement not found' }, 404);
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId));
+    await tx.delete(schema.statements).where(eq(schema.statements.id, statementId));
+  });
+
+  return c.json({ success: true });
+});
+
+statementsRouter.post('/:id/reparse', async (c) => {
+  const statementId = Number(c.req.param('id'));
+
+  if (!Number.isFinite(statementId) || statementId <= 0) {
+    return c.json({ error: 'Invalid statement id' }, 400);
+  }
+
+  const statement = await db.query.statements.findFirst({
+    where: eq(schema.statements.id, statementId)
+  });
+
+  if (!statement) {
+    return c.json({ error: 'Statement not found' }, 404);
+  }
+
+  const rawText = statement.rawText?.trim();
+  if (!rawText) {
+    return c.json({ error: 'Statement cannot be re-parsed because no raw text is stored.' }, 400);
+  }
+
+  const parsedTransactions = parseBankStatementText(rawText);
+  const { periodStart, periodEnd } = getStatementPeriodFromTransactions(parsedTransactions);
+
+  await db.transaction(async (tx) => {
+    await tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId));
+
+    if (parsedTransactions.length > 0) {
+      await tx.insert(schema.transactions).values(
+        parsedTransactions.map((transaction) => ({
+          statementId,
+          date: transaction.date,
+          description: transaction.description,
+          merchant: transaction.merchant,
+          amount: transaction.amount,
+          type: transaction.type,
+          categoryId: null,
+          status: 'needs_review'
+        }))
+      );
+    }
+
+    await tx
+      .update(schema.statements)
+      .set({
+        periodStart,
+        periodEnd
+      })
+      .where(eq(schema.statements.id, statementId));
+  });
+
+  return c.json({
+    data: {
+      id: statementId,
+      periodStart,
+      periodEnd
+    },
+    meta: {
+      insertedTransactions: parsedTransactions.length
+    }
+  });
+});

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Palette, Pencil, Plus, RotateCcw, Star, Trash2, TriangleAlert, X } from 'lucide-react';
 
 interface Category {
   id: number;
@@ -63,6 +64,17 @@ export function CategoriesPage() {
   useEffect(() => {
     void fetchCategories();
   }, []);
+
+  useEffect(() => {
+    if (!categoryPendingDelete || deleting) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setCategoryPendingDelete(null);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [categoryPendingDelete, deleting]);
 
   const createCategory = async () => {
     if (!newName.trim()) return;
@@ -243,6 +255,7 @@ export function CategoriesPage() {
         style={{ borderColor: 'rgba(255,255,255,0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
       />
       <button
+        type="button"
         onClick={onSave}
         className="inline-flex min-h-11 cursor-pointer items-center rounded-full border-0 px-4 py-1.5 text-[13px] font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 sm:min-h-0 sm:px-3.5 sm:text-xs"
         style={{
@@ -302,6 +315,7 @@ export function CategoriesPage() {
                 />
                 <div className="flex shrink-0 items-center gap-2">
                   <button
+                    type="button"
                     onClick={() => void renameCategory(cat.id)}
                     className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center rounded-full border-0 px-4 py-1.5 text-[13px] font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 sm:min-h-0 sm:flex-none sm:px-3 sm:text-xs"
                     style={{ background: 'var(--ink)', color: 'var(--cream)', fontFamily: "'Outfit', sans-serif", boxShadow: '0 4px 12px -4px rgba(45,36,24,0.3)', touchAction: 'manipulation' }}
@@ -309,12 +323,13 @@ export function CategoriesPage() {
                     Save
                   </button>
                   <button
+                    type="button"
                     onClick={() => setEditingId(null)}
                     aria-label="Cancel rename"
                     className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-sm transition-colors hover:bg-white/80 sm:h-6 sm:w-6 sm:text-xs"
                     style={{ color: 'var(--ink-3)', touchAction: 'manipulation' }}
                   >
-                    ✕
+                    <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
                   </button>
                 </div>
               </div>
@@ -349,28 +364,36 @@ export function CategoriesPage() {
           {!isEditing && (
             <div className="hidden shrink-0 items-center gap-1 opacity-60 transition-opacity group-hover:opacity-100 motion-reduce:transition-none md:flex">
               <button
+                type="button"
                 onClick={() => void toggleFavorite(cat)}
                 aria-label={cat.isFavorite ? 'Unfavorite' : 'Favorite'}
                 aria-pressed={!!cat.isFavorite}
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 text-sm transition-all hover:scale-110 motion-reduce:transform-none"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 text-sm transition-all hover:scale-110 motion-reduce:transform-none"
                 style={{
                   background: cat.isFavorite ? 'rgba(248,215,192,0.7)' : 'rgba(255,255,255,0.4)',
                   color: cat.isFavorite ? 'var(--accent)' : 'var(--ink-3)',
                 }}
                 title={cat.isFavorite ? 'Unfavorite' : 'Favorite'}
               >
-                ★
+                <Star
+                  aria-hidden="true"
+                  className="h-4 w-4"
+                  strokeWidth={2.2}
+                  fill={cat.isFavorite ? 'currentColor' : 'none'}
+                />
               </button>
               <button
+                type="button"
                 onClick={() => { setEditingId(cat.id); setEditName(cat.name); setColorEditingId(null); }}
                 aria-label="Rename"
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
                 style={{ color: 'var(--ink-2)' }}
                 title="Rename"
               >
-                ✎
+                <Pencil aria-hidden="true" className="h-4 w-4" strokeWidth={2.3} />
               </button>
               <button
+                type="button"
                 onClick={() => {
                   if (colorEditingId === cat.id) {
                     setColorEditingId(null);
@@ -383,29 +406,21 @@ export function CategoriesPage() {
                 }}
                 aria-label="Edit color"
                 aria-expanded={isColorEditing}
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
                 style={{ color: 'var(--ink-2)' }}
                 title="Edit color"
               >
-                ●
+                <Palette aria-hidden="true" className="h-4 w-4" strokeWidth={2.2} />
               </button>
               <button
-                onClick={() => { setEditingId(cat.id); setEditName(cat.name); }}
-                aria-label="Merge into another category"
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
-                style={{ color: 'var(--ink-2)' }}
-                title="Merge into…"
-              >
-                ⇆
-              </button>
-              <button
+                type="button"
                 onClick={() => setCategoryPendingDelete(cat)}
                 aria-label="Delete"
-                className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
                 style={{ color: 'var(--accent)' }}
                 title="Delete"
               >
-                ✕
+                <Trash2 aria-hidden="true" className="h-4 w-4" strokeWidth={2.2} />
               </button>
             </div>
           )}
@@ -418,6 +433,7 @@ export function CategoriesPage() {
             style={{ borderColor: 'rgba(45,36,24,0.1)' }}
           >
             <button
+              type="button"
               onClick={() => void toggleFavorite(cat)}
               aria-label={cat.isFavorite ? 'Unfavorite' : 'Favorite'}
               aria-pressed={!!cat.isFavorite}
@@ -429,18 +445,25 @@ export function CategoriesPage() {
                 touchAction: 'manipulation',
               }}
             >
-              <span aria-hidden="true">★</span>
+              <Star
+                aria-hidden="true"
+                className="h-3.5 w-3.5"
+                strokeWidth={2.2}
+                fill={cat.isFavorite ? 'currentColor' : 'none'}
+              />
               <span>{cat.isFavorite ? 'Saved' : 'Favorite'}</span>
             </button>
             <button
+              type="button"
               onClick={() => { setEditingId(cat.id); setEditName(cat.name); setColorEditingId(null); }}
               aria-label="Rename"
               className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60"
               style={{ color: 'var(--ink-2)', touchAction: 'manipulation' }}
             >
-              <span aria-hidden="true">✎</span>
+              <Pencil aria-hidden="true" className="h-4 w-4" strokeWidth={2.3} />
             </button>
             <button
+              type="button"
               onClick={() => {
                 if (colorEditingId === cat.id) {
                   setColorEditingId(null);
@@ -456,15 +479,16 @@ export function CategoriesPage() {
               className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60"
               style={{ color: 'var(--ink-2)', touchAction: 'manipulation' }}
             >
-              <span aria-hidden="true">●</span>
+              <Palette aria-hidden="true" className="h-4 w-4" strokeWidth={2.2} />
             </button>
             <button
+              type="button"
               onClick={() => setCategoryPendingDelete(cat)}
               aria-label="Delete"
               className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-[rgba(248,215,192,0.7)]"
               style={{ color: 'var(--accent)', touchAction: 'manipulation' }}
             >
-              <span aria-hidden="true">✕</span>
+              <Trash2 aria-hidden="true" className="h-4 w-4" strokeWidth={2.2} />
             </button>
           </div>
         )}
@@ -486,7 +510,7 @@ export function CategoriesPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" aria-busy={loading}>
       {/* ─── Header ─── */}
       <header className="flex flex-col gap-4 px-1 pt-1 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-6 sm:pt-3">
         <div className="min-w-0">
@@ -504,6 +528,7 @@ export function CategoriesPage() {
           </h1>
         </div>
         <button
+          type="button"
           onClick={() => setShowNewForm(true)}
           className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border-0 px-5 py-3 text-[15px] font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 sm:w-auto"
           style={{
@@ -514,21 +539,35 @@ export function CategoriesPage() {
             touchAction: 'manipulation',
           }}
         >
-          + New category
+          <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2.4} />
+          New category
         </button>
       </header>
 
       {error && (
-        <p
-          className="rounded-2xl border px-5 py-3 text-sm"
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border px-5 py-3 text-sm"
           style={{
             background: 'rgba(245,180,160,0.4)',
             borderColor: 'rgba(197,112,74,0.4)',
             color: '#6b3a1f',
           }}
         >
-          {error}
-        </p>
+          <div className="min-w-0 flex-1">
+            <div className="font-serif text-base font-medium">Couldn't load categories</div>
+            <div className="mt-0.5 text-[13px] text-[#7a4b2f]/85">{error}</div>
+          </div>
+          <button
+            type="button"
+            onClick={() => void fetchCategories()}
+            disabled={loading}
+            className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border-0 bg-[#6b3a1f] px-4 py-2 text-[13px] font-medium text-cream shadow-[0_6px_18px_-6px_rgba(107,58,31,0.45)] transition-transform hover:-translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6b3a1f]/40 motion-reduce:hover:translate-y-0 disabled:cursor-default disabled:opacity-50"
+          >
+            <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
+            Try again
+          </button>
+        </div>
       )}
 
       {/* ─── New category form ─── */}
@@ -593,6 +632,7 @@ export function CategoriesPage() {
             <div className="hidden sm:block sm:flex-1" />
             <div className="flex items-center gap-2.5 sm:gap-3">
               <button
+                type="button"
                 onClick={() => { setShowNewForm(false); setNewName(''); setNewColor(DEFAULT_COLOR); }}
                 className="min-h-11 flex-1 cursor-pointer rounded-full border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50 sm:flex-none"
                 style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)', touchAction: 'manipulation' }}
@@ -600,6 +640,7 @@ export function CategoriesPage() {
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => void createCategory()}
                 disabled={creating || !newName.trim()}
                 className="inline-flex min-h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 px-5 py-2 text-sm font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 disabled:cursor-default disabled:opacity-50 sm:flex-none"
@@ -611,7 +652,7 @@ export function CategoriesPage() {
                   touchAction: 'manipulation',
                 }}
               >
-                {creating ? 'Adding…' : 'Add →'}
+                {creating ? 'Adding…' : 'Add'}
               </button>
             </div>
           </div>
@@ -620,10 +661,12 @@ export function CategoriesPage() {
 
       {/* ─── Loading ─── */}
       {loading ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div role="status" aria-live="polite" aria-busy="true" className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <span className="sr-only">Loading categories…</span>
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
+              aria-hidden="true"
               className="h-16 animate-pulse rounded-[22px] border"
               style={{
                 background: 'rgba(255,253,247,0.5)',
@@ -635,11 +678,53 @@ export function CategoriesPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-8">
+          {categories.length === 0 && (
+            <section
+              className="rounded-[24px] border px-5 py-12 text-center"
+              style={{
+                background: 'rgba(255,253,247,0.55)',
+                borderColor: 'rgba(255,255,255,0.8)',
+                backdropFilter: 'blur(20px) saturate(140%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+              }}
+            >
+              <h2
+                className="m-0 text-[28px] font-normal tracking-tight sm:text-[32px]"
+                style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
+              >
+                No categories yet
+              </h2>
+              <p className="mx-auto mt-2.5 mb-0 max-w-[440px] text-[14px] sm:text-[15px]" style={{ color: 'var(--ink-2)' }}>
+                Create your first category to organize transactions faster in the categorize flow.
+              </p>
+              <button
+                type="button"
+                onClick={() => setShowNewForm(true)}
+                className="mt-5 inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-full border-0 px-5 py-3 text-[14px] font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 sm:text-[15px]"
+                style={{
+                  fontFamily: "'Outfit', sans-serif",
+                  background: 'var(--ink)',
+                  color: 'var(--cream)',
+                  boxShadow: '0 8px 22px -6px rgba(45,36,24,0.4)',
+                  touchAction: 'manipulation',
+                }}
+              >
+                <Plus aria-hidden="true" className="h-4 w-4" strokeWidth={2.4} />
+                New category
+              </button>
+            </section>
+          )}
+
           {/* ─── Favorites ─── */}
           {favorites.length > 0 && (
             <section>
               <div className="mb-4 flex items-center gap-2.5 px-1">
-                <span style={{ color: 'var(--accent)' }}>★</span>
+                <Star
+                  aria-hidden="true"
+                  className="h-4 w-4"
+                  strokeWidth={2.2}
+                  style={{ color: 'var(--accent)', fill: 'currentColor' }}
+                />
                 <h2
                   className="m-0 text-xl font-normal"
                   style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
@@ -698,7 +783,7 @@ export function CategoriesPage() {
           color: 'var(--ink-3)',
         }}
       >
-        <span aria-hidden="true" className="shrink-0">⚠</span>
+        <TriangleAlert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 sm:mt-0" strokeWidth={2.3} />
         <span>
           Deleting a category moves its transactions to <strong style={{ color: 'var(--ink-2)' }}>Other</strong>. Merging keeps history.
         </span>
@@ -737,13 +822,14 @@ export function CategoriesPage() {
                 Delete category?
               </h2>
               <button
+                type="button"
                 onClick={() => setCategoryPendingDelete(null)}
                 disabled={deleting}
                 aria-label="Close"
                 className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-sm transition-colors hover:bg-white/80 disabled:opacity-50 sm:h-7 sm:w-7 sm:text-xs"
                 style={{ color: 'var(--ink-3)', touchAction: 'manipulation' }}
               >
-                ✕
+                <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
               </button>
             </div>
             <p className="text-sm" style={{ color: 'var(--ink-2)' }}>
@@ -755,6 +841,7 @@ export function CategoriesPage() {
             </p>
             <div className="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
               <button
+                type="button"
                 onClick={() => setCategoryPendingDelete(null)}
                 disabled={deleting}
                 className="min-h-11 cursor-pointer rounded-full border bg-transparent px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/50 disabled:opacity-50"
@@ -763,6 +850,7 @@ export function CategoriesPage() {
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={() => void deleteCategory()}
                 disabled={deleting}
                 className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border-0 px-5 py-2.5 text-sm font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 disabled:cursor-default disabled:opacity-50"

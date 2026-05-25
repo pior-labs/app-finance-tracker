@@ -34,6 +34,7 @@ interface ConfirmedItem {
 interface UndoAction {
   txId: number;
   categoryId: number;
+  transaction: Transaction;
 }
 
 function formatMoney(cents: number): string {
@@ -93,12 +94,14 @@ export function CategorizePage() {
   const categoryMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
   const categoryMenuOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [assigningId, setAssigningId] = useState<number | null>(null);
+  const [isUndoing, setIsUndoing] = useState(false);
 
   const categorizedCount = totalTransactions - totalUncategorized + confirmedList.length;
   const remaining = Math.max(0, totalUncategorized - confirmedList.length);
   const positionInBatch = confirmedList.length + 1;
   const current = queue[0] ?? null;
   const isAssigning = assigningId !== null;
+  const isLocked = isAssigning || isUndoing;
   const upNext = queue.slice(1);
   const progressPct = totalUncategorized > 0
     ? Math.round((confirmedList.length / totalUncategorized) * 100)
@@ -163,11 +166,11 @@ export function CategorizePage() {
   }, [fetchData]);
 
   const assignCategory = async (categoryId: number) => {
-    if (!current || isAssigning) return;
+    if (!current || isLocked) return;
     const category = categories.find((c) => c.id === categoryId);
 
     setAssigningId(current.id);
-    setUndoStack((prev) => [{ txId: current.id, categoryId }, ...prev]);
+    setUndoStack((prev) => [{ txId: current.id, categoryId, transaction: current }, ...prev]);
     setConfirmedList((prev) => [
       {
         txId: current.id,
@@ -230,9 +233,37 @@ export function CategorizePage() {
   };
 
   const undo = async () => {
+    if (isLocked) return;
     const [lastAction, ...rest] = undoStack;
     if (!lastAction) return;
+    const confirmedSnapshot = confirmedList.find((item) => item.txId === lastAction.txId);
+
+    setIsUndoing(true);
     setUndoStack(rest);
+
+    setTimeout(() => {
+      setConfirmedList((prev) => removeFirstMatch(prev, (item) => item.txId === lastAction.txId));
+      setQueue((prev) =>
+        prev.some((tx) => tx.id === lastAction.txId) ? prev : [lastAction.transaction, ...prev],
+      );
+      setIsUndoing(false);
+    }, 200);
+
+    const revert = () => {
+      setQueue((prev) => removeFirstMatch(prev, (tx) => tx.id === lastAction.txId));
+      if (confirmedSnapshot) {
+        setConfirmedList((prev) =>
+          prev.some((item) => item.txId === lastAction.txId) ? prev : [confirmedSnapshot, ...prev],
+        );
+      }
+      setUndoStack((prev) => [lastAction, ...prev]);
+      pushToast({
+        variant: 'error',
+        title: 'Undo failed',
+        description: `We couldn't uncategorize this transaction. Please try again.`,
+      });
+    };
+
     try {
       const response = await fetch(`/api/transactions/${lastAction.txId}`, {
         method: 'PATCH',
@@ -240,24 +271,9 @@ export function CategorizePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ category_id: null, status: 'needs_review' }),
       });
-      if (!response.ok) {
-        setUndoStack((prev) => [lastAction, ...prev]);
-        pushToast({
-          variant: 'error',
-          title: 'Undo failed',
-          description: `We couldn't uncategorize this transaction. Please try again.`,
-        });
-        return;
-      }
-      setConfirmedList((prev) => removeFirstMatch(prev, (item) => item.txId === lastAction.txId));
-      void fetchData();
+      if (!response.ok) revert();
     } catch {
-      setUndoStack((prev) => [lastAction, ...prev]);
-      pushToast({
-        variant: 'error',
-        title: 'Undo failed',
-        description: `We couldn't uncategorize this transaction. Please try again.`,
-      });
+      revert();
     }
   };
 
@@ -281,7 +297,7 @@ export function CategorizePage() {
   };
 
   const onCategoryTriggerKeyDown = (e: ReactKeyboardEvent<HTMLButtonElement>) => {
-    if (isAssigning) return;
+    if (isLocked) return;
     if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       openCategoryMenu('first');
@@ -292,7 +308,7 @@ export function CategorizePage() {
   };
 
   const onCategoryListboxKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-    if (isAssigning) return;
+    if (isLocked) return;
     if (categories.length === 0) {
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -366,7 +382,7 @@ export function CategorizePage() {
       <div role="status" aria-live="polite" aria-busy="true" className="flex flex-col gap-6">
         <span className="sr-only">Loading categorize queue…</span>
         <div aria-hidden="true" className="h-24 animate-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)]" />
-        <div aria-hidden="true" className="h-[420px] animate-pulse rounded-[36px] border border-white/60 bg-[rgba(255,253,247,0.5)]" />
+        <div aria-hidden="true" className="h-105 animate-pulse rounded-[36px] border border-white/60 bg-[rgba(255,253,247,0.5)]" />
         <div aria-hidden="true" className="flex gap-3">
           {[1, 2, 3, 4].map((k) => (
             <div key={k} className="h-10 flex-1 animate-pulse rounded-full border border-white/60 bg-[rgba(255,253,247,0.5)]" />
@@ -402,11 +418,11 @@ export function CategorizePage() {
     return (
       <div className="flex flex-col items-center gap-4 py-20 text-center">
         {/* Flower mark */}
-        <div className="relative mb-3 h-[90px] w-[90px]">
+        <div className="relative mb-3 h-22.5 w-22.5">
           {['#cae0a8', '#f8d7c0', '#dcd3f0', '#f5e3a0', '#c6e3d4'].map((color, i) => (
             <span
               key={i}
-              className="absolute left-[34px] top-0 h-9 w-[22px] origin-[50%_130%]"
+              className="absolute left-8.5p-0 h-9 w-5.5 origin-[50%_130%]"
               style={{
                 transform: `rotate(${i * 72}deg)`,
                 background: color,
@@ -415,7 +431,7 @@ export function CategorizePage() {
             />
           ))}
           <span
-            className="absolute left-[27px] top-[27px] z-[2] flex h-9 w-9 items-center justify-center rounded-full text-lg font-bold text-white"
+            className="absolute left-6.75 top-6.75 z-2 flex h-9 w-9 items-center justify-center rounded-full text-lg font-bold text-white"
             style={{
               background: 'linear-gradient(135deg, #cae0a8, #8eb567)',
               boxShadow: '0 6px 20px rgba(93,138,63,0.3)',
@@ -430,7 +446,7 @@ export function CategorizePage() {
         >
           All sorted.
         </h2>
-        <p className="m-0 max-w-[420px] px-4 text-[15px] leading-relaxed sm:px-0 sm:text-base" style={{ color: 'var(--ink-2)' }}>
+        <p className="m-0 max-w-105 px-4 text-[15px] leading-relaxed sm:px-0 sm:text-base" style={{ color: 'var(--ink-2)' }}>
           Every transaction has a home. Your spending picture is complete.
         </p>
         <div className="mt-2 flex w-full flex-col items-stretch gap-3 px-4 sm:w-auto sm:flex-row sm:items-center sm:px-0">
@@ -533,7 +549,7 @@ export function CategorizePage() {
           <div
             key={current.id}
             className="categorize-content relative z-1"
-            data-leaving={isAssigning ? 'true' : undefined}
+            data-leaving={isLocked ? 'true' : undefined}
             aria-live="polite"
           >
             {/* Top: meta + amount — stacked on mobile, side-by-side from sm */}
@@ -595,7 +611,7 @@ export function CategorizePage() {
               {favoriteCategories.map((cat, i) => (
                 <button
                   key={cat.id}
-                  disabled={isAssigning}
+                  disabled={isLocked}
                   onClick={() => void assignCategory(cat.id)}
                   className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 py-2 text-[15px] font-medium transition-all enabled:cursor-pointer enabled:hover:-translate-y-0.5 enabled:hover:scale-[1.03] enabled:active:translate-y-0 enabled:active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55 sm:min-h-0 sm:text-sm motion-reduce:transform-none motion-reduce:transition-none"
                   style={{
@@ -634,7 +650,7 @@ export function CategorizePage() {
               <button
                 ref={categoryMenuTriggerRef}
                 type="button"
-                disabled={isAssigning}
+                disabled={isLocked}
                 aria-haspopup="listbox"
                 aria-expanded={isCategoryMenuOpen}
                 aria-controls="categorize-category-listbox"
@@ -683,7 +699,7 @@ export function CategorizePage() {
                       aria-selected={categoryMenuActiveIndex === idx}
                       tabIndex={categoryMenuActiveIndex === idx ? 0 : -1}
                       onFocus={() => setCategoryMenuActiveIndex(idx)}
-                      disabled={isAssigning}
+                      disabled={isLocked}
                       className="flex min-h-11 w-full items-center gap-2.5 rounded-[14px] border-0 bg-transparent px-3.5 py-2.5 text-left text-sm transition-colors enabled:cursor-pointer enabled:hover:bg-[rgba(45,36,24,0.06)] disabled:cursor-not-allowed disabled:opacity-55"
                       style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)', touchAction: 'manipulation' }}
                       onClick={() => {
@@ -849,7 +865,7 @@ export function CategorizePage() {
             </span>
             <button
               onClick={() => void undo()}
-              disabled={undoStack.length === 0}
+              disabled={undoStack.length === 0 || isLocked}
               aria-label="Undo last categorization"
               className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12px] not-italic transition-all enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:bg-white/90 disabled:cursor-default disabled:opacity-35 motion-reduce:enabled:hover:translate-y-0 sm:text-[11px]"
               style={{

@@ -157,7 +157,7 @@ export function AppShell() {
     <div className="bloom-root relative min-h-screen bg-cream text-ink font-sans text-[15px] leading-[1.55]">
       <a
         href="#main-content"
-        className="absolute left-3 top-3 z-[70] -translate-y-20 rounded-full border border-ink/20 bg-cream px-4 py-2 text-sm font-medium text-ink shadow-[0_10px_24px_-10px_rgba(45,36,24,0.35)] transition-transform focus:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+        className="absolute left-3 top-3 z-70 -translate-y-20 rounded-full border border-ink/20 bg-cream px-4 py-2 text-sm font-medium text-ink shadow-[0_10px_24px_-10px_rgba(45,36,24,0.35)] transition-transform focus:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
       >
         Skip to main content
       </a>
@@ -227,10 +227,10 @@ export function AppShell() {
         />
       )}
 
-      <div className="relative z-[2] mx-auto grid max-w-[1320px] grid-cols-1 gap-0 px-4 pt-[calc(68px+env(safe-area-inset-top))] pb-12 md:grid-cols-[220px_1fr] md:gap-7 md:px-8 md:pt-6 md:pb-15">
+      <div className="relative z-2 mx-auto grid max-w-330 grid-cols-1 gap-0 px-4 pt-[calc(68px+env(safe-area-inset-top))] pb-12 md:grid-cols-[220px_1fr] md:gap-7 md:px-8 md:pt-6 md:pb-15">
         <aside
           id="bloom-desktop-nav"
-          className="hidden flex-col gap-1.5 rounded-[32px] border border-white/80 bg-[rgba(255,252,244,0.55)] p-[22px_16px_18px] shadow-[0_8px_32px_rgba(45,36,24,0.07),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150 md:sticky md:top-6 md:flex md:max-h-[calc(100vh-52px)] md:self-start md:overflow-y-auto"
+          className="hidden flex-col gap-1.5 rounded-4xl border border-white/80 bg-[rgba(255,252,244,0.55)] p-[22px_16px_18px] shadow-[0_8px_32px_rgba(45,36,24,0.07),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150 md:sticky md:top-6 md:flex md:max-h-[calc(100vh-52px)] md:self-start md:overflow-y-auto"
         >
           <Link
             to="/"
@@ -294,7 +294,7 @@ export function AppShell() {
                 profileMenuOpen ? 'bg-white/70' : '',
               ].join(' ')}
             >
-              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#dcd3f0,#f8d7c0)] font-serif text-[15px] text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#dcd3f0,#f8d7c0)] font-serif text-[15px] text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]">
                 {user?.name?.[0]?.toUpperCase() ?? '?'}
               </span>
               <span className="flex min-w-0 flex-1 flex-col leading-[1.15]">
@@ -344,7 +344,7 @@ function NavIcon({ active, icon: Icon }: { active: boolean; icon: LucideIcon }) 
   return (
     <span
       className={[
-        'inline-flex h-5.5 w-5.5 flex-shrink-0 items-center justify-center rounded-full text-xs shadow-[inset_0_0_0_1px_rgba(45,36,24,0.08)]',
+        'inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full text-xs shadow-[inset_0_0_0_1px_rgba(45,36,24,0.08)]',
         active ? 'bg-pistachio text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)]' : 'bg-white/70 text-ink-2',
       ].join(' ')}
       style={{ width: 22, height: 22 }}
@@ -491,7 +491,7 @@ function CloseIcon() {
 
 function BurgerBars({ open }: { open: boolean }) {
   return (
-    <span className="relative inline-block h-3.5 w-[18px]">
+    <span className="relative inline-block h-3.5 w-4.5">
       <span
         className="absolute left-0 right-0 h-0.5 rounded-sm bg-cream transition-[transform,opacity,top] duration-200"
         style={{ top: open ? 6 : 0, transform: open ? 'rotate(45deg)' : 'none' }}

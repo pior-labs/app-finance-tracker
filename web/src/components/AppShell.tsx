@@ -305,7 +305,7 @@ export function AppShell() {
             {profileMenuOpen && (
               <div
                 role="menu"
-                className="absolute bottom-full left-0 right-0 z-20 mb-2 rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150"
+                className="absolute bottom-full left-0 right-0 z-20 mb-1 rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150"
               >
                 <button
                   type="button"

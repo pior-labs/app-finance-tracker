@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { usePublishCategorizeStats } from '@/hooks/useCategorizeStats';
 import { useToast } from '@/hooks/useToast';
+import { useUncategorizedCount } from '@/hooks/useUncategorizedCount';
 
 interface Category {
   id: number;
@@ -80,6 +81,7 @@ function removeFirstMatch<T>(items: T[], predicate: (item: T) => boolean): T[] {
 
 export function CategorizePage() {
   const { pushToast } = useToast();
+  const { adjust: adjustUncategorized } = useUncategorizedCount();
   const [categories, setCategories] = useState<Category[]>([]);
   const [queue, setQueue] = useState<Transaction[]>([]);
   const [totalUncategorized, setTotalUncategorized] = useState(0);
@@ -170,6 +172,7 @@ export function CategorizePage() {
     const category = categories.find((c) => c.id === categoryId);
 
     setAssigningId(current.id);
+    adjustUncategorized(-1);
     setUndoStack((prev) => [{ txId: current.id, categoryId, transaction: current }, ...prev]);
     setConfirmedList((prev) => [
       {
@@ -197,11 +200,13 @@ export function CategorizePage() {
         body: JSON.stringify({ category_id: categoryId, status: 'confirmed' }),
       });
       if (!response.ok) {
+        adjustUncategorized(1);
         setQueue((prev) => (prev.some((tx) => tx.id === current.id) ? prev : [current, ...prev]));
         setConfirmedList((prev) => removeFirstMatch(prev, (item) => item.txId === current.id));
         setUndoStack((prev) => removeFirstMatch(prev, (action) => action.txId === current.id && action.categoryId === categoryId));
       }
     } catch {
+      adjustUncategorized(1);
       setQueue((prev) => (prev.some((tx) => tx.id === current.id) ? prev : [current, ...prev]));
       setConfirmedList((prev) => removeFirstMatch(prev, (item) => item.txId === current.id));
       setUndoStack((prev) => removeFirstMatch(prev, (action) => action.txId === current.id && action.categoryId === categoryId));
@@ -240,6 +245,7 @@ export function CategorizePage() {
 
     setIsUndoing(true);
     setUndoStack(rest);
+    adjustUncategorized(1);
 
     setTimeout(() => {
       setConfirmedList((prev) => removeFirstMatch(prev, (item) => item.txId === lastAction.txId));
@@ -250,6 +256,7 @@ export function CategorizePage() {
     }, 200);
 
     const revert = () => {
+      adjustUncategorized(-1);
       setQueue((prev) => removeFirstMatch(prev, (tx) => tx.id === lastAction.txId));
       if (confirmedSnapshot) {
         setConfirmedList((prev) =>

@@ -2,6 +2,7 @@ import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from
 import { AlertTriangle, ArrowRight, Check, Eye, RefreshCw, Trash2, Upload } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UploadModal } from '@/components/UploadModal';
+import { useToast } from '@/hooks/useToast';
 
 interface StatementListItem {
   id: number;
@@ -32,6 +33,12 @@ interface StatementTransactionsResponse {
   }>;
 }
 
+interface ReparseStatementResponse {
+  meta?: {
+    insertedTransactions?: number;
+  };
+}
+
 function formatDate(value: string): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
@@ -45,6 +52,7 @@ function formatPeriod(start: string | null, end: string | null): string {
 
 export function StatementsPage() {
   const navigate = useNavigate();
+  const { pushToast } = useToast();
   const [statements, setStatements] = useState<StatementListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -136,7 +144,18 @@ export function StatementsPage() {
         const payload = await res.json().catch(() => ({}));
         throw new Error((payload as { error?: string }).error ?? `Failed to re-parse statement (${res.status})`);
       }
+
+      const payload = (await res.json()) as ReparseStatementResponse;
+      const insertedCount = payload.meta?.insertedTransactions;
       await fetchStatements();
+      pushToast({
+        variant: 'success',
+        title: 'Statement re-parsed',
+        description:
+          typeof insertedCount === 'number'
+            ? `${insertedCount} ${insertedCount === 1 ? 'transaction' : 'transactions'} refreshed.`
+            : 'Transactions refreshed with the latest parser.',
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to re-parse statement');
     } finally {

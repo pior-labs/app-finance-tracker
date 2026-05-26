@@ -66,8 +66,49 @@ const MERCHANT_STOP_WORDS = new Set([
   'MONTREAL'
 ]);
 
+const MERCHANT_SUFFIX_STOP_WORDS = new Set([
+  'ENG',
+  'EN',
+  'ENGLISH',
+  'ONLINE',
+  'WEB',
+  'ECOM',
+  'ECOMMERCE',
+  'WWW',
+  'CA',
+  'CAN',
+  'US',
+  'USA',
+  'UK',
+  'GB',
+  'GBR'
+]);
+
 function isStandaloneNumericToken(value: string): boolean {
   return /^\d+$/.test(value);
+}
+
+function normalizeMerchantToken(value: string): string {
+  return value.replace(/^[^A-Za-z0-9&]+|[^A-Za-z0-9.&'-]+$/g, '');
+}
+
+function isLikelyDescriptorId(value: string): boolean {
+  const compact = value.replace(/[^A-Za-z0-9]/g, '');
+
+  if (compact.length < 6) {
+    return false;
+  }
+
+  return /[A-Za-z]/.test(compact) && /\d/.test(compact);
+}
+
+function extractDomainBase(value: string): string | null {
+  const match = value.match(/^([A-Za-z0-9-]+)\.(?:[A-Za-z0-9-]+\.)*(?:com|ca|net|org|io|co|app|ai)$/i);
+  if (!match) {
+    return null;
+  }
+
+  return match[1] ?? null;
 }
 
 type StatementPeriod = {
@@ -165,7 +206,7 @@ function normalizeTextLines(rawText: string): string[] {
   return rawText.split(/\r?\n/).map((line) => line.trim());
 }
 
-function extractMerchantName(rawDescription: string): string | null {
+export function extractMerchantName(rawDescription: string): string | null {
   let value = rawDescription.replace(/\s+/g, ' ').trim();
 
   if (!value) {
@@ -193,8 +234,14 @@ function extractMerchantName(rawDescription: string): string | null {
   const words = cleaned.split(' ');
   const merchantWords: string[] = [];
 
-  for (const word of words) {
-    if (MERCHANT_STOP_WORDS.has(word.toUpperCase())) {
+  for (const rawWord of words) {
+    const word = normalizeMerchantToken(rawWord);
+
+    if (!word) {
+      continue;
+    }
+
+    if (MERCHANT_STOP_WORDS.has(word.toUpperCase()) && merchantWords.length > 0) {
       break;
     }
 
@@ -202,9 +249,26 @@ function extractMerchantName(rawDescription: string): string | null {
       continue;
     }
 
+    if (MERCHANT_SUFFIX_STOP_WORDS.has(word.toUpperCase()) && merchantWords.length > 0) {
+      break;
+    }
+
+    if (isLikelyDescriptorId(word)) {
+      continue;
+    }
+
+    const domainBase = extractDomainBase(word);
+    if (domainBase) {
+      if (merchantWords.length === 0 && domainBase.length >= 2) {
+        merchantWords.push(domainBase);
+      }
+
+      break;
+    }
+
     merchantWords.push(word);
 
-    if (merchantWords.length >= 4) {
+    if (merchantWords.length >= 5) {
       break;
     }
   }

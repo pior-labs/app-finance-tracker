@@ -255,9 +255,9 @@ statementsRouter.delete('/:id', async (c) => {
     return c.json({ error: 'Statement not found' }, 404);
   }
 
-  await db.transaction(async (tx) => {
-    await tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId));
-    await tx.delete(schema.statements).where(eq(schema.statements.id, statementId));
+  db.transaction((tx) => {
+    tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId)).run();
+    tx.delete(schema.statements).where(eq(schema.statements.id, statementId)).run();
   });
 
   return c.json({ success: true });
@@ -286,31 +286,34 @@ statementsRouter.post('/:id/reparse', async (c) => {
   const parsedTransactions = parseBankStatementText(rawText);
   const { periodStart, periodEnd } = getStatementPeriodFromTransactions(parsedTransactions);
 
-  await db.transaction(async (tx) => {
-    await tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId));
+  db.transaction((tx) => {
+    tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId)).run();
 
     if (parsedTransactions.length > 0) {
-      await tx.insert(schema.transactions).values(
-        parsedTransactions.map((transaction) => ({
-          statementId,
-          date: transaction.date,
-          description: transaction.description,
-          merchant: transaction.merchant,
-          amount: transaction.amount,
-          type: transaction.type,
-          categoryId: null,
-          status: 'needs_review'
-        }))
-      );
+      tx.insert(schema.transactions)
+        .values(
+          parsedTransactions.map((transaction) => ({
+            statementId,
+            date: transaction.date,
+            description: transaction.description,
+            merchant: transaction.merchant,
+            amount: transaction.amount,
+            type: transaction.type,
+            categoryId: null,
+            status: 'needs_review'
+          }))
+        )
+        .run();
     }
 
-    await tx
+    tx
       .update(schema.statements)
       .set({
         periodStart,
         periodEnd
       })
-      .where(eq(schema.statements.id, statementId));
+      .where(eq(schema.statements.id, statementId))
+      .run();
   });
 
   return c.json({

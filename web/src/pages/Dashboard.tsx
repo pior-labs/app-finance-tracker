@@ -325,12 +325,12 @@ export function DashboardPage() {
         className="flex flex-col gap-6"
       >
         <span className="sr-only">Loading dashboard…</span>
-        <div aria-hidden="true" className="h-[100px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
-        <div aria-hidden="true" className="h-[280px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
+        <div aria-hidden="true" className="h-25 animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
+        <div aria-hidden="true" className="h-70 animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
         <div aria-hidden="true" className="grid grid-cols-1 gap-5 lg:grid-cols-[1.3fr_1fr_1.1fr]">
-          <div className="h-[200px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
-          <div className="h-[200px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
-          <div className="h-[200px] animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
+          <div className="h-50 animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
+          <div className="h-50 animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
+          <div className="h-50 animate-bloom-pulse rounded-[28px] border border-white/60 bg-[rgba(255,253,247,0.5)] motion-reduce:animate-none" />
         </div>
       </div>
     );
@@ -344,7 +344,7 @@ export function DashboardPage() {
           <h2 className="m-0 font-serif text-4xl font-normal tracking-tight text-ink">
             Nothing here yet.
           </h2>
-          <p className="m-0 max-w-[460px] text-[15px] text-ink-2">
+          <p className="m-0 max-w-115 text-[15px] text-ink-2">
             Upload your first bank statement and we'll show you a month-at-a-glance picture of
             your spending.
           </p>
@@ -368,12 +368,12 @@ export function DashboardPage() {
       <header className="flex flex-wrap items-end justify-between gap-6 px-0.5 pt-3 sm:px-1">
         <div>
           <div className="text-[13px] tracking-wide text-ink-3">
-            Overview · <em className="font-serif italic text-ink-2 not-italic">{monthLabel}</em>
+            Overview · <em className="font-serif italic text-ink-2">{monthLabel}</em>
           </div>
           <h1 className="my-1.5 font-serif text-[36px] font-normal leading-none tracking-[-0.03em] text-ink sm:text-[44px] lg:text-[56px]">
             {isCurrentMonth ? 'This month' : <em className="font-light italic text-accent">{monthLabel}</em>}
           </h1>
-          <p className="m-0 max-w-[520px] text-[15px] text-ink-2 sm:text-base">
+          <p className="m-0 max-w-130 text-[15px] text-ink-2 sm:text-base">
             Your spending, at a glance.
           </p>
         </div>
@@ -398,7 +398,7 @@ export function DashboardPage() {
               aria-label="Choose month"
               tabIndex={-1}
               onKeyDown={onListboxKeyDown}
-              className="absolute right-0 top-[calc(100%+8px)] z-20 min-w-[220px] rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150 focus-visible:outline-none"
+              className="absolute right-0 top-[calc(100%+8px)] z-20 min-w-55 rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150 focus-visible:outline-none"
             >
               {availableMonths.length === 0 ? (
                 <div className="px-3 py-2.5 text-[13px] text-ink-3">No months yet</div>
@@ -446,7 +446,7 @@ export function DashboardPage() {
       {uncategorizedCount > 0 ? (
         <section className="bloom-glass relative grid grid-cols-1 gap-5 overflow-hidden rounded-[36px] p-5 sm:p-7 lg:grid-cols-[1.4fr_1fr] lg:gap-8 lg:p-9">
           <div className="action-bg" />
-          <div className="relative z-[1]">
+          <div className="relative z-1">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-white/60 bg-peach/80 px-3.5 py-1.5 text-[13px] font-medium text-ink-2">
               <Flower2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
               Needs attention
@@ -456,7 +456,7 @@ export function DashboardPage() {
               <br />
               transactions
             </HugeNum>
-            <p className="mb-4 mt-0 max-w-[480px] font-serif text-[17px] font-normal leading-[1.5] text-ink-2 sm:text-[19px]">
+            <p className="mb-4 mt-0 max-w-120 font-serif text-[17px] font-normal leading-normal text-ink-2 sm:text-[19px]">
               Categorize these to complete the picture for <em className="italic text-accent">{monthLabel}</em>.
             </p>
             <div className="flex flex-wrap gap-2.5">
@@ -468,7 +468,7 @@ export function DashboardPage() {
               </Link>
             </div>
           </div>
-          <div className="relative z-[1] self-center rounded-3xl border border-white/70 bg-white/55 p-4 backdrop-blur-md sm:p-5">
+          <div className="relative z-1 self-center rounded-3xl border border-white/70 bg-white/55 p-4 backdrop-blur-md sm:p-5">
             <div className="mb-3.5 font-serif text-sm italic text-ink-3">Recent uncategorized</div>
             {recentUncategorized.map((t) => {
               const href = `/transactions?${new URLSearchParams({
@@ -567,7 +567,7 @@ export function DashboardPage() {
           </div>
           <div className="text-[13px] text-ink-2">{monthTx} transactions</div>
           <svg
-            className="-mx-5.5 -mb-5 mt-3.5 block h-[50px] w-[calc(100%+44px)] sm:-mx-7 sm:-mb-6 sm:w-[calc(100%+56px)]"
+            className="-mx-5.5 -mb-5 mt-3.5 block h-12.5 w-[calc(100%+44px)] sm:-mx-7 sm:-mb-6 sm:w-[calc(100%+56px)]"
             viewBox="0 0 200 40"
             preserveAspectRatio="none"
             aria-hidden="true"
@@ -610,7 +610,7 @@ export function DashboardPage() {
                 {formatStatementPeriod(latestStatement.periodStart, latestStatement.periodEnd)}
               </div>
               <div className="flex items-center gap-3 text-[13px]">
-                <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f8d7c0,#c5704a)] font-serif text-[17px] text-white shadow-[0_4px_10px_rgba(45,36,24,0.15)]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f8d7c0,#c5704a)] font-serif text-[17px] text-white shadow-[0_4px_10px_rgba(45,36,24,0.15)]">
                   {latestStatement.uploadedByName?.[0]?.toUpperCase() ?? '?'}
                 </span>
                 <div>
@@ -648,7 +648,7 @@ export function DashboardPage() {
                     className="mb-1.5 flex items-baseline gap-2.5 rounded-xl text-inherit no-underline transition-colors hover:bg-ink/5"
                   >
                     <span
-                      className="h-2.5 w-2.5 flex-shrink-0 self-center rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]"
+                      className="h-2.5 w-2.5 shrink-0 self-center rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]"
                       style={{ background: PALETTE[i % PALETTE.length] }}
                     />
                     <span className="flex-1 text-[15px] font-medium text-ink">{c.category}</span>
@@ -658,7 +658,7 @@ export function DashboardPage() {
                   </Link>
                   <div className="h-3 overflow-hidden rounded-full bg-ink/5">
                     <div
-                      className="h-full rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-[width] duration-[600ms] motion-reduce:transition-none"
+                      className="h-full rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-[width] duration-600 motion-reduce:transition-none"
                       style={{
                         width: `${(c.totalCents / maxCategoryCents) * 100}%`,
                         background: `linear-gradient(90deg, ${PALETTE[i % PALETTE.length]}, ${
@@ -688,7 +688,7 @@ export function DashboardPage() {
                     className="-mx-1.5 -my-1 flex w-full items-center gap-3.5 rounded-[14px] px-1.5 py-1 text-inherit no-underline transition-colors hover:bg-ink/5"
                   >
                     <div
-                      className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full font-serif text-lg font-medium text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5),0_4px_12px_rgba(45,36,24,0.08)] sm:h-11 sm:w-11 sm:text-xl"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-serif text-lg font-medium text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5),0_4px_12px_rgba(45,36,24,0.08)] sm:h-11 sm:w-11 sm:text-xl"
                       style={{
                         background: `linear-gradient(135deg, ${PALETTE[i % PALETTE.length]}, ${
                           PALETTE[(i + 2) % PALETTE.length]
@@ -702,16 +702,16 @@ export function DashboardPage() {
                         <span className="overflow-hidden truncate whitespace-nowrap text-[15px] font-medium text-ink">
                           {prettyName(m.merchant)}
                         </span>
-                        <span className="flex-shrink-0 font-serif text-base font-medium text-ink sm:text-lg">
+                        <span className="shrink-0 font-serif text-base font-medium text-ink sm:text-lg">
                           {formatMoney(m.totalCents)}
                         </span>
                       </div>
                       {m.transactionCount && m.transactionCount > 0 ? (
-                        <div className="mt-1 flex items-center gap-[3px]">
+                        <div className="mt-1 flex items-center gap-0.75">
                           {Array.from({ length: Math.min(m.transactionCount, 14) }).map((_, k) => (
                             <span
                               key={k}
-                              className="h-[5px] w-[5px] rounded-full opacity-70"
+                              className="h-1.25 w-1.25 rounded-full opacity-70"
                               style={{ background: PALETTE[i % PALETTE.length] }}
                             />
                           ))}
@@ -740,9 +740,9 @@ export function DashboardPage() {
 
 function HugeNum({ value, children }: { value: number | string; children: React.ReactNode }) {
   return (
-    <div className="my-3 flex flex-wrap items-end gap-3 font-serif text-[84px] font-light leading-[0.9] tracking-[-0.05em] text-ink sm:text-[120px] sm:gap-4 lg:text-[168px] lg:gap-4.5">
+    <div className="my-3 flex flex-wrap items-end gap-3 font-serif text-[84px] font-light leading-[0.9] tracking-tighter text-ink sm:text-[120px] sm:gap-4 lg:text-[168px] lg:gap-4.5">
       {value}
-      <span className="pb-1.5 font-sans text-base font-normal leading-[1.25] tracking-normal text-ink-2 sm:pb-3 sm:text-lg lg:pb-4.5">
+      <span className="pb-1.5 font-sans text-base font-normal leading-tight tracking-normal text-ink-2 sm:pb-3 sm:text-lg lg:pb-4.5">
         {children}
       </span>
     </div>
@@ -760,7 +760,7 @@ function StatCard({
     <div
       className={[
         tint,
-        'relative flex min-h-0 flex-col overflow-hidden rounded-[26px] border border-white/80 p-5.5 backdrop-blur-xl backdrop-saturate-150 shadow-[0_12px_36px_-10px_rgba(45,36,24,0.1)] sm:min-h-[200px] sm:rounded-[30px] sm:p-7',
+        'relative flex min-h-0 flex-col overflow-hidden rounded-[26px] border border-white/80 p-5.5 backdrop-blur-xl backdrop-saturate-150 shadow-[0_12px_36px_-10px_rgba(45,36,24,0.1)] sm:min-h-50 sm:rounded-[30px] sm:p-7',
       ].join(' ')}
     >
       {children}
@@ -778,7 +778,7 @@ function BigCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bloom-glass relative rounded-[26px] p-5 sm:rounded-[32px] sm:p-8">
+    <div className="bloom-glass relative rounded-[26px] p-5 sm:rounded-4xl sm:p-8">
       <div className="mb-5.5">
         <h2 className="m-0 font-serif text-[22px] font-normal leading-[1.1] tracking-[-0.02em] text-ink sm:text-[28px]">
           {title}
@@ -810,7 +810,7 @@ function AllCaughtCard({
   return (
     <section className="bloom-glass relative overflow-hidden rounded-[36px] p-5 sm:p-7 lg:p-9">
       <div className="action-bg all-caught" />
-      <div className="relative z-[1]">
+      <div className="relative z-1">
         <div
           className={[
             'inline-flex items-center gap-1.5 rounded-full border border-white/60 px-3.5 py-1.5 text-[13px] font-medium',
@@ -820,7 +820,7 @@ function AllCaughtCard({
           {tagText}
         </div>
         <HugeNum value={mainNum}>{subText}</HugeNum>
-        <p className="mb-4 mt-0 max-w-[480px] font-serif text-[17px] font-normal leading-[1.5] text-ink-2 sm:text-[19px]">
+        <p className="mb-4 mt-0 max-w-120 font-serif text-[17px] font-normal leading-normal text-ink-2 sm:text-[19px]">
           {copy}
         </p>
         <div className="flex flex-wrap gap-2.5">
@@ -837,7 +837,7 @@ function Arrow() {
   return (
     <ArrowRight
       aria-hidden="true"
-      className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-[3px] motion-reduce:transition-none"
+      className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.75 motion-reduce:transition-none"
       strokeWidth={2.25}
     />
   );

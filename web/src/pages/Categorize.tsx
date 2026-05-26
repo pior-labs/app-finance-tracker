@@ -592,7 +592,7 @@ export function CategorizePage() {
                 {prettyName(current.merchant ?? current.description)}
               </h2>
               {current.merchant && (
-                <p className="m-0 mt-1.5 max-w-[500px] truncate text-[13px] sm:text-sm" style={{ color: 'var(--ink-3)' }}>
+                <p className="m-0 mt-1.5 max-w-125 truncate text-[13px] sm:text-sm" style={{ color: 'var(--ink-3)' }}>
                   {current.description}
                 </p>
               )}
@@ -680,7 +680,7 @@ export function CategorizePage() {
                   aria-label="Choose category"
                   tabIndex={-1}
                   onKeyDown={onCategoryListboxKeyDown}
-                  className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 max-h-[260px] overflow-y-auto rounded-[22px] border p-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none"
+                  className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 max-h-65 overflow-y-auto rounded-[22px] border p-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none"
                   style={{
                     background: 'rgba(255,253,247,0.94)',
                     borderColor: 'rgba(255,255,255,0.8)',
@@ -721,7 +721,7 @@ export function CategorizePage() {
 
           {/* Navigation bar */}
           <div
-            className="relative z-[1] flex items-center justify-between gap-3 rounded-b-[28px] border-t border-dashed px-4 py-3 sm:gap-4 sm:rounded-b-[36px] sm:px-8 sm:py-4"
+            className="relative z-1 flex items-center justify-between gap-3 rounded-b-[28px] border-t border-dashed px-4 py-3 sm:gap-4 sm:rounded-b-[36px] sm:px-8 sm:py-4"
             style={{ borderColor: 'rgba(45,36,24,0.1)', background: 'rgba(255,255,255,0.25)' }}
           >
             <button
@@ -756,7 +756,7 @@ export function CategorizePage() {
               Skip{' '}
               <span
                 aria-hidden="true"
-                className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-md text-xs font-medium"
+                className="inline-flex h-5.5 w-5.5 items-center justify-center rounded-md text-xs font-medium"
                 style={{
                   fontFamily: "'Fraunces', serif",
                   background: 'rgba(255,255,255,0.15)',
@@ -934,7 +934,7 @@ export function CategorizePage() {
 function KeyHint({ char }: { char: string }) {
   return (
     <span
-      className="inline-flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md text-xs font-medium"
+      className="inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-md text-xs font-medium"
       style={{
         fontFamily: "'Fraunces', serif",
         background: 'rgba(255,255,255,0.6)',

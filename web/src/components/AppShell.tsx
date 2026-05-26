@@ -5,6 +5,7 @@ import { FolderTree, LayoutDashboard, ReceiptText, ScanSearch, Tags } from 'luci
 import { useAuth } from '@/hooks/useAuth';
 import { BrandMark } from '@/components/BrandMark';
 import { ToastViewport } from '@/hooks/useToast';
+import { useUncategorizedCount } from '@/hooks/useUncategorizedCount';
 
 const mainNav = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -38,7 +39,7 @@ function getFocusableElements(container: HTMLElement) {
 export function AppShell() {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const [uncategorizedTotal, setUncategorizedTotal] = useState(0);
+  const { count: uncategorizedTotal, refresh: refreshUncategorized } = useUncategorizedCount();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -55,18 +56,8 @@ export function AppShell() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    fetch('/api/transactions?status=needs_review&limit=1', { credentials: 'include' })
-      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`tx ${res.status}`))))
-      .then((payload: { pagination?: { total?: number } }) => {
-        if (cancelled) return;
-        setUncategorizedTotal(Number(payload.pagination?.total ?? 0));
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [location.pathname]);
+    void refreshUncategorized();
+  }, [location.pathname, refreshUncategorized]);
 
   useEffect(() => {
     setMobileNavOpen(false);

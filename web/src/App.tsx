@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AuthProvider } from '@/hooks/useAuth';
 import { CategorizeStatsProvider } from '@/hooks/useCategorizeStats';
 import { ToastProvider } from '@/hooks/useToast';
+import { UncategorizedCountProvider } from '@/hooks/useUncategorizedCount';
 import { DashboardPage } from '@/pages/Dashboard';
 import { LoginPage } from '@/pages/Login';
 import { CategorizePage } from '@/pages/Categorize';
@@ -22,7 +23,9 @@ export function App() {
               <Route
                 element={
                   <ProtectedRoute>
-                    <AppShell />
+                    <UncategorizedCountProvider>
+                      <AppShell />
+                    </UncategorizedCountProvider>
                   </ProtectedRoute>
                 }
               >

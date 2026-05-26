@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, Check, ChevronLeft, ChevronRight, Flower2, Pencil, RotateCcw, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { useUncategorizedCount } from '@/hooks/useUncategorizedCount';
 
 interface Category {
   id: number;
@@ -146,6 +147,7 @@ function TransactionStatusPill({
 
 export function TransactionsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { adjust: adjustUncategorized } = useUncategorizedCount();
 
   const [month, setMonth] = useState(() => {
     const fromQuery = searchParams.get('month');
@@ -372,6 +374,9 @@ export function TransactionsPage() {
         category_id: selectedCategoryId,
         status: selectedCategoryId === null ? 'needs_review' : 'confirmed',
       });
+      if (transaction.status !== payload.status) {
+        adjustUncategorized(payload.status === 'needs_review' ? 1 : -1);
+      }
       setTransactions((prev) =>
         prev.map((item) =>
           item.id === transaction.id
@@ -393,6 +398,9 @@ export function TransactionsPage() {
       if (transaction.status !== 'needs_review') {
         setUpdatingTransactionIds((prev) => (prev.includes(transaction.id) ? prev : [...prev, transaction.id]));
         const payload = await patchTransaction(transaction.id, { status: 'needs_review' });
+        if (transaction.status !== payload.status) {
+          adjustUncategorized(payload.status === 'needs_review' ? 1 : -1);
+        }
         setTransactions((prev) =>
           prev.map((item) =>
             item.id === transaction.id
@@ -427,6 +435,9 @@ export function TransactionsPage() {
         throw new Error((payload as { error?: string }).error ?? `Failed to delete transaction (${response.status})`);
       }
 
+      if (transaction.status === 'needs_review') {
+        adjustUncategorized(-1);
+      }
       setTransactions((prev) => prev.filter((item) => item.id !== transaction.id));
       setTotal((prev) => Math.max(0, prev - 1));
       if (transactions.length === 1 && offset > 0) {
@@ -565,7 +576,7 @@ export function TransactionsPage() {
             placeholder="Search merchant…"
             aria-label="Search by merchant"
             inputMode="search"
-            className="h-11 w-full rounded-full border-0 bg-white/50 pl-9 pr-3 text-[15px] outline-none transition-colors placeholder:text-[var(--ink-3)] focus:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-9 sm:w-44 sm:pl-8 sm:text-sm"
+            className="h-11 w-full rounded-full border-0 bg-white/50 pl-9 pr-3 text-[15px] outline-none transition-colors placeholder:text-ink-3 focus:bg-white/80 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:w-44 sm:pl-8 sm:text-sm"
             style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
           />
         </div>
@@ -579,7 +590,7 @@ export function TransactionsPage() {
             value={month}
             onChange={(e) => onFilterChange('month', e.target.value)}
             aria-label="Filter by month"
-            className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-9 sm:text-sm"
+            className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:text-sm"
             style={{ fontFamily: "'Outfit', sans-serif", color: month === 'all' ? 'var(--ink-3)' : 'var(--ink)', touchAction: 'manipulation' }}
           >
             {monthOptions.map((opt) => (
@@ -591,7 +602,7 @@ export function TransactionsPage() {
             value={category}
             onChange={(e) => onFilterChange('category', e.target.value)}
             aria-label="Filter by category"
-            className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-9 sm:text-sm"
+            className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:text-sm"
             style={{ fontFamily: "'Outfit', sans-serif", color: category === 'all' ? 'var(--ink-3)' : 'var(--ink)', touchAction: 'manipulation' }}
           >
             {categoryFilterOptions.map((opt) => (
@@ -603,7 +614,7 @@ export function TransactionsPage() {
             value={status}
             onChange={(e) => onFilterChange('status', e.target.value)}
             aria-label="Filter by status"
-            className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-9 sm:text-sm"
+            className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:text-sm"
             style={{ fontFamily: "'Outfit', sans-serif", color: status === 'all' ? 'var(--ink-3)' : 'var(--ink)', touchAction: 'manipulation' }}
           >
             {statusOptions.map((opt) => (
@@ -771,7 +782,7 @@ export function TransactionsPage() {
                             }}
                             onChange={(e) => void onCategoryAssign(tx, e.target.value)}
                             aria-label={`Set category for transaction ${tx.id}`}
-                            className="h-9 cursor-pointer appearance-none rounded-full border border-white/70 bg-white/50 pr-6 text-[13px] font-medium outline-none transition-colors hover:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 disabled:cursor-default disabled:opacity-50"
+                            className="h-9 cursor-pointer appearance-none rounded-full border border-white/70 bg-white/50 pr-6 text-[13px] font-medium outline-none transition-colors hover:bg-white/80 focus:ring-2 focus:ring-(--accent)/30 disabled:cursor-default disabled:opacity-50"
                             style={{
                               fontFamily: "'Outfit', sans-serif",
                               color: tx.categoryId === null ? 'var(--ink-3)' : 'var(--ink)',
@@ -864,7 +875,7 @@ export function TransactionsPage() {
           ))
         ) : transactions.length === 0 ? (
           <div
-            className="rounded-[24px] border px-5 py-12 text-center"
+            className="rounded-3xl border px-5 py-12 text-center"
             style={{
               background: 'rgba(255,253,247,0.55)',
               borderColor: 'rgba(255,255,255,0.8)',
@@ -954,7 +965,7 @@ export function TransactionsPage() {
                       disabled={isBusy}
                       onChange={(e) => void onCategoryAssign(tx, e.target.value)}
                       aria-label={`Set category for transaction ${tx.id}`}
-                      className="h-11 w-full min-w-0 cursor-pointer appearance-none rounded-full border border-white/70 bg-white/50 pr-7 text-[13px] font-medium outline-none transition-colors hover:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 disabled:cursor-default disabled:opacity-50"
+                      className="h-11 w-full min-w-0 cursor-pointer appearance-none rounded-full border border-white/70 bg-white/50 pr-7 text-[13px] font-medium outline-none transition-colors hover:bg-white/80 focus:ring-2 focus:ring-(--accent)/30 disabled:cursor-default disabled:opacity-50"
                       style={{
                         fontFamily: "'Outfit', sans-serif",
                         color: tx.categoryId === null ? 'var(--ink-3)' : 'var(--ink)',

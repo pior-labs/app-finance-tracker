@@ -9,7 +9,7 @@ import { DashboardPage } from '@/pages/dashboard';
 import { LoginPage } from '@/pages/Login';
 import { CategorizePage } from '@/pages/categorize';
 import { TransactionsPage } from '@/pages/transactions';
-import { CategoriesPage } from '@/pages/Categories';
+import { CategoriesPage } from '@/pages/categories';
 import { StatementsPage } from '@/pages/Statements';
 
 export function App() {

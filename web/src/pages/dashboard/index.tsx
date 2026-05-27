@@ -2,17 +2,17 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Check, RotateCcw } from 'lucide-react';
 import { UploadModal } from '@/components/UploadModal';
-import { useDashboardData } from './dashboard/hooks/useDashboardData';
-import { formatMonthLabel, getCurrentMonth, isValidMonth } from './dashboard/lib/format';
-import { AllCaughtCard } from './dashboard/components/AllCaughtCard';
-import { CategoryBreakdownCard } from './dashboard/components/CategoryBreakdownCard';
-import { DashboardEmptyState } from './dashboard/components/DashboardEmptyState';
-import { DashboardErrorState } from './dashboard/components/DashboardErrorState';
-import { DashboardHeader } from './dashboard/components/DashboardHeader';
-import { DashboardLoadingState } from './dashboard/components/DashboardLoadingState';
-import { NeedsAttentionCard } from './dashboard/components/NeedsAttentionCard';
-import { SummaryStatsGrid } from './dashboard/components/SummaryStatsGrid';
-import { TopMerchantsCard } from './dashboard/components/TopMerchantsCard';
+import { useDashboardData } from './hooks/useDashboardData';
+import { formatMonthLabel, getCurrentMonth, isValidMonth } from './lib/format';
+import { AllCaughtCard } from './components/AllCaughtCard';
+import { CategoryBreakdownCard } from './components/CategoryBreakdownCard';
+import { DashboardEmptyState } from './components/DashboardEmptyState';
+import { DashboardErrorState } from './components/DashboardErrorState';
+import { DashboardHeader } from './components/DashboardHeader';
+import { DashboardLoadingState } from './components/DashboardLoadingState';
+import { NeedsAttentionCard } from './components/NeedsAttentionCard';
+import { SummaryStatsGrid } from './components/SummaryStatsGrid';
+import { TopMerchantsCard } from './components/TopMerchantsCard';
 
 export function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();

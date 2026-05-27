@@ -5,7 +5,7 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { CategorizeStatsProvider } from '@/hooks/useCategorizeStats';
 import { ToastProvider } from '@/hooks/useToast';
 import { UncategorizedCountProvider } from '@/hooks/useUncategorizedCount';
-import { DashboardPage } from '@/pages/Dashboard';
+import { DashboardPage } from '@/pages/dashboard';
 import { LoginPage } from '@/pages/Login';
 import { CategorizePage } from '@/pages/Categorize';
 import { TransactionsPage } from '@/pages/Transactions';

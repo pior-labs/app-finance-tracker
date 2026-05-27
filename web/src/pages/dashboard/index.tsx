@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react';
+import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Check, RotateCcw } from 'lucide-react';
-import { UploadModal } from '@/components/UploadModal';
 import { useDashboardData } from './hooks/useDashboardData';
 import { formatMonthLabel, getCurrentMonth, isValidMonth } from './lib/format';
 import { AllCaughtCard } from './components/AllCaughtCard';
@@ -14,11 +13,18 @@ import { NeedsAttentionCard } from './components/NeedsAttentionCard';
 import { SummaryStatsGrid } from './components/SummaryStatsGrid';
 import { TopMerchantsCard } from './components/TopMerchantsCard';
 
+const UploadModal = lazy(async () => {
+  const module = await import('@/components/UploadModal');
+  return { default: module.UploadModal };
+});
+
 export function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const searchParamsSnapshot = searchParams.toString();
+  const currentMonth = getCurrentMonth();
   const monthFromUrl = searchParams.get('month');
-  const month = isValidMonth(monthFromUrl) ? monthFromUrl : getCurrentMonth();
-  const isCurrentMonth = month === getCurrentMonth();
+  const month = isValidMonth(monthFromUrl) ? monthFromUrl : currentMonth;
+  const isCurrentMonth = month === currentMonth;
 
   const { stats, recentUncategorized, availableMonths, loading, error, fetchDashboard } =
     useDashboardData(month);
@@ -41,21 +47,46 @@ export function DashboardPage() {
   const latestStatement = stats?.meta?.latestStatement;
   const monthLabel = formatMonthLabel(month);
 
-  const needsReviewHref = `/transactions?${new URLSearchParams({
-    status: 'needs_review',
-    month,
-  }).toString()}`;
-  const monthTransactionsHref = `/transactions?${new URLSearchParams({ month }).toString()}`;
+  const needsReviewHref = useMemo(
+    () =>
+      `/transactions?${new URLSearchParams({
+        status: 'needs_review',
+        month,
+      }).toString()}`,
+    [month],
+  );
+  const monthTransactionsHref = useMemo(
+    () => `/transactions?${new URLSearchParams({ month }).toString()}`,
+    [month],
+  );
 
-  const onPickMonth = (nextMonth: string) => {
-    const next = new URLSearchParams(searchParams);
-    if (nextMonth === getCurrentMonth()) {
+  const onPickMonth = useCallback((nextMonth: string) => {
+    const next = new URLSearchParams(searchParamsSnapshot);
+    if (nextMonth === currentMonth) {
       next.delete('month');
     } else {
       next.set('month', nextMonth);
     }
     setSearchParams(next, { replace: true });
-  };
+  }, [currentMonth, searchParamsSnapshot, setSearchParams]);
+
+  const openUpload = useCallback(() => {
+    setUploadOpen(true);
+  }, []);
+
+  const closeUpload = useCallback(() => {
+    setUploadOpen(false);
+  }, []);
+
+  const onUploadComplete = useCallback(() => {
+    void fetchDashboard();
+  }, [fetchDashboard]);
+
+  const renderUploadModal = uploadOpen ? (
+    <Suspense fallback={null}>
+      <UploadModal open={uploadOpen} onClose={closeUpload} onUploadComplete={onUploadComplete} />
+    </Suspense>
+  ) : null;
 
   if (error) {
     return <DashboardErrorState error={error} onRetry={() => void fetchDashboard()} />;
@@ -68,12 +99,8 @@ export function DashboardPage() {
   if (totalTx === 0) {
     return (
       <>
-        <DashboardEmptyState onUpload={() => setUploadOpen(true)} />
-        <UploadModal
-          open={uploadOpen}
-          onClose={() => setUploadOpen(false)}
-          onUploadComplete={() => void fetchDashboard()}
-        />
+        <DashboardEmptyState onUpload={openUpload} />
+        {renderUploadModal}
       </>
     );
   }
@@ -157,7 +184,7 @@ export function DashboardPage() {
         categorizedCount={categorizedCount}
         uncategorizedCount={uncategorizedCount}
         latestStatement={latestStatement}
-        onUpload={() => setUploadOpen(true)}
+        onUpload={openUpload}
       />
 
       <section className="grid grid-cols-1 gap-5.5 lg:grid-cols-[1.2fr_1fr]">
@@ -170,11 +197,7 @@ export function DashboardPage() {
         <TopMerchantsCard merchantRows={merchantRows} month={month} />
       </section>
 
-      <UploadModal
-        open={uploadOpen}
-        onClose={() => setUploadOpen(false)}
-        onUploadComplete={() => void fetchDashboard()}
-      />
+      {renderUploadModal}
     </>
   );
 }

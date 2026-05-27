@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Flower2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PILL_GHOST, PILL_PRIMARY } from '../lib/constants';
@@ -6,7 +7,7 @@ import type { RecentTransaction } from '../types';
 import { ArrowIcon } from './ArrowIcon';
 import { HugeNum } from './HugeNum';
 
-export function NeedsAttentionCard({
+function NeedsAttentionCardComponent({
   uncategorizedCount,
   monthLabel,
   needsReviewHref,
@@ -78,3 +79,5 @@ export function NeedsAttentionCard({
     </section>
   );
 }
+
+export const NeedsAttentionCard = memo(NeedsAttentionCardComponent);

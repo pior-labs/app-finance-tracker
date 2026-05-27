@@ -1,10 +1,11 @@
+import { memo } from 'react';
 import { PILL_SMALL } from '../lib/constants';
 import { formatStatementPeriod, splitMoney } from '../lib/format';
 import type { DashboardStatsResponse } from '../types';
 import { Donut } from './Donut';
 import { StatCard } from './StatCard';
 
-export function SummaryStatsGrid({
+function SummaryStatsGridComponent({
   isCurrentMonth,
   monthLabel,
   totalSpentCents,
@@ -94,3 +95,5 @@ export function SummaryStatsGrid({
     </section>
   );
 }
+
+export const SummaryStatsGrid = memo(SummaryStatsGridComponent);

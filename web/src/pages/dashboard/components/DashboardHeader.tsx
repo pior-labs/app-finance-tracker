@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { memo, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { formatMonthLabel, getCurrentMonth } from '../lib/format';
 
-export function DashboardHeader({
+function DashboardHeaderComponent({
   month,
   monthLabel,
   isCurrentMonth,
@@ -181,3 +181,5 @@ export function DashboardHeader({
     </header>
   );
 }
+
+export const DashboardHeader = memo(DashboardHeaderComponent);

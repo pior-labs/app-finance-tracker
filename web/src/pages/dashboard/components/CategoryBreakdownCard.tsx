@@ -1,10 +1,11 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { PALETTE } from '../lib/constants';
 import { formatMoney } from '../lib/format';
 import type { CategorySpending } from '../types';
 import { BigCard } from './BigCard';
 
-export function CategoryBreakdownCard({
+function CategoryBreakdownCardComponent({
   categoryRows,
   maxCategoryCents,
   month,
@@ -61,3 +62,5 @@ export function CategoryBreakdownCard({
     </BigCard>
   );
 }
+
+export const CategoryBreakdownCard = memo(CategoryBreakdownCardComponent);

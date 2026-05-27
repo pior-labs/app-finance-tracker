@@ -1,10 +1,17 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { PALETTE } from '../lib/constants';
 import { formatMoney, prettyName } from '../lib/format';
 import type { MerchantSpending } from '../types';
 import { BigCard } from './BigCard';
 
-export function TopMerchantsCard({ merchantRows, month }: { merchantRows: MerchantSpending[]; month: string }) {
+function TopMerchantsCardComponent({
+  merchantRows,
+  month,
+}: {
+  merchantRows: MerchantSpending[];
+  month: string;
+}) {
   return (
     <BigCard title="Top merchants" sub="your most-visited">
       {merchantRows.length === 0 ? (
@@ -60,3 +67,5 @@ export function TopMerchantsCard({ merchantRows, month }: { merchantRows: Mercha
     </BigCard>
   );
 }
+
+export const TopMerchantsCard = memo(TopMerchantsCardComponent);

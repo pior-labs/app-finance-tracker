@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { UploadModal } from '@/components/UploadModal';
+import { StatementUploadModal } from '@/features/statements/components/StatementUploadModal';
 import { StatementsDesktopTable } from './components/StatementsDesktopTable';
 import { StatementsErrorBanner } from './components/StatementsErrorBanner';
 import { StatementsHeader } from './components/StatementsHeader';
@@ -91,7 +91,11 @@ export function StatementsPage() {
 
       <StatementsWarningFooter />
 
-      <UploadModal open={uploadOpen} onClose={closeUpload} onUploadComplete={onUploadComplete} />
+      <StatementUploadModal
+        open={uploadOpen}
+        onClose={closeUpload}
+        onUploadComplete={onUploadComplete}
+      />
     </div>
   );
 }

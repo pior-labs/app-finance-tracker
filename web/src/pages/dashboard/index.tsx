@@ -14,8 +14,8 @@ import { SummaryStatsGrid } from './components/SummaryStatsGrid';
 import { TopMerchantsCard } from './components/TopMerchantsCard';
 
 const UploadModal = lazy(async () => {
-  const module = await import('@/components/UploadModal');
-  return { default: module.UploadModal };
+  const module = await import('@/features/statements/components/StatementUploadModal');
+  return { default: module.StatementUploadModal };
 });
 
 export function DashboardPage() {

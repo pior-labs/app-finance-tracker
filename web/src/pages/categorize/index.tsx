@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { usePublishCategorizeStats } from '@/hooks/useCategorizeStats';
 import { useCategorizeQueue } from './hooks/useCategorizeQueue';
 import { CategorizeCompleteState } from './components/CategorizeCompleteState';
 import { CategorizeErrorState } from './components/CategorizeErrorState';
@@ -15,7 +14,6 @@ export function CategorizePage() {
     current,
     upNext,
     totalUncategorized,
-    totalTransactions,
     confirmedList,
     undoStack,
     loading,
@@ -29,7 +27,6 @@ export function CategorizePage() {
   } = useCategorizeQueue();
 
   const confirmedCount = confirmedList.length;
-  const categorizedCount = totalTransactions - totalUncategorized + confirmedCount;
   const remaining = Math.max(0, totalUncategorized - confirmedCount);
   const positionInBatch = confirmedCount + 1;
   const batchTotal = remaining + confirmedCount;
@@ -47,15 +44,6 @@ export function CategorizePage() {
       })
       .slice(0, 10);
   }, [categories]);
-
-  const publishedStats = useMemo(() => ({
-    done: categorizedCount,
-    left: remaining,
-    position: positionInBatch,
-    total: totalUncategorized,
-  }), [categorizedCount, positionInBatch, remaining, totalUncategorized]);
-
-  usePublishCategorizeStats(publishedStats);
 
   const onAssignCategory = useCallback((categoryId: number) => {
     void assignCategory(categoryId);

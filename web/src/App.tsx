@@ -8,7 +8,7 @@ import { UncategorizedCountProvider } from '@/hooks/useUncategorizedCount';
 import { DashboardPage } from '@/pages/dashboard';
 import { LoginPage } from '@/pages/Login';
 import { CategorizePage } from '@/pages/categorize';
-import { TransactionsPage } from '@/pages/Transactions';
+import { TransactionsPage } from '@/pages/transactions';
 import { CategoriesPage } from '@/pages/Categories';
 import { StatementsPage } from '@/pages/Statements';
 

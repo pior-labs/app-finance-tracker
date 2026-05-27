@@ -6,7 +6,7 @@ import { CategorizeStatsProvider } from '@/hooks/useCategorizeStats';
 import { ToastProvider } from '@/hooks/useToast';
 import { UncategorizedCountProvider } from '@/hooks/useUncategorizedCount';
 import { DashboardPage } from '@/pages/dashboard';
-import { LoginPage } from '@/pages/Login';
+import { LoginPage } from '@/pages/login';
 import { CategorizePage } from '@/pages/categorize';
 import { TransactionsPage } from '@/pages/transactions';
 import { CategoriesPage } from '@/pages/categories';

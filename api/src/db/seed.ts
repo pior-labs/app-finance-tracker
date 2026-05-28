@@ -143,13 +143,23 @@ async function seedCategories(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const user1 = {
-    name: requireEnv('SEED_USER_1_NAME'),
-    email: requireEnv('SEED_USER_1_EMAIL'),
-    password: requireEnv('SEED_USER_1_PASSWORD')
-  };
+  const seedUsers = [
+    {
+      name: requireEnv('SEED_USER_1_NAME'),
+      email: requireEnv('SEED_USER_1_EMAIL'),
+      password: requireEnv('SEED_USER_1_PASSWORD')
+    },
+    {
+      name: requireEnv('SEED_USER_2_NAME'),
+      email: requireEnv('SEED_USER_2_EMAIL'),
+      password: requireEnv('SEED_USER_2_PASSWORD')
+    }
+  ];
 
-  await upsertAuthUser(user1.name, user1.email, user1.password);
+  for (const user of seedUsers) {
+    await upsertAuthUser(user.name, user.email, user.password);
+  }
+
   await seedCategories();
 
   console.log('Seed completed: users + default categories');

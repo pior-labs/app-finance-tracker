@@ -1,11 +1,15 @@
-import { useCallback, useState } from 'react';
-import { StatementUploadModal } from '@/features/statements/components/StatementUploadModal';
+import { Suspense, lazy, useCallback, useState } from 'react';
 import { StatementsDesktopTable } from './components/StatementsDesktopTable';
 import { StatementsErrorBanner } from './components/StatementsErrorBanner';
 import { StatementsHeader } from './components/StatementsHeader';
 import { StatementsMobileList } from './components/StatementsMobileList';
 import { StatementsWarningFooter } from './components/StatementsWarningFooter';
 import { useStatementsData } from './hooks/useStatementsData';
+
+const UploadModal = lazy(async () => {
+  const module = await import('@/features/statements/components/StatementUploadModal');
+  return { default: module.StatementUploadModal };
+});
 
 export function StatementsPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -53,6 +57,12 @@ export function StatementsPage() {
     void deleteStatement(statementId);
   }, [deleteStatement]);
 
+  const renderUploadModal = uploadOpen ? (
+    <Suspense fallback={null}>
+      <UploadModal open={uploadOpen} onClose={closeUpload} onUploadComplete={onUploadComplete} />
+    </Suspense>
+  ) : null;
+
   return (
     <div className="flex flex-col gap-5">
       <StatementsHeader
@@ -91,11 +101,7 @@ export function StatementsPage() {
 
       <StatementsWarningFooter />
 
-      <StatementUploadModal
-        open={uploadOpen}
-        onClose={closeUpload}
-        onUploadComplete={onUploadComplete}
-      />
+      {renderUploadModal}
     </div>
   );
 }

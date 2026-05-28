@@ -1,0 +1,102 @@
+name: CI/CD
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: finlens-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install API dependencies
+        working-directory: api
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck API
+        working-directory: api
+        run: pnpm typecheck
+
+      - name: Build API
+        working-directory: api
+        run: pnpm build
+
+      - name: Install web dependencies
+        working-directory: web
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck web
+        working-directory: web
+        run: pnpm typecheck
+
+      - name: Build web
+        working-directory: web
+        run: pnpm build
+
+      - name: Build API Docker image
+        run: docker build ./api
+
+      - name: Build web Docker image
+        run: docker build ./web
+
+  deploy:
+    name: Deploy to OptiPlex
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on:
+      - self-hosted
+      - linux
+      - finlens
+    defaults:
+      run:
+        working-directory: /opt/docker/finance-tracker
+
+    steps:
+      - name: Update production checkout
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Write production env
+        env:
+          FINLENS_ENV: ${{ secrets.FINLENS_ENV }}
+        run: |
+          if [ -z "$FINLENS_ENV" ]; then
+            echo "Missing required secret: FINLENS_ENV"
+            exit 1
+          fi
+          printf '%s\n' "$FINLENS_ENV" > .env
+          chmod 600 .env
+
+      - name: Build Compose images
+        run: docker compose build
+
+      - name: Run database migrations
+        run: docker compose run --rm api node dist/db/migrate.js
+
+      - name: Restart stack
+        run: docker compose up -d --remove-orphans
+
+      - name: Show running services
+        run: docker compose ps

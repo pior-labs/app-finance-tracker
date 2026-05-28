@@ -12,13 +12,13 @@ interface UploadResult {
   filename: string;
 }
 
-interface UploadModalProps {
+interface StatementUploadModalProps {
   open: boolean;
   onClose: () => void;
   onUploadComplete?: () => void;
 }
 
-export function UploadModal({ open, onClose, onUploadComplete }: UploadModalProps) {
+export function StatementUploadModal({ open, onClose, onUploadComplete }: StatementUploadModalProps) {
   const [state, setState] = useState<UploadState>('idle');
   const [result, setResult] = useState<UploadResult | null>(null);
   const [errorMessage, setErrorMessage] = useState('');

@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "merchants:normalize": "tsx src/scripts/normalize-merchants.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.9",

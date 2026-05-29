@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { memo, useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { formatMonthLabel, getCurrentMonth } from '../lib/format';
 
@@ -17,9 +17,33 @@ function DashboardHeaderComponent({
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerActiveIndex, setPickerActiveIndex] = useState(0);
+  const [pickerMenuStyle, setPickerMenuStyle] = useState<CSSProperties | undefined>();
   const pickerRef = useRef<HTMLDivElement>(null);
   const pickerTriggerRef = useRef<HTMLButtonElement>(null);
   const pickerOptionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const updatePickerMenuPosition = useCallback(() => {
+    const trigger = pickerTriggerRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const viewportPadding = 16;
+    const menuWidth = Math.min(256, window.innerWidth - viewportPadding * 2);
+    const centeredLeft = rect.left + rect.width / 2 - menuWidth / 2;
+    const left = Math.min(
+      Math.max(viewportPadding, centeredLeft),
+      Math.max(viewportPadding, window.innerWidth - viewportPadding - menuWidth),
+    );
+
+    setPickerMenuStyle({
+      position: 'fixed',
+      top: rect.bottom + 8,
+      left,
+      width: menuWidth,
+      maxHeight: Math.max(160, window.innerHeight - rect.bottom - 24),
+      overflowY: 'auto',
+    });
+  }, []);
 
   const closePickerAndReturnFocus = () => {
     setPickerOpen(false);
@@ -41,6 +65,7 @@ function DashboardHeaderComponent({
           : Math.max(0, availableMonths.indexOf(month));
 
     setPickerActiveIndex(idx);
+    updatePickerMenuPosition();
     setPickerOpen(true);
   };
 
@@ -86,6 +111,9 @@ function DashboardHeaderComponent({
 
   useEffect(() => {
     if (!pickerOpen) return;
+    updatePickerMenuPosition();
+
+    const onViewportChange = () => updatePickerMenuPosition();
     const onDocClick = (e: MouseEvent) => {
       if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
         setPickerOpen(false);
@@ -93,8 +121,14 @@ function DashboardHeaderComponent({
     };
 
     document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
-  }, [pickerOpen]);
+    window.addEventListener('resize', onViewportChange);
+    window.addEventListener('scroll', onViewportChange, { passive: true });
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      window.removeEventListener('resize', onViewportChange);
+      window.removeEventListener('scroll', onViewportChange);
+    };
+  }, [pickerOpen, updatePickerMenuPosition]);
 
   useEffect(() => {
     if (!pickerOpen) return;
@@ -134,7 +168,8 @@ function DashboardHeaderComponent({
             aria-label="Choose month"
             tabIndex={-1}
             onKeyDown={onListboxKeyDown}
-            className="absolute right-0 top-[calc(100%+8px)] z-20 min-w-55 rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150 focus-visible:outline-none"
+            style={pickerMenuStyle}
+            className="z-20 rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150 focus-visible:outline-none"
           >
             {availableMonths.length === 0 ? (
               <div className="px-3 py-2.5 text-[13px] text-ink-3">No months yet</div>

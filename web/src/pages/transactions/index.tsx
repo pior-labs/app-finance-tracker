@@ -216,7 +216,7 @@ export function TransactionsPage() {
   }, []);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-5" aria-busy={loading}>
+    <div className="flex h-full min-h-0 flex-col gap-6" aria-busy={loading}>
       {loading ? (
         <div role="status" aria-live="polite" className="sr-only">
           Loading transactions...

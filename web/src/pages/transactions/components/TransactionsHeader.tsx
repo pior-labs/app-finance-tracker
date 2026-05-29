@@ -15,7 +15,7 @@ export const TransactionsHeader = memo(function TransactionsHeader({
   completePct,
 }: TransactionsHeaderProps) {
   return (
-    <header className="flex flex-col gap-4 px-1 pt-1 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-6 sm:pt-3">
+    <header className="flex flex-col gap-5 px-0.5 pt-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between sm:gap-6 sm:px-1">
       <div className="min-w-0">
         <div className="truncate text-[12px] tracking-wide sm:text-[13px]" style={{ color: 'var(--ink-3)' }}>
           {filterParts.length > 0 ? (

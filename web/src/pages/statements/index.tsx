@@ -66,7 +66,7 @@ export function StatementsPage() {
   ) : null;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6">
       <StatementsHeader
         statementCount={statements.length}
         totalTransactions={totalTransactions}

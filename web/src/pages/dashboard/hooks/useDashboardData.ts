@@ -30,13 +30,6 @@ export function useDashboardData(month: string) {
   }, []);
 
   useEffect(() => {
-    for (const controller of controllersRef.current) {
-      controller.abort();
-    }
-    controllersRef.current.clear();
-  }, [month]);
-
-  useEffect(() => {
     return () => {
       for (const controller of controllersRef.current) {
         controller.abort();
@@ -56,7 +49,6 @@ export function useDashboardData(month: string) {
     data: statsData,
     error: statsError,
     isLoading: statsLoading,
-    isValidating: statsValidating,
     mutate: mutateStats,
   } = useSWR<DashboardStatsResponse>(statsQuery, fetchJson, {
     dedupingInterval: 10_000,
@@ -68,7 +60,6 @@ export function useDashboardData(month: string) {
     data: recentData,
     error: recentError,
     isLoading: recentLoading,
-    isValidating: recentValidating,
     mutate: mutateRecent,
   } = useSWR<{ data: RecentTransaction[] }>(uncategorizedQuery, fetchJson, {
     dedupingInterval: 10_000,
@@ -112,7 +103,7 @@ export function useDashboardData(month: string) {
           ? recentError.message
           : null;
 
-  const loading = statsLoading || recentLoading || (!statsData && (statsValidating || recentValidating));
+  const loading = statsLoading || recentLoading || !statsData;
 
   const fetchDashboard = useCallback(async () => {
     await Promise.all([mutateStats(), mutateRecent()]);

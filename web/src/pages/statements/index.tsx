@@ -1,4 +1,5 @@
 import { Suspense, lazy, useCallback, useState } from 'react';
+import { useUncategorizedCount } from '@/hooks/useUncategorizedCount';
 import { StatementsDesktopTable } from './components/StatementsDesktopTable';
 import { StatementsErrorBanner } from './components/StatementsErrorBanner';
 import { StatementsHeader } from './components/StatementsHeader';
@@ -13,6 +14,7 @@ const UploadModal = lazy(async () => {
 
 export function StatementsPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
+  const { refresh: refreshUncategorizedCount } = useUncategorizedCount();
   const {
     statements,
     sortedStatements,
@@ -42,20 +44,20 @@ export function StatementsPage() {
   }, [refresh]);
 
   const onUploadComplete = useCallback(() => {
-    void refresh();
-  }, [refresh]);
+    void Promise.all([refresh(), refreshUncategorizedCount()]);
+  }, [refresh, refreshUncategorizedCount]);
 
   const onViewStatementTransactions = useCallback((statementId: number) => {
     void viewStatementTransactions(statementId);
   }, [viewStatementTransactions]);
 
   const onReparseStatement = useCallback((statementId: number) => {
-    void reparseStatement(statementId);
-  }, [reparseStatement]);
+    void reparseStatement(statementId).then(refreshUncategorizedCount);
+  }, [refreshUncategorizedCount, reparseStatement]);
 
   const onDeleteStatement = useCallback((statementId: number) => {
-    void deleteStatement(statementId);
-  }, [deleteStatement]);
+    void deleteStatement(statementId).then(refreshUncategorizedCount);
+  }, [deleteStatement, refreshUncategorizedCount]);
 
   const renderUploadModal = uploadOpen ? (
     <Suspense fallback={null}>

@@ -1,6 +1,7 @@
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Check, RotateCcw } from 'lucide-react';
+import { useUncategorizedCount } from '@/hooks/useUncategorizedCount';
 import { useDashboardData } from './hooks/useDashboardData';
 import { formatMonthLabel, getCurrentMonth, isValidMonth } from './lib/format';
 import { AllCaughtCard } from './components/AllCaughtCard';
@@ -28,6 +29,7 @@ export function DashboardPage() {
 
   const { stats, recentUncategorized, availableMonths, loading, error, fetchDashboard } =
     useDashboardData(month);
+  const { refresh: refreshUncategorizedCount } = useUncategorizedCount();
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const categoryRows = useMemo(() => {
@@ -79,8 +81,8 @@ export function DashboardPage() {
   }, []);
 
   const onUploadComplete = useCallback(() => {
-    void fetchDashboard();
-  }, [fetchDashboard]);
+    void Promise.all([fetchDashboard(), refreshUncategorizedCount()]);
+  }, [fetchDashboard, refreshUncategorizedCount]);
 
   const renderUploadModal = uploadOpen ? (
     <Suspense fallback={null}>

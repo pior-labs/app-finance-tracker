@@ -21,12 +21,12 @@ export function UncategorizedCountProvider({ children }: { children: ReactNode }
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch('/api/transactions?status=needs_review&limit=1', {
+      const res = await fetch('/api/transactions/uncategorized-count', {
         credentials: 'include',
       });
       if (!res.ok) return;
-      const payload = (await res.json()) as { pagination?: { total?: number } };
-      setCount(Number(payload.pagination?.total ?? 0));
+      const payload = (await res.json()) as { data?: { count?: number } };
+      setCount(Number(payload.data?.count ?? 0));
     } catch {
       // ignore — badge will keep its last known value
     }

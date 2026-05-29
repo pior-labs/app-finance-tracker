@@ -188,6 +188,19 @@ transactionsRouter.get('/stats', async (c) => {
   });
 });
 
+transactionsRouter.get('/uncategorized-count', async (c) => {
+  const [uncategorizedRow] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.transactions)
+    .where(eq(schema.transactions.status, 'needs_review'));
+
+  return c.json({
+    data: {
+      count: Number(uncategorizedRow?.count ?? 0)
+    }
+  });
+});
+
 transactionsRouter.get('/', async (c) => {
   const query = querySchema.safeParse(c.req.query());
 

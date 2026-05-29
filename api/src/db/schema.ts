@@ -78,34 +78,48 @@ export const categories = sqliteTable('categories', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs)
 });
 
-export const statements = sqliteTable('statements', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  uploadedBy: integer('uploaded_by')
-    .notNull()
-    .references(() => users.id),
-  filename: text('filename').notNull(),
-  originalFilename: text('original_filename').notNull(),
-  institution: text('institution'),
-  periodStart: text('period_start'),
-  periodEnd: text('period_end'),
-  rawText: text('raw_text'),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs)
-});
+export const statements = sqliteTable(
+  'statements',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    uploadedBy: integer('uploaded_by')
+      .notNull()
+      .references(() => users.id),
+    filename: text('filename').notNull(),
+    originalFilename: text('original_filename').notNull(),
+    institution: text('institution'),
+    periodStart: text('period_start'),
+    periodEnd: text('period_end'),
+    rawText: text('raw_text'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs)
+  },
+  (table) => [index('statements_created_at_idx').on(table.createdAt)]
+);
 
-export const transactions = sqliteTable('transactions', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  statementId: integer('statement_id')
-    .notNull()
-    .references(() => statements.id),
-  date: text('date').notNull(),
-  description: text('description').notNull(),
-  merchant: text('merchant'),
-  amount: integer('amount').notNull(),
-  type: text('type').notNull(),
-  categoryId: integer('category_id').references(() => categories.id),
-  status: text('status').notNull().default('needs_review'),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs)
-});
+export const transactions = sqliteTable(
+  'transactions',
+  {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    statementId: integer('statement_id')
+      .notNull()
+      .references(() => statements.id),
+    date: text('date').notNull(),
+    description: text('description').notNull(),
+    merchant: text('merchant'),
+    amount: integer('amount').notNull(),
+    type: text('type').notNull(),
+    categoryId: integer('category_id').references(() => categories.id),
+    status: text('status').notNull().default('needs_review'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs)
+  },
+  (table) => [
+    index('transactions_status_date_id_idx').on(table.status, table.date, table.id),
+    index('transactions_date_id_idx').on(table.date, table.id),
+    index('transactions_date_merchant_idx').on(table.date, table.merchant),
+    index('transactions_statement_id_idx').on(table.statementId),
+    index('transactions_category_id_idx').on(table.categoryId)
+  ]
+);
 
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),

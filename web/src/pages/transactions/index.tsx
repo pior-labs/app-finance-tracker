@@ -61,7 +61,7 @@ export function TransactionsPage() {
     shouldMoveToPreviousPageAfterDelete,
     refresh,
     assignCategory,
-    markForReview,
+    updateTransactionDetails,
     removeTransaction,
     mutateTransactions,
   } = useTransactionsData(filters);
@@ -182,11 +182,10 @@ export function TransactionsPage() {
     void assignCategory(transaction, selectedValue);
   }, [assignCategory]);
 
-  const onEditTransaction = useCallback((transaction: TransactionListItem) => {
-    void markForReview(transaction).then((updated) => {
-      if (updated) categorySelectRefs.current.get(transaction.id)?.focus();
-    });
-  }, [markForReview]);
+  const onUpdateTransaction = useCallback((
+    transaction: TransactionListItem,
+    details: { merchant: string; description: string },
+  ) => updateTransactionDetails(transaction, details), [updateTransactionDetails]);
 
   const onDeleteTransaction = useCallback(async (transaction: TransactionListItem) => {
     const label = transaction.merchant ?? transaction.description;
@@ -256,7 +255,7 @@ export function TransactionsPage() {
         categoryColorMap={categoryColorMap}
         focusedRowId={focusedRowId}
         onCategoryAssign={onCategoryAssign}
-        onEditTransaction={onEditTransaction}
+        onUpdateTransaction={onUpdateTransaction}
         onDeleteTransaction={onDeleteTransaction}
       />
 
@@ -270,7 +269,7 @@ export function TransactionsPage() {
         categoryColorMap={categoryColorMap}
         focusedRowId={focusedRowId}
         onCategoryAssign={onCategoryAssign}
-        onEditTransaction={onEditTransaction}
+        onUpdateTransaction={onUpdateTransaction}
         onDeleteTransaction={onDeleteTransaction}
       />
 

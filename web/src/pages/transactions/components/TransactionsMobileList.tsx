@@ -1,5 +1,5 @@
-import { memo, type RefObject } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { memo, useEffect, useState, type RefObject } from 'react';
+import { Check, Pencil, Trash2, X } from 'lucide-react';
 import { formatAmount, formatShortDate, prettyName } from '../lib/format';
 import type { SelectOption, TransactionListItem } from '../types';
 import { CategorySelect } from './TransactionsDesktopTable';
@@ -17,7 +17,7 @@ interface TransactionsMobileListProps {
   categoryColorMap: Map<number, string>;
   focusedRowId: number | null;
   onCategoryAssign: (transaction: TransactionListItem, value: string) => void;
-  onEditTransaction: (transaction: TransactionListItem) => void;
+  onUpdateTransaction: (transaction: TransactionListItem, details: { merchant: string; description: string }) => Promise<boolean>;
   onDeleteTransaction: (transaction: TransactionListItem) => void;
 }
 
@@ -31,7 +31,7 @@ export const TransactionsMobileList = memo(function TransactionsMobileList({
   categoryColorMap,
   focusedRowId,
   onCategoryAssign,
-  onEditTransaction,
+  onUpdateTransaction,
   onDeleteTransaction,
 }: TransactionsMobileListProps) {
   return (
@@ -95,7 +95,7 @@ export const TransactionsMobileList = memo(function TransactionsMobileList({
             categoryColor={transaction.categoryId ? categoryColorMap.get(transaction.categoryId) : undefined}
             isFocused={focusedRowId === transaction.id}
             onCategoryAssign={onCategoryAssign}
-            onEditTransaction={onEditTransaction}
+            onUpdateTransaction={onUpdateTransaction}
             onDeleteTransaction={onDeleteTransaction}
           />
         ))
@@ -113,7 +113,7 @@ interface TransactionsMobileCardProps {
   categoryColor?: string;
   isFocused: boolean;
   onCategoryAssign: (transaction: TransactionListItem, value: string) => void;
-  onEditTransaction: (transaction: TransactionListItem) => void;
+  onUpdateTransaction: (transaction: TransactionListItem, details: { merchant: string; description: string }) => Promise<boolean>;
   onDeleteTransaction: (transaction: TransactionListItem) => void;
 }
 
@@ -126,10 +126,30 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
   categoryColor,
   isFocused,
   onCategoryAssign,
-  onEditTransaction,
+  onUpdateTransaction,
   onDeleteTransaction,
 }: TransactionsMobileCardProps) {
   const isBusy = isUpdating || isDeleting;
+  const [isEditing, setIsEditing] = useState(false);
+  const [merchant, setMerchant] = useState(transaction.merchant ?? '');
+  const [description, setDescription] = useState(transaction.description);
+
+  useEffect(() => {
+    if (isEditing) return;
+    setMerchant(transaction.merchant ?? '');
+    setDescription(transaction.description);
+  }, [isEditing, transaction.description, transaction.merchant]);
+
+  const cancelEdit = () => {
+    setMerchant(transaction.merchant ?? '');
+    setDescription(transaction.description);
+    setIsEditing(false);
+  };
+
+  const saveEdit = async () => {
+    const updated = await onUpdateTransaction(transaction, { merchant, description });
+    if (updated) setIsEditing(false);
+  };
 
   return (
     <article
@@ -184,6 +204,33 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
         </p>
       ) : null}
 
+      {isEditing ? (
+        <div className="grid gap-2.5 rounded-[18px] border border-white/70 bg-white/35 p-3">
+          <label className="grid gap-1.5 text-[12px] font-medium" style={{ color: 'var(--ink-3)' }}>
+            Merchant
+            <input
+              value={merchant}
+              onChange={(event) => setMerchant(event.target.value)}
+              disabled={isBusy}
+              className="h-11 rounded-full border border-white/75 bg-white/65 px-3.5 text-[14px] outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
+              style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
+            />
+          </label>
+          <label className="grid gap-1.5 text-[12px] font-medium" style={{ color: 'var(--ink-3)' }}>
+            Description
+            <textarea
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              disabled={isBusy}
+              required
+              rows={3}
+              className="min-h-22 resize-y rounded-[16px] border border-white/75 bg-white/65 px-3.5 py-2.5 text-[14px] leading-snug outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
+              style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
+            />
+          </label>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-2">
         <CategorySelect
           transaction={transaction}
@@ -200,28 +247,55 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
         className="-mx-1 flex items-center justify-end gap-1 border-t border-dashed pt-2"
         style={{ borderColor: 'rgba(45,36,24,0.1)' }}
       >
-        <button
-          type="button"
-          onClick={() => onEditTransaction(transaction)}
-          disabled={isBusy}
-          aria-label="Edit transaction"
-          className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-white/60 disabled:opacity-50"
-          style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', touchAction: 'manipulation' }}
-        >
-          <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.3} />
-          Edit
-        </button>
-        <button
-          type="button"
-          onClick={() => onDeleteTransaction(transaction)}
-          disabled={isBusy}
-          aria-label="Delete transaction"
-          className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:opacity-50"
-          style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--accent)', touchAction: 'manipulation' }}
-        >
-          <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.2} />
-          Delete
-        </button>
+        {isEditing ? (
+          <>
+            <button
+              type="button"
+              onClick={() => void saveEdit()}
+              disabled={isBusy || description.trim().length === 0}
+              aria-label="Save transaction"
+              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-white/60 disabled:cursor-default disabled:opacity-50"
+              style={{ fontFamily: "'Outfit', sans-serif", color: '#3d6b1f', touchAction: 'manipulation' }}
+            >
+              <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={cancelEdit}
+              disabled={isBusy}
+              aria-label="Cancel editing transaction"
+              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-white/60 disabled:cursor-default disabled:opacity-50"
+              style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', touchAction: 'manipulation' }}
+            >
+              <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.3} />
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => onDeleteTransaction(transaction)}
+              disabled={isBusy}
+              aria-label="Delete transaction"
+              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-default disabled:opacity-50"
+              style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--accent)', touchAction: 'manipulation' }}
+            >
+              <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.2} />
+              Delete
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            disabled={isBusy}
+            aria-label="Edit transaction"
+            className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-white/60 disabled:cursor-default disabled:opacity-50"
+            style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', touchAction: 'manipulation' }}
+          >
+            <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.3} />
+            Edit
+          </button>
+        )}
       </div>
     </article>
   );

@@ -1,5 +1,5 @@
-import { memo, type RefObject } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { memo, useEffect, useState, type RefObject } from 'react';
+import { Check, Pencil, Trash2, X } from 'lucide-react';
 import { formatAmount, formatShortDate, prettyName } from '../lib/format';
 import type { SelectOption, TransactionListItem } from '../types';
 import { TransactionStatusPill } from './TransactionStatusPill';
@@ -19,7 +19,7 @@ interface TransactionsDesktopTableProps {
   categoryColorMap: Map<number, string>;
   focusedRowId: number | null;
   onCategoryAssign: (transaction: TransactionListItem, value: string) => void;
-  onEditTransaction: (transaction: TransactionListItem) => void;
+  onUpdateTransaction: (transaction: TransactionListItem, details: { merchant: string; description: string }) => Promise<boolean>;
   onDeleteTransaction: (transaction: TransactionListItem) => void;
 }
 
@@ -36,7 +36,7 @@ export const TransactionsDesktopTable = memo(function TransactionsDesktopTable({
   categoryColorMap,
   focusedRowId,
   onCategoryAssign,
-  onEditTransaction,
+  onUpdateTransaction,
   onDeleteTransaction,
 }: TransactionsDesktopTableProps) {
   return (
@@ -68,7 +68,7 @@ export const TransactionsDesktopTable = memo(function TransactionsDesktopTable({
               <th className="h-11 w-32 px-4 text-right text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Amount</th>
               <th className="h-11 w-64 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Category</th>
               <th className="h-11 w-40 px-4 text-left text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Status</th>
-              <th className="h-11 w-28 px-5 text-right text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Actions</th>
+              <th className="h-11 w-36 px-5 text-right text-xs font-semibold tracking-wide" style={{ color: 'var(--ink-3)' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -109,7 +109,7 @@ export const TransactionsDesktopTable = memo(function TransactionsDesktopTable({
                   isFocused={focusedRowId === transaction.id}
                   rowHeightPx={rowHeightPx}
                   onCategoryAssign={onCategoryAssign}
-                  onEditTransaction={onEditTransaction}
+                  onUpdateTransaction={onUpdateTransaction}
                   onDeleteTransaction={onDeleteTransaction}
                 />
               ))
@@ -132,7 +132,7 @@ interface TransactionsTableRowProps {
   isFocused: boolean;
   rowHeightPx: number | null;
   onCategoryAssign: (transaction: TransactionListItem, value: string) => void;
-  onEditTransaction: (transaction: TransactionListItem) => void;
+  onUpdateTransaction: (transaction: TransactionListItem, details: { merchant: string; description: string }) => Promise<boolean>;
   onDeleteTransaction: (transaction: TransactionListItem) => void;
 }
 
@@ -147,10 +147,30 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
   isFocused,
   rowHeightPx,
   onCategoryAssign,
-  onEditTransaction,
+  onUpdateTransaction,
   onDeleteTransaction,
 }: TransactionsTableRowProps) {
   const isBusy = isUpdating || isDeleting;
+  const [isEditing, setIsEditing] = useState(false);
+  const [merchant, setMerchant] = useState(transaction.merchant ?? '');
+  const [description, setDescription] = useState(transaction.description);
+
+  useEffect(() => {
+    if (isEditing) return;
+    setMerchant(transaction.merchant ?? '');
+    setDescription(transaction.description);
+  }, [isEditing, transaction.description, transaction.merchant]);
+
+  const cancelEdit = () => {
+    setMerchant(transaction.merchant ?? '');
+    setDescription(transaction.description);
+    setIsEditing(false);
+  };
+
+  const saveEdit = async () => {
+    const updated = await onUpdateTransaction(transaction, { merchant, description });
+    if (updated) setIsEditing(false);
+  };
 
   return (
     <tr
@@ -168,12 +188,35 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
         {formatShortDate(transaction.date)}
       </td>
       <td className="px-4 py-1.5">
-        <span className="text-[15px] font-medium" style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}>
-          {prettyName(transaction.merchant ?? transaction.description)}
-        </span>
+        {isEditing ? (
+          <input
+            value={merchant}
+            onChange={(event) => setMerchant(event.target.value)}
+            disabled={isBusy}
+            aria-label={`Merchant for transaction ${transaction.id}`}
+            className="h-9 w-full rounded-xl border border-white/70 bg-white/60 px-3 text-[13px] outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
+            style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
+          />
+        ) : (
+          <span className="text-[15px] font-medium" style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}>
+            {prettyName(transaction.merchant ?? transaction.description)}
+          </span>
+        )}
       </td>
       <td className="px-4 py-1.5 text-[12px]" style={{ color: 'var(--ink-3)' }}>
-        {transaction.description}
+        {isEditing ? (
+          <input
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            disabled={isBusy}
+            required
+            aria-label={`Description for transaction ${transaction.id}`}
+            className="h-9 w-full rounded-xl border border-white/70 bg-white/60 px-3 text-[13px] outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
+            style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
+          />
+        ) : (
+          transaction.description
+        )}
       </td>
       <td className="whitespace-nowrap px-4 py-1.5 text-right">
         <span
@@ -202,28 +245,55 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
       </td>
       <td className="px-5 py-1.5">
         <div className="flex justify-end gap-1">
-          <button
-            type="button"
-            onClick={() => onEditTransaction(transaction)}
-            disabled={isBusy}
-            aria-label={`Edit transaction ${transaction.id}`}
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
-            style={{ color: 'var(--ink-2)' }}
-            title="Edit"
-          >
-            <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
-          </button>
-          <button
-            type="button"
-            onClick={() => onDeleteTransaction(transaction)}
-            disabled={isBusy}
-            aria-label={`Delete transaction ${transaction.id}`}
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
-            style={{ color: 'var(--accent)' }}
-            title="Delete"
-          >
-            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.2} />
-          </button>
+          {isEditing ? (
+            <>
+              <button
+                type="button"
+                onClick={() => void saveEdit()}
+                disabled={isBusy || description.trim().length === 0}
+                aria-label={`Save transaction ${transaction.id}`}
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/50 text-xs transition-colors hover:bg-white/85 disabled:cursor-default disabled:opacity-50"
+                style={{ color: '#3d6b1f' }}
+                title="Save"
+              >
+                <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </button>
+              <button
+                type="button"
+                onClick={cancelEdit}
+                disabled={isBusy}
+                aria-label={`Cancel editing transaction ${transaction.id}`}
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/40 text-xs transition-colors hover:bg-white/80 disabled:cursor-default disabled:opacity-50"
+                style={{ color: 'var(--ink-2)' }}
+                title="Cancel"
+              >
+                <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onDeleteTransaction(transaction)}
+                disabled={isBusy}
+                aria-label={`Delete transaction ${transaction.id}`}
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-default disabled:opacity-50"
+                style={{ color: 'var(--accent)' }}
+                title="Delete"
+              >
+                <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.2} />
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              disabled={isBusy}
+              aria-label={`Edit transaction ${transaction.id}`}
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/40 text-xs transition-colors hover:bg-white/80 disabled:cursor-default disabled:opacity-50"
+              style={{ color: 'var(--ink-2)' }}
+              title="Edit"
+            >
+              <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
+            </button>
+          )}
         </div>
       </td>
     </tr>

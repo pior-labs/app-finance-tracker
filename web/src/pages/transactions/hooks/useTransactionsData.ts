@@ -28,7 +28,12 @@ async function fetchJson<T>(url: string): Promise<T> {
 
 async function patchTransaction(
   transactionId: number,
-  updatePayload: { category_id?: number | null; status?: 'needs_review' | 'confirmed' },
+  updatePayload: {
+    category_id?: number | null;
+    status?: 'needs_review' | 'confirmed';
+    merchant?: string | null;
+    description?: string;
+  },
 ): Promise<TransactionUpdatePayload> {
   const response = await fetch(`/api/transactions/${transactionId}`, {
     method: 'PATCH',
@@ -65,7 +70,14 @@ function updateTransactionList(
 ): TransactionListItem[] {
   return transactions.map((item) =>
     item.id === transactionId
-      ? { ...item, categoryId: payload.categoryId, categoryName: payload.categoryName, status: payload.status }
+      ? {
+          ...item,
+          description: payload.description,
+          merchant: payload.merchant,
+          categoryId: payload.categoryId,
+          categoryName: payload.categoryName,
+          status: payload.status,
+        }
       : item,
   );
 }
@@ -176,17 +188,30 @@ export function useTransactionsData(filters: TransactionFilters) {
     }
   }, [adjustUncategorized, mutateTransactions]);
 
-  const markForReview = useCallback(async (transaction: TransactionListItem) => {
+  const updateTransactionDetails = useCallback(async (
+    transaction: TransactionListItem,
+    details: { merchant: string; description: string },
+  ) => {
     setMutationError(null);
-    if (transaction.status === 'needs_review') return true;
+    const description = details.description.trim();
+    const merchant = details.merchant.trim();
+
+    if (!description) {
+      setMutationError('Description is required.');
+      return false;
+    }
+
+    if (description === transaction.description && merchant === (transaction.merchant ?? '')) {
+      return true;
+    }
 
     setUpdatingTransactionIds((prev) => new Set(prev).add(transaction.id));
 
     try {
-      const payload = await patchTransaction(transaction.id, { status: 'needs_review' });
-      if (transaction.status !== payload.status) {
-        adjustUncategorized(payload.status === 'needs_review' ? 1 : -1);
-      }
+      const payload = await patchTransaction(transaction.id, {
+        description,
+        merchant: merchant || null,
+      });
       void mutateTransactions((current) => {
         if (!current) return current;
         return {
@@ -196,7 +221,7 @@ export function useTransactionsData(filters: TransactionFilters) {
       }, { revalidate: false });
       return true;
     } catch (updateError) {
-      setMutationError(updateError instanceof Error ? updateError.message : 'Failed to prepare transaction for editing');
+      setMutationError(updateError instanceof Error ? updateError.message : 'Failed to update transaction');
       return false;
     } finally {
       setUpdatingTransactionIds((prev) => {
@@ -205,7 +230,7 @@ export function useTransactionsData(filters: TransactionFilters) {
         return next;
       });
     }
-  }, [adjustUncategorized, mutateTransactions]);
+  }, [mutateTransactions]);
 
   const removeTransaction = useCallback(async (transaction: TransactionListItem) => {
     setMutationError(null);
@@ -254,7 +279,7 @@ export function useTransactionsData(filters: TransactionFilters) {
     shouldMoveToPreviousPageAfterDelete,
     refresh,
     assignCategory,
-    markForReview,
+    updateTransactionDetails,
     removeTransaction,
     mutateTransactions,
   };

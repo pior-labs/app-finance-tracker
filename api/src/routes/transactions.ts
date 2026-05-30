@@ -19,7 +19,9 @@ const statsQuerySchema = z.object({
 
 const patchSchema = z.object({
   category_id: z.number().int().positive().nullable().optional(),
-  status: z.enum(['needs_review', 'confirmed']).optional()
+  status: z.enum(['needs_review', 'confirmed']).optional(),
+  merchant: z.string().trim().max(160).nullable().optional(),
+  description: z.string().trim().min(1).max(500).optional()
 });
 
 export const transactionsRouter = new Hono<{ Variables: AuthVariables }>();
@@ -360,6 +362,12 @@ transactionsRouter.patch('/:id', async (c) => {
   }
   if (payload.data.status !== undefined) {
     updateData.status = payload.data.status;
+  }
+  if (payload.data.merchant !== undefined) {
+    updateData.merchant = payload.data.merchant === null || payload.data.merchant === '' ? null : payload.data.merchant;
+  }
+  if (payload.data.description !== undefined) {
+    updateData.description = payload.data.description;
   }
 
   const updatedRows = await db

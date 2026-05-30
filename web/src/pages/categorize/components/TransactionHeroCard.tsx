@@ -70,7 +70,7 @@ export const TransactionHeroCard = memo(function TransactionHeroCard({
                 color: isCredit ? '#3d6b1f' : 'var(--ink-2)',
               }}
             >
-              {isCredit ? '↑ credit' : '↓ debit'}
+              Credit
             </span>
           </div>
           <div

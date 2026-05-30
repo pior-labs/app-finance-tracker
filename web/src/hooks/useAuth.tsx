@@ -16,23 +16,25 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    credentials: 'include',
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers ?? {})
+function toErrorMessage(payload: unknown, fallback: string): string {
+  if (typeof payload === 'object' && payload !== null) {
+    const message = (payload as { message?: unknown; error?: unknown }).message;
+    if (typeof message === 'string' && message.length > 0) {
+      return message;
     }
-  });
 
-  if (!response.ok) {
-    const errorPayload = await response.json().catch(() => ({}));
-    const message = (errorPayload as { error?: string }).error ?? `Request failed: ${response.status}`;
-    throw new Error(message);
+    const error = (payload as { error?: unknown }).error;
+    if (typeof error === 'string' && error.length > 0) {
+      return error;
+    }
   }
 
-  return (await response.json()) as T;
+  return fallback;
+}
+
+async function parseJson<T>(response: Response): Promise<T> {
+  const payload = (await response.json().catch(() => ({}))) as T;
+  return payload;
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -41,8 +43,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = async (): Promise<void> => {
     try {
-      const result = await fetchJson<{ user: AuthUser }>('/api/auth/me');
-      setUser(result.user);
+      const response = await fetch('/api/auth/get-session', {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        setUser(null);
+        return;
+      }
+
+      const payload = (await parseJson<{
+        user?: { id: string | number; name: string; email: string };
+      }>(response)) as { user?: { id: string | number; name: string; email: string } };
+
+      if (!payload.user) {
+        setUser(null);
+        return;
+      }
+
+      setUser({
+        id: Number(payload.user.id),
+        name: payload.user.name,
+        email: payload.user.email
+      });
     } catch {
       setUser(null);
     } finally {
@@ -55,16 +78,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
-    const result = await fetchJson<{ user: AuthUser }>('/api/auth/login', {
+    const response = await fetch('/api/auth/sign-in/email', {
       method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({ email, password })
     });
 
-    setUser(result.user);
+    if (!response.ok) {
+      const payload = await parseJson(response);
+      throw new Error(toErrorMessage(payload, `Request failed: ${response.status}`));
+    }
+
+    const payload = await parseJson<{ user?: { id: string | number; name: string; email: string } }>(response);
+
+    if (!payload.user) {
+      await refresh();
+      return;
+    }
+
+    setUser({
+      id: Number(payload.user.id),
+      name: payload.user.name,
+      email: payload.user.email
+    });
   };
 
   const logout = async (): Promise<void> => {
-    await fetchJson<{ success: boolean }>('/api/auth/logout', { method: 'POST' });
+    const response = await fetch('/api/auth/sign-out', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    });
+
+    if (!response.ok) {
+      const payload = await parseJson(response);
+      throw new Error(toErrorMessage(payload, `Request failed: ${response.status}`));
+    }
+
     setUser(null);
   };
 

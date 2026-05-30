@@ -8,13 +8,17 @@ export interface SelectOption {
 
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   options: SelectOption[];
+  variant?: 'default' | 'dashed';
 }
 
-export function Select({ className, options, ...props }: SelectProps) {
+export function Select({ className, options, variant = 'default', ...props }: SelectProps) {
   return (
     <select
       className={cn(
-        'h-10 w-full rounded-md border border-[var(--border)] bg-[var(--card)] px-3 text-sm outline-none ring-[var(--primary)] focus:ring-2',
+        'h-10 w-full rounded-lg bg-card px-3 text-sm outline-none ring-primary focus:ring-2',
+        variant === 'dashed'
+          ? 'border-[1.3px] border-dashed border-muted-foreground text-muted-foreground shadow-none'
+          : 'border-[1.3px] border-border shadow-sketch-xs',
         className
       )}
       {...props}

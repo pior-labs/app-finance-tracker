@@ -4,9 +4,37 @@
   "entries": [
     {
       "idx": 0,
-      "version": "7",
-      "when": 1739913600000,
-      "tag": "0000_initial_schema",
+      "version": "6",
+      "when": 1777855487064,
+      "tag": "0000_solid_the_watchers",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1777855487065,
+      "tag": "0001_add_category_favorites",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1778449847685,
+      "tag": "0002_purple_kate_bishop",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1778500000000,
+      "tag": "0003_add_category_favorited_at",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1779999999999,
+      "tag": "0004_add_transaction_query_indexes",
       "breakpoints": true
     }
   ]

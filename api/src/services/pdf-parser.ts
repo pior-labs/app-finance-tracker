@@ -3,6 +3,7 @@ import { PDFParse } from 'pdf-parse';
 export interface ParsedTransaction {
   date: string;
   description: string;
+  merchant: string | null;
   amount: number;
   type: 'debit' | 'credit';
 }
@@ -38,6 +39,78 @@ const AMOUNT_REGEX = /^-?\$\d{1,3}(?:,\d{3})*\.\d{2}$/;
 const PAGE_BREAK_REGEX = /^--\s+\d+\s+of\s+\d+\s+--$/;
 const REFERENCE_NUMBER_REGEX = /^\d{16,25}$/;
 
+const MERCHANT_PREFIXES = [
+  'POS PURCHASE -',
+  'INTERAC PURCHASE -',
+  'PRE-AUTHORIZED -',
+  'PRE AUTHORIZED -',
+  'DEBIT PURCHASE -',
+  'PURCHASE -',
+  'PAYMENT TO -',
+  'E-TRANSFER TO -',
+  'E-TRANSFER FROM -'
+];
+
+const MERCHANT_STOP_WORDS = new Set([
+  'TORONTO',
+  'ONTARIO',
+  'ON',
+  'CANADA',
+  'QC',
+  'QUEBEC',
+  'AB',
+  'ALBERTA',
+  'BC',
+  'VANCOUVER',
+  'CALGARY',
+  'MONTREAL'
+]);
+
+const MERCHANT_SUFFIX_STOP_WORDS = new Set([
+  'ENG',
+  'EN',
+  'ENGLISH',
+  'ONLINE',
+  'WEB',
+  'ECOM',
+  'ECOMMERCE',
+  'WWW',
+  'CA',
+  'CAN',
+  'US',
+  'USA',
+  'UK',
+  'GB',
+  'GBR'
+]);
+
+function isStandaloneNumericToken(value: string): boolean {
+  return /^\d+$/.test(value);
+}
+
+function normalizeMerchantToken(value: string): string {
+  return value.replace(/^[^A-Za-z0-9&]+|[^A-Za-z0-9.&'-]+$/g, '');
+}
+
+function isLikelyDescriptorId(value: string): boolean {
+  const compact = value.replace(/[^A-Za-z0-9]/g, '');
+
+  if (compact.length < 6) {
+    return false;
+  }
+
+  return /[A-Za-z]/.test(compact) && /\d/.test(compact);
+}
+
+function extractDomainBase(value: string): string | null {
+  const match = value.match(/^([A-Za-z0-9-]+)\.(?:[A-Za-z0-9-]+\.)*(?:com|ca|net|org|io|co|app|ai)$/i);
+  if (!match) {
+    return null;
+  }
+
+  return match[1] ?? null;
+}
+
 type StatementPeriod = {
   startMonth: number;
   endMonth: number;
@@ -68,12 +141,7 @@ function parseStatementPeriod(rawText: string): StatementPeriod | null {
   const endYear = Number(endYearRaw);
   const startYear = startYearRaw ? Number(startYearRaw) : startMonth > endMonth ? endYear - 1 : endYear;
 
-  return {
-    startMonth,
-    endMonth,
-    startYear,
-    endYear
-  };
+  return { startMonth, endMonth, startYear, endYear };
 }
 
 function inferYearForMonth(month: number, period: StatementPeriod | null): number {
@@ -93,10 +161,7 @@ function toIsoDate(monthAbbrev: string, day: number, period: StatementPeriod | n
   const month = MONTH_INDEX_BY_ABBREV[monthAbbrev];
   const year = inferYearForMonth(month, period);
 
-  const monthPadded = String(month).padStart(2, '0');
-  const dayPadded = String(day).padStart(2, '0');
-
-  return `${year}-${monthPadded}-${dayPadded}`;
+  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
 function parseAmountCents(amountRaw: string): number {
@@ -108,30 +173,28 @@ function parseAmountCents(amountRaw: string): number {
 }
 
 function shouldIgnoreDetailLine(line: string): boolean {
-  if (!line) {
+  if (!line || PAGE_BREAK_REGEX.test(line)) {
     return true;
   }
 
-  if (PAGE_BREAK_REGEX.test(line)) {
-    return true;
-  }
+  const normalized = line.replace(/\s+/g, ' ').trim();
 
   if (
-    line === LEGACY_TABLE_HEADER ||
-    line === CURRENT_TABLE_HEADER ||
-    line === 'TRANSACTION' ||
-    line === 'POSTING' ||
-    line === 'DATE' ||
-    line.replace(/\s+/g, ' ').trim() === 'DATE DATE'
+    normalized === LEGACY_TABLE_HEADER ||
+    normalized === CURRENT_TABLE_HEADER ||
+    normalized === 'TRANSACTION' ||
+    normalized === 'POSTING' ||
+    normalized === 'DATE' ||
+    normalized === 'DATE DATE'
   ) {
     return true;
   }
 
   if (
-    line.includes('RBC® Cash Back Mastercard') ||
-    line.includes('STATEMENT FROM ') ||
-    /\d+\s+OF\s+\d+/.test(line) ||
-    line.includes('(continued)')
+    normalized.includes('RBC') ||
+    normalized.includes('STATEMENT FROM ') ||
+    /\d+\s+OF\s+\d+/.test(normalized) ||
+    normalized.includes('(continued)')
   ) {
     return true;
   }
@@ -139,16 +202,88 @@ function shouldIgnoreDetailLine(line: string): boolean {
   return false;
 }
 
-function isTableHeaderLine(line: string): boolean {
-  return line === LEGACY_TABLE_HEADER || line === CURRENT_TABLE_HEADER;
-}
-
-function isReferenceNumberLine(line: string): boolean {
-  return REFERENCE_NUMBER_REGEX.test(line.replace(/\s+/g, ''));
-}
-
 function normalizeTextLines(rawText: string): string[] {
   return rawText.split(/\r?\n/).map((line) => line.trim());
+}
+
+export function extractMerchantName(rawDescription: string): string | null {
+  let value = rawDescription.replace(/\s+/g, ' ').trim();
+
+  if (!value) {
+    return null;
+  }
+
+  for (const prefix of MERCHANT_PREFIXES) {
+    if (value.toUpperCase().startsWith(prefix)) {
+      value = value.slice(prefix.length).trim();
+      break;
+    }
+  }
+
+  const cleaned = value
+    .replace(/\b#\d+\b/g, ' ')
+    .replace(/\b\d{3,}\b/g, ' ')
+    .replace(/[*/|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!cleaned) {
+    return null;
+  }
+
+  const words = cleaned.split(' ');
+  const merchantWords: string[] = [];
+
+  for (const rawWord of words) {
+    const word = normalizeMerchantToken(rawWord);
+
+    if (!word) {
+      continue;
+    }
+
+    if (MERCHANT_STOP_WORDS.has(word.toUpperCase()) && merchantWords.length > 0) {
+      break;
+    }
+
+    if (isStandaloneNumericToken(word)) {
+      continue;
+    }
+
+    if (MERCHANT_SUFFIX_STOP_WORDS.has(word.toUpperCase()) && merchantWords.length > 0) {
+      break;
+    }
+
+    if (isLikelyDescriptorId(word)) {
+      continue;
+    }
+
+    const domainBase = extractDomainBase(word);
+    if (domainBase) {
+      if (merchantWords.length === 0 && domainBase.length >= 2) {
+        merchantWords.push(domainBase);
+      }
+
+      break;
+    }
+
+    merchantWords.push(word);
+
+    if (merchantWords.length >= 5) {
+      break;
+    }
+  }
+
+  const merchant = merchantWords.join(' ').trim();
+
+  if (!merchant || merchant.length < 2) {
+    return null;
+  }
+
+  return merchant
+    .toLowerCase()
+    .split(' ')
+    .map((part) => (part ? part[0].toUpperCase() + part.slice(1) : part))
+    .join(' ');
 }
 
 export function parseRbcStatementTable(rawText: string): ParsedStatementRow[] {
@@ -166,7 +301,7 @@ export function parseRbcStatementTable(rawText: string): ParsedStatementRow[] {
       continue;
     }
 
-    if (isTableHeaderLine(compact)) {
+    if (compact === LEGACY_TABLE_HEADER || compact === CURRENT_TABLE_HEADER) {
       inTable = true;
       continue;
     }
@@ -205,7 +340,7 @@ export function parseRbcStatementTable(rawText: string): ParsedStatementRow[] {
       const activity = pending.details[0] ?? '';
       const description = pending.details
         .slice(1)
-        .filter((detailLine) => !isReferenceNumberLine(detailLine))
+        .filter((detailLine) => !REFERENCE_NUMBER_REGEX.test(detailLine.replace(/\s+/g, '')))
         .join(' ');
 
       rows.push({
@@ -239,12 +374,18 @@ export async function extractPdfText(fileBuffer: Buffer): Promise<string> {
 
 export function parseBankStatementText(extractedText: string): ParsedTransaction[] {
   const parsedRows = parseRbcStatementTable(extractedText);
-  return parsedRows.map((row) => ({
-    date: row.transactionDate,
-    description: row.description ? `${row.activity} ${row.description}` : row.activity,
-    amount: row.amount,
-    type: row.amount < 0 ? 'credit' : 'debit'
-  }));
+
+  return parsedRows.map((row) => {
+    const fullDescription = row.description ? `${row.activity} ${row.description}` : row.activity;
+
+    return {
+      date: row.transactionDate,
+      description: fullDescription,
+      merchant: extractMerchantName(fullDescription),
+      amount: row.amount,
+      type: row.amount < 0 ? 'credit' : 'debit'
+    };
+  });
 }
 
 export async function parseBankStatement(fileBuffer: Buffer): Promise<ParsedTransaction[]> {

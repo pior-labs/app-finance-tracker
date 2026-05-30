@@ -1,9 +1,9 @@
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
+import { ensureDir, env, resolveFromApiDir } from './lib/env.js';
+import { auth } from './lib/auth.js';
 import { authMiddleware, type AuthVariables } from './middleware/auth.js';
-import { env, ensureDir, resolveFromApiDir } from './lib/env.js';
-import { authRouter } from './routes/auth.js';
 import { categoriesRouter } from './routes/categories.js';
 import { statementsRouter } from './routes/statements.js';
 import { transactionsRouter } from './routes/transactions.js';
@@ -11,11 +11,12 @@ import { transactionsRouter } from './routes/transactions.js';
 const app = new Hono<{ Variables: AuthVariables }>();
 
 app.use('*', logger());
-app.use('/api/*', authMiddleware);
 
 app.get('/health', (c) => c.json({ status: 'ok' }));
+app.on(['POST', 'GET'], '/api/auth/*', (c) => auth.handler(c.req.raw));
 
-app.route('/api/auth', authRouter);
+app.use('/api/*', authMiddleware);
+
 app.route('/api/statements', statementsRouter);
 app.route('/api/transactions', transactionsRouter);
 app.route('/api/categories', categoriesRouter);

@@ -6,7 +6,15 @@ function Table({ className, ...props }: React.ComponentProps<'table'>) {
 }
 
 function TableHeader({ className, ...props }: React.ComponentProps<'thead'>) {
-  return <thead className={cn('[&_tr]:border-b [&_tr]:border-[var(--border)]', className)} {...props} />;
+  return (
+    <thead
+      className={cn(
+        'font-hand text-sm [&_tr]:border-b-[1.5px] [&_tr]:border-border [&_tr]:bg-muted',
+        className
+      )}
+      {...props}
+    />
+  );
 }
 
 function TableBody({ className, ...props }: React.ComponentProps<'tbody'>) {
@@ -14,15 +22,23 @@ function TableBody({ className, ...props }: React.ComponentProps<'tbody'>) {
 }
 
 function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
-  return <tr className={cn('border-b border-[var(--border)] hover:bg-[var(--muted)]/60', className)} {...props} />;
+  return (
+    <tr
+      className={cn(
+        'border-b border-dashed border-border-soft hover:bg-muted/60',
+        className
+      )}
+      {...props}
+    />
+  );
 }
 
 function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
-  return <th className={cn('h-10 px-2 text-left align-middle font-medium text-[var(--muted-foreground)]', className)} {...props} />;
+  return <th className={cn('h-10 px-3 text-left align-middle font-bold', className)} {...props} />;
 }
 
 function TableCell({ className, ...props }: React.ComponentProps<'td'>) {
-  return <td className={cn('p-2 align-middle', className)} {...props} />;
+  return <td className={cn('px-3 py-2.5 align-middle', className)} {...props} />;
 }
 
 export { Table, TableHeader, TableBody, TableHead, TableRow, TableCell };

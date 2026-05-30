@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { and, desc, eq, gte, isNull, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, gte, isNull, like, lt, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, schema } from '../db/index.js';
 import type { AuthVariables } from '../middleware/auth.js';
@@ -8,6 +8,7 @@ const querySchema = z.object({
   month: z.string().optional(),
   category: z.string().optional(),
   status: z.string().optional(),
+  merchant: z.string().optional(),
   limit: z.coerce.number().int().positive().max(200).optional(),
   offset: z.coerce.number().int().nonnegative().optional()
 });
@@ -18,8 +19,9 @@ const statsQuerySchema = z.object({
 
 const patchSchema = z.object({
   category_id: z.number().int().positive().nullable().optional(),
-  status: z.enum(['needs_review', 'auto_categorized', 'confirmed']).optional(),
-  categorized_by: z.enum(['human', 'ai']).nullable().optional()
+  status: z.enum(['needs_review', 'confirmed']).optional(),
+  merchant: z.string().trim().max(160).nullable().optional(),
+  description: z.string().trim().min(1).max(500).optional()
 });
 
 export const transactionsRouter = new Hono<{ Variables: AuthVariables }>();
@@ -51,9 +53,19 @@ transactionsRouter.get('/stats', async (c) => {
     return c.json({ error: 'Invalid query params', details: query.error.flatten() }, 400);
   }
 
+  const availableMonthRows = await db
+    .select({ month: sql<string>`substr(${schema.transactions.date}, 1, 7)` })
+    .from(schema.transactions)
+    .groupBy(sql`substr(${schema.transactions.date}, 1, 7)`)
+    .orderBy(desc(sql`substr(${schema.transactions.date}, 1, 7)`));
+
+  const uploadedMonths = availableMonthRows
+    .map((row) => row.month)
+    .filter((availableMonth) => availableMonth.length === 7);
+
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const month = query.data.month ?? currentMonth;
+  const month = query.data.month ?? uploadedMonths[0] ?? currentMonth;
   const bounds = computeMonthBounds(month);
 
   if (!bounds) {
@@ -71,7 +83,13 @@ transactionsRouter.get('/stats', async (c) => {
   const [uncategorizedRow] = await db
     .select({ uncategorizedCount: sql<number>`count(*)` })
     .from(schema.transactions)
-    .where(and(isNull(schema.transactions.categoryId), gte(schema.transactions.date, bounds.start), lt(schema.transactions.date, bounds.endExclusive)));
+    .where(
+      and(
+        eq(schema.transactions.status, 'needs_review'),
+        gte(schema.transactions.date, bounds.start),
+        lt(schema.transactions.date, bounds.endExclusive)
+      )
+    );
 
   const [monthTransactionCountRow] = await db
     .select({ monthTransactionCount: sql<number>`count(*)` })
@@ -82,17 +100,11 @@ transactionsRouter.get('/stats', async (c) => {
     .select({ totalTransactionCount: sql<number>`count(*)` })
     .from(schema.transactions);
 
-  const availableMonthRows = await db
-    .select({
-      month: sql<string>`substr(${schema.transactions.date}, 1, 7)`
-    })
-    .from(schema.transactions)
-    .groupBy(sql`substr(${schema.transactions.date}, 1, 7)`)
-    .orderBy(desc(sql`substr(${schema.transactions.date}, 1, 7)`));
-
   const byCategoryRows = await db
     .select({
+      categoryId: schema.categories.id,
       category: schema.categories.name,
+      transactionCount: sql<number>`count(*)`,
       totalCents:
         sql<number>`coalesce(sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end), 0)`
     })
@@ -102,6 +114,58 @@ transactionsRouter.get('/stats', async (c) => {
     .groupBy(schema.categories.id, schema.categories.name)
     .orderBy(desc(sql`sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end)`));
 
+  const byMerchantRows = await db
+    .select({
+      merchant: schema.transactions.merchant,
+      transactionCount: sql<number>`count(*)`,
+      totalCents:
+        sql<number>`coalesce(sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end), 0)`
+    })
+    .from(schema.transactions)
+    .where(
+      and(
+        gte(schema.transactions.date, bounds.start),
+        lt(schema.transactions.date, bounds.endExclusive),
+        sql`${schema.transactions.merchant} is not null`
+      )
+    )
+    .groupBy(schema.transactions.merchant)
+    .orderBy(desc(sql`sum(case when ${schema.transactions.amount} > 0 then ${schema.transactions.amount} else 0 end)`))
+    .limit(10);
+
+  const [latestStatementRow] = await db
+    .select({
+      id: schema.statements.id,
+      periodStart: schema.statements.periodStart,
+      periodEnd: schema.statements.periodEnd,
+      uploadedByName: schema.users.name
+    })
+    .from(schema.statements)
+    .innerJoin(schema.users, eq(schema.statements.uploadedBy, schema.users.id))
+    .orderBy(desc(schema.statements.createdAt))
+    .limit(1);
+
+  let latestStatement: {
+    periodStart: string | null;
+    periodEnd: string | null;
+    transactionCount: number;
+    uploadedByName: string;
+  } | undefined;
+
+  if (latestStatementRow) {
+    const [statementTxCountRow] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.transactions)
+      .where(eq(schema.transactions.statementId, latestStatementRow.id));
+
+    latestStatement = {
+      periodStart: latestStatementRow.periodStart,
+      periodEnd: latestStatementRow.periodEnd,
+      transactionCount: Number(statementTxCountRow?.count ?? 0),
+      uploadedByName: latestStatementRow.uploadedByName
+    };
+  }
+
   return c.json({
     data: {
       totalSpentCents: Number(spendingRow?.totalSpentCents ?? 0),
@@ -109,15 +173,36 @@ transactionsRouter.get('/stats', async (c) => {
       monthTransactionCount: Number(monthTransactionCountRow?.monthTransactionCount ?? 0),
       totalTransactionCount: Number(transactionCountRow?.totalTransactionCount ?? 0),
       byCategory: byCategoryRows.map((row) => ({
+        categoryId: Number(row.categoryId),
         category: row.category,
+        transactionCount: Number(row.transactionCount ?? 0),
         totalCents: Number(row.totalCents ?? 0)
-      }))
+      })),
+      topMerchants: byMerchantRows
+        .filter((row) => row.merchant)
+        .map((row) => ({
+          merchant: row.merchant as string,
+          transactionCount: Number(row.transactionCount ?? 0),
+          totalCents: Number(row.totalCents ?? 0)
+        }))
     },
     meta: {
       month,
-      availableMonths: availableMonthRows
-        .map((row) => row.month)
-        .filter((availableMonth) => availableMonth.length === 7)
+      availableMonths: uploadedMonths,
+      latestStatement
+    }
+  });
+});
+
+transactionsRouter.get('/uncategorized-count', async (c) => {
+  const [uncategorizedRow] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.transactions)
+    .where(eq(schema.transactions.status, 'needs_review'));
+
+  return c.json({
+    data: {
+      count: Number(uncategorizedRow?.count ?? 0)
     }
   });
 });
@@ -133,6 +218,7 @@ transactionsRouter.get('/', async (c) => {
   const categoryFilter = query.data.category;
   const statusFilter = query.data.status;
   const monthFilter = query.data.month;
+  const merchantFilter = query.data.merchant;
 
   if (monthFilter && monthFilter !== 'all') {
     const bounds = computeMonthBounds(monthFilter);
@@ -149,7 +235,7 @@ transactionsRouter.get('/', async (c) => {
       filters.push(isNull(schema.transactions.categoryId));
     } else {
       const parsedCategoryId = Number(categoryFilter);
-      if (Number.isNaN(parsedCategoryId) || parsedCategoryId <= 0) {
+      if (!Number.isFinite(parsedCategoryId) || parsedCategoryId <= 0) {
         return c.json({ error: 'Invalid category filter.' }, 400);
       }
       filters.push(eq(schema.transactions.categoryId, parsedCategoryId));
@@ -157,10 +243,15 @@ transactionsRouter.get('/', async (c) => {
   }
 
   if (statusFilter && statusFilter !== 'all') {
-    if (!['needs_review', 'auto_categorized', 'confirmed'].includes(statusFilter)) {
+    if (!['needs_review', 'confirmed'].includes(statusFilter)) {
       return c.json({ error: 'Invalid status filter.' }, 400);
     }
+
     filters.push(eq(schema.transactions.status, statusFilter));
+  }
+
+  if (merchantFilter && merchantFilter !== 'all') {
+    filters.push(like(sql`lower(${schema.transactions.merchant})`, `%${merchantFilter.toLowerCase()}%`));
   }
 
   const whereClause = filters.length > 0 ? and(...filters) : undefined;
@@ -211,13 +302,12 @@ transactionsRouter.get('/', async (c) => {
       statementId: transaction.statementId,
       date: transaction.date,
       description: transaction.description,
+      merchant: transaction.merchant,
       amount: transaction.amount,
       type: transaction.type,
       categoryId: transaction.categoryId,
       categoryName: transaction.category?.name ?? null,
-      confidenceScore: transaction.confidenceScore,
       status: transaction.status,
-      categorizedBy: transaction.categorizedBy,
       createdAt: transaction.createdAt,
       statement: {
         id: transaction.statement.id,
@@ -234,14 +324,15 @@ transactionsRouter.get('/', async (c) => {
     filters: {
       month: monthFilter ?? null,
       category: categoryFilter ?? null,
-      status: statusFilter ?? null
+      status: statusFilter ?? null,
+      merchant: merchantFilter ?? null
     }
   });
 });
 
 transactionsRouter.patch('/:id', async (c) => {
   const transactionId = Number(c.req.param('id'));
-  if (Number.isNaN(transactionId) || transactionId <= 0) {
+  if (!Number.isFinite(transactionId) || transactionId <= 0) {
     return c.json({ error: 'Invalid transaction id' }, 400);
   }
 
@@ -272,8 +363,11 @@ transactionsRouter.patch('/:id', async (c) => {
   if (payload.data.status !== undefined) {
     updateData.status = payload.data.status;
   }
-  if (payload.data.categorized_by !== undefined) {
-    updateData.categorizedBy = payload.data.categorized_by;
+  if (payload.data.merchant !== undefined) {
+    updateData.merchant = payload.data.merchant === null || payload.data.merchant === '' ? null : payload.data.merchant;
+  }
+  if (payload.data.description !== undefined) {
+    updateData.description = payload.data.description;
   }
 
   const updatedRows = await db
@@ -308,14 +402,35 @@ transactionsRouter.patch('/:id', async (c) => {
       statementId: updatedTransaction.statementId,
       date: updatedTransaction.date,
       description: updatedTransaction.description,
+      merchant: updatedTransaction.merchant,
       amount: updatedTransaction.amount,
       type: updatedTransaction.type,
       categoryId: updatedTransaction.categoryId,
       categoryName: updatedTransaction.category?.name ?? null,
-      confidenceScore: updatedTransaction.confidenceScore,
       status: updatedTransaction.status,
-      categorizedBy: updatedTransaction.categorizedBy,
       createdAt: updatedTransaction.createdAt
+    }
+  });
+});
+
+transactionsRouter.delete('/:id', async (c) => {
+  const transactionId = Number(c.req.param('id'));
+  if (!Number.isFinite(transactionId) || transactionId <= 0) {
+    return c.json({ error: 'Invalid transaction id' }, 400);
+  }
+
+  const deletedRows = await db
+    .delete(schema.transactions)
+    .where(eq(schema.transactions.id, transactionId))
+    .returning({ id: schema.transactions.id });
+
+  if (deletedRows.length === 0) {
+    return c.json({ error: 'Transaction not found' }, 404);
+  }
+
+  return c.json({
+    data: {
+      id: deletedRows[0].id
     }
   });
 });

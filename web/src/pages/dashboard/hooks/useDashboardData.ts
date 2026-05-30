@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import useSWR from 'swr';
-import { getCurrentMonth, isValidMonth } from '../lib/format';
+import { isValidMonth } from '../lib/format';
 import type { DashboardStatsResponse, RecentTransaction } from '../types';
 
-export function useDashboardData(month: string) {
+export function useDashboardData(month: string | null) {
   const controllersRef = useRef<Set<AbortController>>(new Set());
 
   const fetchJson = useCallback(async <T>(url: string): Promise<T> => {
@@ -38,12 +38,9 @@ export function useDashboardData(month: string) {
     };
   }, []);
 
-  const statsQuery = `/api/transactions/stats?${new URLSearchParams({ month }).toString()}`;
-  const uncategorizedQuery = `/api/transactions?${new URLSearchParams({
-    status: 'needs_review',
-    limit: '3',
-    month,
-  }).toString()}`;
+  const statsQuery = month
+    ? `/api/transactions/stats?${new URLSearchParams({ month }).toString()}`
+    : '/api/transactions/stats';
 
   const {
     data: statsData,
@@ -55,6 +52,15 @@ export function useDashboardData(month: string) {
     keepPreviousData: true,
     shouldRetryOnError: false,
   });
+
+  const activeMonth = statsData?.meta.month ?? month;
+  const uncategorizedQuery = activeMonth
+    ? `/api/transactions?${new URLSearchParams({
+        status: 'needs_review',
+        limit: '3',
+        month: activeMonth,
+      }).toString()}`
+    : null;
 
   const {
     data: recentData,
@@ -72,17 +78,10 @@ export function useDashboardData(month: string) {
 
   const availableMonths = useMemo(() => {
     if (!statsData) {
-      return [month, getCurrentMonth()].filter((candidate, index, array) => {
-        return isValidMonth(candidate) && array.indexOf(candidate) === index;
-      });
+      return month && isValidMonth(month) ? [month] : [];
     }
 
-    const months = new Set<string>([
-      getCurrentMonth(),
-      month,
-      statsData.meta.month,
-      ...(statsData.meta.availableMonths ?? []),
-    ]);
+    const months = new Set([month, statsData.meta.month, ...(statsData.meta.availableMonths ?? [])]);
 
     return Array.from(months)
       .filter((candidate) => isValidMonth(candidate))

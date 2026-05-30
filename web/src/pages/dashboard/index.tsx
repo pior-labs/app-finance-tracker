@@ -24,11 +24,12 @@ export function DashboardPage() {
   const searchParamsSnapshot = searchParams.toString();
   const currentMonth = getCurrentMonth();
   const monthFromUrl = searchParams.get('month');
-  const month = isValidMonth(monthFromUrl) ? monthFromUrl : currentMonth;
-  const isCurrentMonth = month === currentMonth;
+  const requestedMonth = isValidMonth(monthFromUrl) ? monthFromUrl : null;
 
   const { stats, recentUncategorized, availableMonths, loading, error, fetchDashboard } =
-    useDashboardData(month);
+    useDashboardData(requestedMonth);
+  const month = stats?.meta.month ?? requestedMonth ?? currentMonth;
+  const isCurrentMonth = month === currentMonth;
   const { refresh: refreshUncategorizedCount } = useUncategorizedCount();
   const [uploadOpen, setUploadOpen] = useState(false);
 
@@ -64,13 +65,13 @@ export function DashboardPage() {
 
   const onPickMonth = useCallback((nextMonth: string) => {
     const next = new URLSearchParams(searchParamsSnapshot);
-    if (nextMonth === currentMonth) {
+    if (nextMonth === stats?.meta.month) {
       next.delete('month');
     } else {
       next.set('month', nextMonth);
     }
     setSearchParams(next, { replace: true });
-  }, [currentMonth, searchParamsSnapshot, setSearchParams]);
+  }, [searchParamsSnapshot, setSearchParams, stats?.meta.month]);
 
   const openUpload = useCallback(() => {
     setUploadOpen(true);

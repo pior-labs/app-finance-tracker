@@ -51,9 +51,19 @@ transactionsRouter.get('/stats', async (c) => {
     return c.json({ error: 'Invalid query params', details: query.error.flatten() }, 400);
   }
 
+  const availableMonthRows = await db
+    .select({ month: sql<string>`substr(${schema.transactions.date}, 1, 7)` })
+    .from(schema.transactions)
+    .groupBy(sql`substr(${schema.transactions.date}, 1, 7)`)
+    .orderBy(desc(sql`substr(${schema.transactions.date}, 1, 7)`));
+
+  const uploadedMonths = availableMonthRows
+    .map((row) => row.month)
+    .filter((availableMonth) => availableMonth.length === 7);
+
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const month = query.data.month ?? currentMonth;
+  const month = query.data.month ?? uploadedMonths[0] ?? currentMonth;
   const bounds = computeMonthBounds(month);
 
   if (!bounds) {
@@ -87,12 +97,6 @@ transactionsRouter.get('/stats', async (c) => {
   const [transactionCountRow] = await db
     .select({ totalTransactionCount: sql<number>`count(*)` })
     .from(schema.transactions);
-
-  const availableMonthRows = await db
-    .select({ month: sql<string>`substr(${schema.transactions.date}, 1, 7)` })
-    .from(schema.transactions)
-    .groupBy(sql`substr(${schema.transactions.date}, 1, 7)`)
-    .orderBy(desc(sql`substr(${schema.transactions.date}, 1, 7)`));
 
   const byCategoryRows = await db
     .select({
@@ -182,7 +186,7 @@ transactionsRouter.get('/stats', async (c) => {
     },
     meta: {
       month,
-      availableMonths: availableMonthRows.map((row) => row.month).filter((availableMonth) => availableMonth.length === 7),
+      availableMonths: uploadedMonths,
       latestStatement
     }
   });

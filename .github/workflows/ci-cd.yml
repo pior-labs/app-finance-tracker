@@ -89,6 +89,9 @@ jobs:
           printf '%s\n' "$FINLENS_ENV" > .env
           chmod 600 .env
 
+      - name: Ensure external Docker network
+        run: docker network inspect finlens_private >/dev/null 2>&1 || docker network create finlens_private
+
       - name: Build Compose images
         run: docker compose build
 

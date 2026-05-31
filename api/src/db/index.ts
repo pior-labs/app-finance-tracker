@@ -1,13 +1,13 @@
-import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { ensurePathForFile, env, resolveFromApiDir } from '../lib/env.js';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import { env } from '../lib/env.js';
 import * as schema from './schema.js';
 
-const dbFilePath = resolveFromApiDir(env.databaseUrl);
-ensurePathForFile(dbFilePath);
+const client = postgres(env.databaseUrl);
 
-const sqlite = new Database(dbFilePath);
-sqlite.pragma('journal_mode = WAL');
-
-export const db = drizzle(sqlite, { schema });
+export const db = drizzle(client, { schema });
 export { schema };
+
+export function closeDb(): Promise<void> {
+  return client.end();
+}

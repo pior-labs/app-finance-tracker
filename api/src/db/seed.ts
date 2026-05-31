@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { auth } from '../lib/auth.js';
-import { db, schema } from './index.js';
+import { closeDb, db, schema } from './index.js';
 
 const defaultCategories = [
   {
@@ -165,7 +165,11 @@ async function main(): Promise<void> {
   console.log('Seed completed: users + default categories');
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await closeDb();
+  });

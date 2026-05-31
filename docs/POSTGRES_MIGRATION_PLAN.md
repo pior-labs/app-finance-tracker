@@ -2,14 +2,14 @@
 
 ## Summary
 
-Move FinLens from SQLite/`better-sqlite3` to Postgres over Docker, using a fresh database with no SQLite data migration. The app will connect to an already-running Postgres container through an internal external Docker network, with production credentials stored only in the server's untracked `.env`.
+Move FinLens from SQLite/`better-sqlite3` to Postgres, using a fresh database with no SQLite data migration. Production will connect to an already-running Postgres container through an internal external Docker network, while each development machine will use its own local Postgres database for testing.
 
 ## Key Changes
 
 - Replace SQLite Drizzle wiring with Postgres:
   - Use `postgres` and `drizzle-orm/postgres-js`.
   - Update `api/src/db/index.ts` and `api/src/db/migrate.ts` to connect via `DATABASE_URL`.
-  - Update Better Auth Drizzle adapter provider from `sqlite` to `postgresql`.
+  - Update Better Auth Drizzle adapter provider from `sqlite` to `pg`.
 - Convert schema from `sqlite-core` to `pg-core`:
   - Use `pgTable`, `serial`, `integer`, `text`, `boolean`, and `timestamp with time zone`.
   - Keep HTTP response shapes effectively unchanged.
@@ -23,9 +23,23 @@ Move FinLens from SQLite/`better-sqlite3` to Postgres over Docker, using a fresh
   - Add `postgres`.
   - Remove `better-sqlite3` and `@types/better-sqlite3`.
 - Update env/docs:
-  - Change `DATABASE_URL` from a SQLite file path to a Postgres URI, for example `postgresql://finlens:<password>@postgres:5432/finlens`.
+  - Change `DATABASE_URL` from a SQLite file path to a Postgres URI.
+  - Use `postgresql://finlens:<password>@localhost:5432/finlens_dev` for local development.
+  - Use `postgresql://finlens:<password>@postgres:5432/finlens` for production inside Docker.
   - Keep `UPLOAD_DIR` as filesystem storage for uploaded PDFs.
   - Update `.env.example`, `README.md`, and Docker notes.
+
+## Local Development
+
+- Install Postgres locally on each development machine.
+- Create a local database named `finlens_dev` and a local app user named `finlens`.
+- Point each machine's untracked `.env` at its own local database:
+  - `DATABASE_URL=postgresql://finlens:<password>@localhost:5432/finlens_dev`
+- Run migrations and seed locally:
+  - `cd api && pnpm db:migrate`
+  - `cd api && pnpm db:seed`
+- Treat local databases as disposable development state; reset/recreate them as needed without touching production.
+- Do not require laptops or desktop machines to connect directly to the production Postgres container for normal development.
 
 ## Docker And Deployment
 
@@ -45,6 +59,12 @@ Move FinLens from SQLite/`better-sqlite3` to Postgres over Docker, using a fresh
   - `cd api && pnpm install`
   - `cd api && pnpm typecheck`
   - `cd api && pnpm build`
+- Local database validation:
+  - Install Postgres on the development machine.
+  - Create `finlens_dev`.
+  - Run `cd api && pnpm db:migrate`.
+  - Run `cd api && pnpm db:seed`.
+  - Start the API locally and verify login plus basic category/transaction reads.
 - Migration validation against Postgres:
   - Confirm Postgres container is reachable at `postgres:5432` from the app network.
   - Run the compiled migration command inside the API container.
@@ -58,7 +78,8 @@ Move FinLens from SQLite/`better-sqlite3` to Postgres over Docker, using a fresh
 ## Assumptions
 
 - Existing SQLite data will not be migrated.
-- Postgres database name is `finlens`, user is `finlens`, network alias is `postgres`, and Docker network is `finlens_private`.
+- Production Postgres database name is `finlens`, user is `finlens`, network alias is `postgres`, and Docker network is `finlens_private`.
+- Local development database name is `finlens_dev` on each development machine.
 - The Postgres container already exists or will be managed outside this repo.
 - Database credentials remain outside Git in the server `.env`.
-- Postgres remains internal to Docker; no host or LAN port exposure.
+- Production Postgres remains internal to Docker; no host or LAN port exposure.

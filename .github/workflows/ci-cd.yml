@@ -63,7 +63,7 @@ jobs:
   deploy:
     name: Deploy to OptiPlex
     needs: ci
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     runs-on:
       - self-hosted
       - linux
@@ -91,6 +91,27 @@ jobs:
 
       - name: Ensure external Docker network
         run: docker network inspect finlens_private >/dev/null 2>&1 || docker network create finlens_private
+
+      - name: Validate production database URL
+        run: |
+          database_url="$(grep -E '^DATABASE_URL=' .env | tail -n 1 | cut -d= -f2-)"
+          if [ -z "$database_url" ]; then
+            echo "Missing DATABASE_URL in FINLENS_ENV"
+            exit 1
+          fi
+
+          database_host="$(printf '%s\n' "$database_url" | sed -E 's#^postgres(ql)?://([^/@]+@)?([^/:?]+).*#\3#')"
+          if [ -z "$database_host" ] || [ "$database_host" = "$database_url" ]; then
+            echo "DATABASE_URL must be a Postgres connection URL"
+            exit 1
+          fi
+
+          if [ "$database_host" = "localhost" ] || [ "$database_host" = "127.0.0.1" ]; then
+            echo "DATABASE_URL points at $database_host, which is the API container during deploy. Use the Postgres container hostname or network alias."
+            exit 1
+          fi
+
+          echo "Using production database host: $database_host"
 
       - name: Build Compose images
         run: docker compose build

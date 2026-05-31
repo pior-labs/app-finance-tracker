@@ -255,9 +255,9 @@ statementsRouter.delete('/:id', async (c) => {
     return c.json({ error: 'Statement not found' }, 404);
   }
 
-  db.transaction((tx) => {
-    tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId)).run();
-    tx.delete(schema.statements).where(eq(schema.statements.id, statementId)).run();
+  await db.transaction(async (tx) => {
+    await tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId));
+    await tx.delete(schema.statements).where(eq(schema.statements.id, statementId));
   });
 
   return c.json({ success: true });
@@ -286,11 +286,12 @@ statementsRouter.post('/:id/reparse', async (c) => {
   const parsedTransactions = parseBankStatementText(rawText);
   const { periodStart, periodEnd } = getStatementPeriodFromTransactions(parsedTransactions);
 
-  db.transaction((tx) => {
-    tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId)).run();
+  await db.transaction(async (tx) => {
+    await tx.delete(schema.transactions).where(eq(schema.transactions.statementId, statementId));
 
     if (parsedTransactions.length > 0) {
-      tx.insert(schema.transactions)
+      await tx
+        .insert(schema.transactions)
         .values(
           parsedTransactions.map((transaction) => ({
             statementId,
@@ -302,18 +303,16 @@ statementsRouter.post('/:id/reparse', async (c) => {
             categoryId: null,
             status: 'needs_review'
           }))
-        )
-        .run();
+        );
     }
 
-    tx
+    await tx
       .update(schema.statements)
       .set({
         periodStart,
         periodEnd
       })
-      .where(eq(schema.statements.id, statementId))
-      .run();
+      .where(eq(schema.statements.id, statementId));
   });
 
   return c.json({

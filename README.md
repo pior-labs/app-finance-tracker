@@ -4,10 +4,10 @@ FinLens is a self-hosted personal finance tracker for two users.
 
 ## Project Layout
 
-- `api/`: Hono + TypeScript + Drizzle + SQLite backend
+- `api/`: Hono + TypeScript + Drizzle + Postgres backend
 - `web/`: React 19 + Vite + Tailwind v4 + shadcn-style UI scaffold
 - `docs/`: source specification documents
-- `data/`: gitignored local data (SQLite + uploads)
+- `data/`: gitignored local upload storage
 
 ## Quick Start
 
@@ -24,16 +24,21 @@ cd api && pnpm install
 cd ../web && pnpm install
 ```
 
-3. Prepare database and seed:
+3. Create a local Postgres database:
+
+```bash
+sudo -u postgres createdb -O <your-postgres-user> finlens_dev
+```
+
+4. Prepare database and seed:
 
 ```bash
 cd ../api
-pnpm db:generate
 pnpm db:migrate
 pnpm db:seed
 ```
 
-4. Run each app:
+5. Run each app:
 
 ```bash
 # terminal 1
@@ -44,6 +49,8 @@ cd web && pnpm dev
 ```
 
 ## Docker
+
+Production Docker expects `DATABASE_URL` to point at a Postgres container reachable from the API container, for example `postgresql://finlens:<password>@postgres:5432/finlens`.
 
 ```bash
 docker compose up --build

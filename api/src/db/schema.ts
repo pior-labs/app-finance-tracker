@@ -1,27 +1,29 @@
-import { relations, sql } from 'drizzle-orm';
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { relations } from 'drizzle-orm';
+import { boolean, index, integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
-const nowMs = sql`(cast(unixepoch('subsecond') * 1000 as integer))`;
+const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
+const updatedAt = () =>
+  timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date());
 
-export const users = sqliteTable('users', {
-  id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
-  emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
+  emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
   passwordHash: text('password_hash'),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().default(nowMs).$onUpdate(() => new Date())
+  createdAt: createdAt(),
+  updatedAt: updatedAt()
 });
 
-export const sessions = sqliteTable(
+export const sessions = pgTable(
   'sessions',
   {
-    id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
-    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+    id: serial('id').primaryKey(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     token: text('token').notNull().unique(),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().$onUpdate(() => new Date()),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
     ipAddress: text('ip_address'),
     userAgent: text('user_agent'),
     userId: integer('user_id')
@@ -31,10 +33,10 @@ export const sessions = sqliteTable(
   (table) => [index('sessions_user_id_idx').on(table.userId)]
 );
 
-export const accounts = sqliteTable(
+export const accounts = pgTable(
   'accounts',
   {
-    id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     accountId: text('account_id').notNull(),
     providerId: text('provider_id').notNull(),
     userId: integer('user_id')
@@ -43,45 +45,45 @@ export const accounts = sqliteTable(
     accessToken: text('access_token'),
     refreshToken: text('refresh_token'),
     idToken: text('id_token'),
-    accessTokenExpiresAt: integer('access_token_expires_at', { mode: 'timestamp_ms' }),
-    refreshTokenExpiresAt: integer('refresh_token_expires_at', { mode: 'timestamp_ms' }),
+    accessTokenExpiresAt: timestamp('access_token_expires_at', { withTimezone: true }),
+    refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { withTimezone: true }),
     scope: text('scope'),
     password: text('password'),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().$onUpdate(() => new Date())
+    createdAt: createdAt(),
+    updatedAt: updatedAt()
   },
   (table) => [index('accounts_user_id_idx').on(table.userId)]
 );
 
-export const verifications = sqliteTable(
+export const verifications = pgTable(
   'verifications',
   {
-    id: integer('id', { mode: 'number' }).primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     identifier: text('identifier').notNull(),
     value: text('value').notNull(),
-    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().default(nowMs).$onUpdate(() => new Date())
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt()
   },
   (table) => [index('verifications_identifier_idx').on(table.identifier)]
 );
 
-export const categories = sqliteTable('categories', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const categories = pgTable('categories', {
+  id: serial('id').primaryKey(),
   name: text('name').notNull().unique(),
   description: text('description').notNull(),
   keywords: text('keywords').notNull().default(''),
   color: text('color').notNull().default('#6b8db5'),
-  isDefault: integer('is_default', { mode: 'boolean' }).notNull().default(true),
-  isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
-  favoritedAt: integer('favorited_at', { mode: 'timestamp_ms' }),
-  createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs)
+  isDefault: boolean('is_default').notNull().default(true),
+  isFavorite: boolean('is_favorite').notNull().default(false),
+  favoritedAt: timestamp('favorited_at', { withTimezone: true }),
+  createdAt: createdAt()
 });
 
-export const statements = sqliteTable(
+export const statements = pgTable(
   'statements',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     uploadedBy: integer('uploaded_by')
       .notNull()
       .references(() => users.id),
@@ -91,15 +93,15 @@ export const statements = sqliteTable(
     periodStart: text('period_start'),
     periodEnd: text('period_end'),
     rawText: text('raw_text'),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs)
+    createdAt: createdAt()
   },
   (table) => [index('statements_created_at_idx').on(table.createdAt)]
 );
 
-export const transactions = sqliteTable(
+export const transactions = pgTable(
   'transactions',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
+    id: serial('id').primaryKey(),
     statementId: integer('statement_id')
       .notNull()
       .references(() => statements.id),
@@ -110,7 +112,7 @@ export const transactions = sqliteTable(
     type: text('type').notNull(),
     categoryId: integer('category_id').references(() => categories.id),
     status: text('status').notNull().default('needs_review'),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().default(nowMs)
+    createdAt: createdAt()
   },
   (table) => [
     index('transactions_status_date_id_idx').on(table.status, table.date, table.id),

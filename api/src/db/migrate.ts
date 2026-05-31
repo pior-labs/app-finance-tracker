@@ -1,18 +1,16 @@
 import path from 'node:path';
-import Database from 'better-sqlite3';
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { ensurePathForFile, env, resolveFromApiDir } from '../lib/env.js';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import { env } from '../lib/env.js';
 
-const dbFilePath = resolveFromApiDir(env.databaseUrl);
-ensurePathForFile(dbFilePath);
+const client = postgres(env.databaseUrl, { max: 1 });
+const migrationDb = drizzle(client);
 
-const sqlite = new Database(dbFilePath);
-const migrationDb = drizzle(sqlite);
-
-migrate(migrationDb, {
+await migrate(migrationDb, {
   migrationsFolder: path.resolve(process.cwd(), 'drizzle')
 });
 
-sqlite.close();
-console.log(`Migrations applied to ${dbFilePath}`);
+await client.end();
+
+console.log('Migrations applied to Postgres database');

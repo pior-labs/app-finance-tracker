@@ -2,6 +2,8 @@
 
 > **The goal of Phase 2 is focused:** convert FinLens into a pnpm monorepo and ship an MCP server that exposes household finance data safely for conversational querying.
 
+**Status:** Phase 2 is now active as of 2026-06-05. Phase 1 is considered complete enough to freeze as the baseline before structural changes.
+
 ---
 
 ## How to Use This Document
@@ -16,18 +18,33 @@ Work through the steps in order. Each step has a "Test it" gate. Do not continue
 
 **In scope:**
 - Convert root `api/` + `web/` into `packages/api` + `packages/web`
-- Add `packages/shared` for cross-package types/contracts
+- Add `packages/shared` for cross-package types/contracts and pure formatting/date helpers
+- Add `packages/db` for the shared Drizzle/Postgres schema, database client factory, and read-only finance query helpers
 - Add `packages/mcp-server` using the MCP TypeScript SDK
 - Expose finance query tools for Claude Desktop
-- Run API + web + MCP server together in Docker Compose
+- Run API + web + MCP server together in Docker Compose against the existing external Postgres setup
 
 **Out of scope:**
 - No AI auto-categorization
 - No new budgets/reports domain tables
 - No changes to household shared-data model
 - No auth redesign for the web app
+- No SQLite support or SQLite data migration
 
 Phase 2 extends access to existing data; it does not redesign Phase 1 behavior.
+
+---
+
+## Current Baseline After Phase 1
+
+The original Phase 2 draft assumed the Phase 1 database would still be SQLite. The current app has already migrated to Postgres, so Phase 2 should preserve that reality.
+
+- API is Hono + TypeScript + Drizzle using `drizzle-orm/postgres-js`.
+- Database connection comes from `DATABASE_URL`.
+- Docker Compose expects Postgres to be managed outside this repo and reachable on the external `finlens_private` network with alias `postgres`.
+- Uploaded PDFs remain filesystem-backed through `UPLOAD_DIR`.
+- Existing root layout is still `api/` and `web/`, each with its own `pnpm-lock.yaml`.
+- Phase 1 user workflows are implemented: login, dashboard, statements, transactions, categories, and manual categorization.
 
 ---
 
@@ -40,13 +57,19 @@ finlens/
 │   ├── web/
 │   ├── shared/
 │   │   ├── src/
-│   │   │   └── types.ts
+│   │   │   ├── types.ts
+│   │   │   ├── dates.ts
+│   │   │   └── money.ts
+│   │   └── package.json
+│   ├── db/
+│   │   ├── src/
+│   │   │   ├── index.ts
+│   │   │   ├── schema.ts
+│   │   │   └── finance-queries.ts
 │   │   └── package.json
 │   └── mcp-server/
 │       ├── src/
 │       │   ├── index.ts
-│       │   ├── db/
-│       │   │   └── finance-queries.ts
 │       │   └── tools/
 │       │       ├── spending.ts
 │       │       ├── transactions.ts
@@ -77,10 +100,10 @@ Before changing structure, freeze a known-good baseline.
    - login
    - upload one statement
    - categorize one transaction
-3. Back up `data/finlens.db` and `data/uploads/`.
+3. Back up the current Postgres database and `data/uploads/`.
 4. Record current container behavior (`docker compose up --build`) so regressions are obvious later.
 
-**Test it:** You can still complete the full Phase 1 household workflow, and backup copies of DB/uploads exist.
+**Test it:** You can still complete the full Phase 1 household workflow, and backup copies of the database/uploads exist.
 
 ---
 
@@ -104,9 +127,10 @@ Move from per-folder package management to one workspace.
 4. Remove per-package lockfiles and generate one root `pnpm-lock.yaml`.
 5. Fix path-sensitive config:
    - env file references
-   - Drizzle config DB path
+   - Drizzle config and migration output paths
    - Docker build contexts
    - relative upload/data paths
+   - `DATABASE_URL` handling for local and Docker runtimes
 
 **Test it:**
 
@@ -126,15 +150,16 @@ Both apps should start and behave exactly as in Phase 1.
 
 **Time:** 1-2 hours
 
-Create `packages/shared` so API and MCP server speak the same contract types.
+Create `packages/shared` so API and MCP server speak the same contract language.
 
 **Do this:**
 
 1. Create `@finlens/shared` package with TS build + exports.
 2. Move shared type definitions from `api/src/lib/types.ts` into `packages/shared/src/types.ts`.
-3. Export stable contract types used in responses and MCP structured output.
-4. Update API imports to consume `@finlens/shared` instead of local copies.
-5. Keep schema ownership in API; shared package holds contracts, not DB implementation.
+3. Add pure helpers for date periods and money formatting where the API and MCP output should agree.
+4. Export stable contract types used in API responses and MCP structured output.
+5. Update API imports to consume `@finlens/shared` instead of local copies.
+6. Keep this package free of database clients and runtime side effects.
 
 **Test it:**
 
@@ -147,7 +172,33 @@ No duplicated type definitions remain between API and MCP-facing code.
 
 ---
 
-## Step 4 — Scaffold MCP Server Package
+## Step 4 — Extract Shared Database Package
+
+**Time:** 2-4 hours
+
+Create `packages/db` so the API and MCP server share one Drizzle/Postgres schema and one query vocabulary without making the MCP server depend on the API process.
+
+**Do this:**
+
+1. Create `@finlens/db` package with TS build + exports.
+2. Move `api/src/db/schema.ts` into `packages/db/src/schema.ts`.
+3. Move or wrap the Postgres client setup in `packages/db/src/index.ts`.
+4. Keep API-specific scripts such as migration and seed in the API package unless they become easier to share later.
+5. Add `packages/db/src/finance-queries.ts` with read-only analytics queries used by the MCP tools.
+6. Update API imports to consume schema/client exports from `@finlens/db`.
+
+**Test it:**
+
+```bash
+pnpm --filter @finlens/db build
+pnpm --filter @finlens/api typecheck
+```
+
+API behavior should remain unchanged, and the database schema should have one source of truth.
+
+---
+
+## Step 5 — Scaffold MCP Server Package
 
 **Time:** 1-2 hours
 
@@ -160,7 +211,7 @@ Set up a standalone process for MCP transport and tool registration.
    - `dev`, `build`, and `start` scripts
 2. Install MCP SDK dependency (`@modelcontextprotocol/sdk`) and validation dependency (`zod`).
 3. Build `src/index.ts` with MCP server bootstrap and stdio transport.
-4. Load env from root `.env` (or package-local override) for DB path and runtime flags.
+4. Load env from root `.env` (or package-local override) for `DATABASE_URL` and runtime flags.
 5. Add structured logging and graceful shutdown handlers.
 
 **Test it:**
@@ -173,7 +224,7 @@ Process starts cleanly and advertises tool capabilities without crashing.
 
 ---
 
-## Step 5 — Implement Read-Only Finance Query Layer
+## Step 6 — Implement Read-Only Finance Query Layer
 
 **Time:** 3-5 hours
 
@@ -181,8 +232,8 @@ Keep tool handlers thin by pushing SQL/Drizzle access into a dedicated query mod
 
 **Do this:**
 
-1. Add `src/db/finance-queries.ts` in MCP package.
-2. Reuse existing database schema definitions from the API package (single source of truth).
+1. Implement the read-only query module in `@finlens/db`.
+2. Reuse the shared Drizzle schema from `@finlens/db/src/schema.ts`.
 3. Implement read-only query functions for:
    - monthly spending summary
    - category breakdown
@@ -202,7 +253,7 @@ Run query module smoke checks against real local DB data and verify totals match
 
 ---
 
-## Step 6 — Register MCP Tools
+## Step 7 — Register MCP Tools
 
 **Time:** 3-5 hours
 
@@ -239,7 +290,7 @@ All tools should respond deterministically with clear payload shape.
 
 ---
 
-## Step 7 — Claude Desktop Integration
+## Step 8 — Claude Desktop Integration
 
 **Time:** 1-2 hours
 
@@ -259,7 +310,7 @@ Wire local MCP server into Claude Desktop and verify real conversational usage.
 
 ---
 
-## Step 8 — Docker Compose: API + Web + MCP
+## Step 9 — Docker Compose: API + Web + MCP
 
 **Time:** 2-3 hours
 
@@ -268,8 +319,8 @@ Deploy all three processes together in Phase 2 structure.
 **Do this:**
 
 1. Update `docker-compose.yml` for monorepo paths.
-2. Add `mcp-server` service with shared `data/` volume mount.
-3. Ensure API and MCP both point to the same SQLite file path.
+2. Add `mcp-server` service with the same `env_file` and `finlens_private` network access as the API.
+3. Ensure API and MCP both point to the same Postgres `DATABASE_URL`.
 4. Keep MCP process internal-only unless an HTTP transport is intentionally added later.
 5. Add health checks/log visibility so runtime issues are easy to diagnose.
 
@@ -286,7 +337,7 @@ docker compose up --build
 
 ---
 
-## Step 9 — Docs, Runbooks, and Hardening
+## Step 10 — Docs, Runbooks, and Hardening
 
 **Time:** 1-2 hours
 
@@ -296,11 +347,12 @@ Capture the new developer workflow so future changes stay fast.
 
 1. Update `README.md` for workspace commands.
 2. Document MCP run commands (local + Docker).
-3. Document backup/restore notes for SQLite + uploads.
+3. Document backup/restore notes for Postgres + uploads.
 4. Add troubleshooting notes:
-   - DB path mismatches after move
+   - `DATABASE_URL` mismatches after move
    - workspace filter mistakes
    - Claude Desktop command path issues
+   - Docker network/alias issues for external Postgres
 5. Record clear boundaries:
    - API handles user-facing app/auth
    - MCP server handles read-only conversational analytics
@@ -316,20 +368,22 @@ Phase 2 is complete when all are true:
 1. Project is a working pnpm workspace monorepo under `packages/`.
 2. Existing Phase 1 app behavior still works (no regression in upload/categorization flow).
 3. `@finlens/shared` is the single source for cross-package contracts.
-4. MCP server exposes the 7 planned finance tools with validated inputs and structured outputs.
-5. Claude Desktop can connect locally and answer real spending questions accurately.
-6. Docker Compose runs API + web + MCP together against the same dataset.
-7. Updated documentation reflects the new workflow and runtime model.
+4. `@finlens/db` is the single source for Drizzle/Postgres schema and shared read-only finance queries.
+5. MCP server exposes the 7 planned finance tools with validated inputs and structured outputs.
+6. Claude Desktop can connect locally and answer real spending questions accurately.
+7. Docker Compose runs API + web + MCP together against the same Postgres dataset.
+8. Updated documentation reflects the new workflow and runtime model.
 
 ---
 
 ## Common Pitfalls to Avoid
 
 - Treating MCP as a replacement for API routes. It is an additional interface, not a rewrite.
-- Duplicating DB schema logic across packages instead of reusing API schema source.
+- Duplicating DB schema logic across packages instead of using `@finlens/db`.
 - Returning unbounded transaction lists from tools (token bloat and poor UX).
 - Mixing dollars and cents in tool outputs.
 - Breaking relative paths during folder moves (`.env`, Drizzle, Docker contexts).
+- Accidentally reintroducing SQLite assumptions into docs, scripts, or Docker config.
 - Adding write/mutation tools in Phase 2 (scope creep and safety risk).
 
 ---

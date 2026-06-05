@@ -2,6 +2,10 @@
 
 > **The goal of Phase 1 is simple:** you and your fiancée can upload a bank statement PDF, see the parsed transactions, and manually assign categories to them. That's it. No AI, no RAG, no agents. Just a working app.
 
+**Status:** Complete as of 2026-06-05. Phase 1 is now the frozen baseline for Phase 2.
+
+**Historical note:** Some early database setup details below refer to SQLite. The completed app now uses Postgres; the active Phase 2 plan and README reflect the current runtime.
+
 ---
 
 ## How to Use This Document

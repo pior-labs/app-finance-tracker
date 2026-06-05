@@ -2,6 +2,8 @@
 
 > A self-hosted personal finance tracker for two users. Upload bank statement PDFs, manually categorize transactions with a clean UI, and expose your finance data as an MCP server for conversational queries.
 
+**Current status:** Phase 1 is complete. Phase 2 is active and focuses on the pnpm monorepo conversion plus MCP server.
+
 ---
 
 ## Why This Project Exists
@@ -23,7 +25,7 @@ Not everything is installed on day one. Each phase introduces only what it needs
 | Tailwind CSS v4       | Phase 1       | Utility-first styling, v4 for the latest CSS-first config  |
 | shadcn/ui             | Phase 1       | Pre-built accessible components, you own the code          |
 | Better Auth           | Phase 1       | Production-grade auth with Drizzle adapter, secure defaults|
-| SQLite + Drizzle ORM  | Phase 1       | Zero-config database, file-based, easy backups             |
+| Postgres + Drizzle ORM| Phase 1       | Durable self-hosted relational storage with shared access   |
 | Docker Compose        | Phase 1       | Deployment on VPS                                          |
 | MCP TypeScript SDK    | Phase 2       | Expose finance data as an MCP server                       |
 
@@ -43,7 +45,8 @@ Phase 2:  (convert to monorepo, add MCP server)
           │   ├── api/               ← moved here
           │   ├── web/               ← moved here
           │   ├── mcp-server/        ← NEW: standalone MCP server
-          │   └── shared/            ← NEW: shared types extracted
+          │   ├── db/                ← NEW: shared Drizzle/Postgres access
+          │   └── shared/            ← NEW: shared contracts/helpers
           ├── docs/                  ← stays at root
           ├── pnpm-workspace.yaml    ← NEW: monorepo config
           └── docker-compose.yml
@@ -67,7 +70,7 @@ Two phases. Each one is a working, deployable app. **Do not start Phase 2 until 
 
 **What gets installed:**
 - hono
-- drizzle-orm + better-sqlite3
+- drizzle-orm + postgres
 - better-auth (authentication)
 - pdf-parse (PDF extraction)
 - react + react-dom + react-router
@@ -288,8 +291,8 @@ No API calls, no AI costs. FinLens is a pure web app.
 
 ## Key Design Decisions
 
-**Why SQLite over Postgres?**
-Two users, low writes, self-hosted. Zero-config, easy backups (copy one file). Drizzle makes switching to Postgres easy if you ever need to.
+**Why Postgres?**
+FinLens started simple, then moved to Postgres during Phase 1 so the API, deployment environment, and Phase 2 MCP server can share one durable database through `DATABASE_URL`. The repo expects production Postgres to be managed outside this compose file and reachable on the private Docker network.
 
 **Why not a monorepo from day one?**
 You don't need one until Phase 2. A monorepo with shared packages is overhead when you're learning Hono and Drizzle. Start simple, restructure when you have a real reason (the MCP server needing shared types).

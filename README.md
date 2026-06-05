@@ -1,6 +1,8 @@
-# FinLens (Phase 1)
+# FinLens (Phase 2 Active)
 
 FinLens is a self-hosted personal finance tracker for two users.
+
+Phase 1 is complete. The current work is Phase 2: converting the app into a pnpm monorepo and adding a read-only MCP server for conversational finance queries.
 
 ## Project Layout
 

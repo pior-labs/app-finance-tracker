@@ -1,13 +1,11 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
+import { createDatabase, schema } from '@finlens/db';
 import { env } from '../lib/env.js';
-import * as schema from './schema.js';
 
-const client = postgres(env.databaseUrl);
+const database = createDatabase(env.databaseUrl);
 
-export const db = drizzle(client, { schema });
+export const db = database.db;
 export { schema };
 
 export function closeDb(): Promise<void> {
-  return client.end();
+  return database.close();
 }

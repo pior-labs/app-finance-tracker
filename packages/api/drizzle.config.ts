@@ -6,7 +6,7 @@ loadEnv({ path: path.resolve(process.cwd(), '.env') });
 loadEnv({ path: path.resolve(process.cwd(), '../../.env') });
 
 export default {
-  schema: './src/db/schema.ts',
+  schema: '../db/src/schema.ts',
   out: './drizzle',
   dialect: 'postgresql',
   dbCredentials: {

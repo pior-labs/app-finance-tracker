@@ -5,17 +5,22 @@
   "packageManager": "pnpm@10.8.1",
   "type": "module",
   "scripts": {
+    "predev": "pnpm --filter @finlens/shared build && pnpm --filter @finlens/db build",
     "dev": "tsx watch src/index.ts",
+    "prebuild": "pnpm --filter @finlens/shared build && pnpm --filter @finlens/db build",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "db:migrate": "tsx src/db/migrate.ts",
+    "predb:seed": "pnpm --filter @finlens/shared build && pnpm --filter @finlens/db build",
     "db:seed": "tsx src/db/seed.ts",
     "db:generate": "drizzle-kit generate",
+    "premerchants:normalize": "pnpm --filter @finlens/shared build && pnpm --filter @finlens/db build",
     "merchants:normalize": "tsx src/scripts/normalize-merchants.ts"
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "^1.6.9",
+    "@finlens/db": "workspace:*",
     "@finlens/shared": "workspace:*",
     "@hono/node-server": "^1.14.1",
     "better-auth": "^1.6.9",

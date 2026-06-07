@@ -1,0 +1,19 @@
+import { drizzle } from 'drizzle-orm/postgres-js';
+import postgres from 'postgres';
+import * as schema from './schema.js';
+
+export { createFinanceQueries } from './finance-queries.js';
+export { schema };
+export * from './schema.js';
+
+export function createDatabase(databaseUrl: string) {
+  const client = postgres(databaseUrl);
+  const db = drizzle(client, { schema });
+
+  return {
+    db,
+    close: () => client.end()
+  };
+}
+
+export type Database = ReturnType<typeof createDatabase>['db'];

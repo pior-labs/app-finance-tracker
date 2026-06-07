@@ -185,6 +185,10 @@ No duplicated type definitions remain between API and MCP-facing code.
 
 **Time:** 2-4 hours
 
+**Status:** Complete on 2026-06-06. The schema, Postgres client factory, and
+initial read-only finance query vocabulary now live in `@finlens/db`; API-owned
+migration and seed scripts remain operational.
+
 Create `packages/db` so the API and MCP server share one Drizzle/Postgres schema and one query vocabulary without making the MCP server depend on the API process.
 
 **Do this:**

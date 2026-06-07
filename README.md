@@ -6,8 +6,8 @@ Phase 1 is complete. The current work is Phase 2: converting the app into a pnpm
 
 ## Project Layout
 
-- `api/`: Hono + TypeScript + Drizzle + Postgres backend
-- `web/`: React 19 + Vite + Tailwind v4 + shadcn-style UI scaffold
+- `packages/api/`: Hono + TypeScript + Drizzle + Postgres backend
+- `packages/web/`: React 19 + Vite + Tailwind v4 + shadcn-style UI scaffold
 - `docs/`: source specification documents
 - `data/`: gitignored local upload storage
 
@@ -22,8 +22,7 @@ cp .env.example .env
 2. Install dependencies:
 
 ```bash
-cd api && pnpm install
-cd ../web && pnpm install
+pnpm install
 ```
 
 3. Create a local Postgres database:
@@ -35,20 +34,17 @@ sudo -u postgres createdb -O <your-postgres-user> finlens_dev
 4. Prepare database and seed:
 
 ```bash
-cd ../api
 pnpm db:migrate
 pnpm db:seed
 ```
 
-5. Run each app:
+5. Run the apps:
 
 ```bash
-# terminal 1
-cd api && pnpm dev
-
-# terminal 2
-cd web && pnpm dev
+pnpm dev
 ```
+
+Run one app with `pnpm dev:api` or `pnpm dev:web`.
 
 ## Docker
 

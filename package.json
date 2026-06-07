@@ -1,0 +1,17 @@
+{
+  "name": "finlens",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.8.1",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @finlens/api --filter @finlens/web dev",
+    "dev:api": "pnpm --filter @finlens/api dev",
+    "dev:web": "pnpm --filter @finlens/web dev",
+    "dev:mcp": "pnpm --filter @finlens/mcp-server dev",
+    "build": "pnpm --recursive build",
+    "typecheck": "pnpm --recursive typecheck",
+    "db:migrate": "pnpm --filter @finlens/api db:migrate",
+    "db:seed": "pnpm --filter @finlens/api db:seed",
+    "db:generate": "pnpm --filter @finlens/api db:generate"
+  }
+}

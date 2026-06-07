@@ -91,6 +91,8 @@ finlens/
 
 **Time:** 30-60 minutes
 
+**Status:** Complete on 2026-06-06. See [`PHASE_2_BASELINE.md`](./PHASE_2_BASELINE.md).
+
 Before changing structure, freeze a known-good baseline.
 
 **Do this:**
@@ -110,6 +112,10 @@ Before changing structure, freeze a known-good baseline.
 ## Step 2 — Convert to pnpm Workspace Monorepo
 
 **Time:** 2-4 hours
+
+**Status:** Complete on 2026-06-06. The root workspace, local runtime, database
+scripts, Docker images, and Phase 1 household workflow were validated after the
+move.
 
 Move from per-folder package management to one workspace.
 

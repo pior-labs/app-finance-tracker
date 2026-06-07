@@ -4,6 +4,7 @@ import { config as loadEnv } from 'dotenv';
 
 loadEnv({ path: path.resolve(process.cwd(), '.env') });
 loadEnv({ path: path.resolve(process.cwd(), '../.env') });
+loadEnv({ path: path.resolve(process.cwd(), '../../.env') });
 
 function normalizeOrigin(value: string): string | null {
   const trimmed = value.trim();
@@ -42,7 +43,7 @@ const webPort = Number(process.env.WEB_PORT ?? 5173);
 export const env = {
   apiPort,
   databaseUrl: process.env.DATABASE_URL ?? 'postgresql://finlens:finlens@localhost:5432/finlens_dev',
-  uploadDir: process.env.UPLOAD_DIR ?? '../data/uploads',
+  uploadDir: process.env.UPLOAD_DIR ?? '../../data/uploads',
   betterAuthSecret: process.env.BETTER_AUTH_SECRET ?? 'change-me-in-production',
   betterAuthUrl,
   betterAuthTrustedOrigins: parseTrustedOrigins(betterAuthUrl, webPort)

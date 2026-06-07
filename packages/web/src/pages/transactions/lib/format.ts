@@ -1,32 +1,13 @@
 import { PAGE_SIZE } from './constants';
+import { formatMonthLabel } from '@finlens/shared/dates';
+import { formatMoney } from '@finlens/shared/money';
 import type { Category, SelectOption } from '../types';
 
-export function getCurrentMonth(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-}
-
-export function isValidMonth(value: string | null): value is string {
-  return value !== null && /^\d{4}-\d{2}$/.test(value);
-}
-
-export function formatMonthLabel(month: string): string {
-  const [year, monthNumber] = month.split('-');
-  const parsed = new Date(Number(year), Number(monthNumber) - 1, 1);
-  if (Number.isNaN(parsed.getTime())) return month;
-  return parsed.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-}
+export { formatShortDate, getCurrentMonth, isValidMonth } from '@finlens/shared/dates';
+export { formatMonthLabel };
 
 export function formatAmount(cents: number): string {
-  const value = Math.abs(cents) / 100;
-  const formatted = value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return cents < 0 ? `-$${formatted}` : `$${formatted}`;
-}
-
-export function formatShortDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  if (Number.isNaN(d.getTime())) return dateStr;
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return formatMoney(cents, { signed: true });
 }
 
 export function prettyName(s: string | null | undefined): string {

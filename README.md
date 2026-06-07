@@ -8,6 +8,7 @@ Phase 1 is complete. The current work is Phase 2: converting the app into a pnpm
 
 - `packages/api/`: Hono + TypeScript + Drizzle + Postgres backend
 - `packages/web/`: React 19 + Vite + Tailwind v4 + shadcn-style UI scaffold
+- `packages/shared/`: Shared finance contracts and pure date/money helpers
 - `docs/`: source specification documents
 - `data/`: gitignored local upload storage
 

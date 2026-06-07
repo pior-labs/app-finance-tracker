@@ -1,30 +1,15 @@
-export interface StatementListItem {
-  id: number;
-  uploadedBy: number;
-  filename: string;
-  originalFilename: string;
-  institution: string | null;
-  periodStart: string | null;
-  periodEnd: string | null;
-  createdAt: string;
-  uploadedByUser: {
-    id: number;
-    name: string;
-    email: string;
-  };
-  transactionCount: number;
+import type { StatementListItem as SharedStatementListItem, Transaction } from '@finlens/shared/types';
+
+export interface StatementListItem extends SharedStatementListItem {
   status?: 'imported' | 'failed';
 }
 
-export interface StatementsResponse {
+export type StatementsResponse = Omit<import('@finlens/shared/types').StatementsResponse, 'data'> & {
   data: StatementListItem[];
-}
+};
 
 export interface StatementTransactionsResponse {
-  data: Array<{
-    id: number;
-    date: string;
-  }>;
+  data: Array<Pick<Transaction, 'id' | 'date'>>;
 }
 
 export interface ReparseStatementResponse {

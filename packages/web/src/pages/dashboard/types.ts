@@ -1,41 +1,9 @@
-export interface CategorySpending {
-  categoryId?: number;
-  category: string;
-  transactionCount?: number;
-  totalCents: number;
-}
+import type { Transaction } from '@finlens/shared/types';
 
-export interface MerchantSpending {
-  merchant: string;
-  totalCents: number;
-  transactionCount?: number;
-}
+export type {
+  CategorySpending,
+  MerchantSpending,
+  TransactionStatsResponse as DashboardStatsResponse
+} from '@finlens/shared/types';
 
-export interface DashboardStatsResponse {
-  data: {
-    totalSpentCents: number;
-    uncategorizedCount: number;
-    monthTransactionCount: number;
-    totalTransactionCount: number;
-    byCategory: CategorySpending[];
-    topMerchants: MerchantSpending[];
-  };
-  meta: {
-    month: string;
-    availableMonths?: string[];
-    latestStatement?: {
-      periodStart: string | null;
-      periodEnd: string | null;
-      transactionCount: number;
-      uploadedByName: string;
-    };
-  };
-}
-
-export interface RecentTransaction {
-  id: number;
-  date: string;
-  merchant: string | null;
-  description: string;
-  amount: number;
-}
+export type RecentTransaction = Pick<Transaction, 'id' | 'date' | 'merchant' | 'description' | 'amount'>;

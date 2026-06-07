@@ -1,52 +1,26 @@
-export interface Category {
-  id: number;
-  name: string;
-  color: string;
-}
+import type {
+  CategoriesResponse,
+  Category,
+  Transaction,
+  TransactionListItem,
+  TransactionStatsResponse,
+  TransactionStatus
+} from '@finlens/shared/types';
 
-export interface CategoryResponse {
-  data: Category[];
-}
+export type { Category, TransactionListItem, TransactionStatus };
+
+export type CategoryResponse = CategoriesResponse;
 
 export interface SelectOption {
   value: string;
   label: string;
 }
 
-export interface TransactionListItem {
-  id: number;
-  statementId: number;
-  date: string;
-  description: string;
-  merchant: string | null;
-  amount: number;
-  type: 'debit' | 'credit';
-  categoryId: number | null;
-  categoryName: string | null;
-  status: 'needs_review' | 'confirmed';
-}
+export type { TransactionsResponse } from '@finlens/shared/types';
 
-export interface TransactionsResponse {
-  data: TransactionListItem[];
-  pagination: {
-    limit: number;
-    offset: number;
-    total: number;
-  };
-}
+export type TransactionUpdatePayload = Transaction;
 
-export interface TransactionUpdatePayload extends TransactionListItem {
-  createdAt: string;
-}
-
-export interface StatsResponse {
-  meta: {
-    month: string;
-    availableMonths: string[];
-  };
-}
-
-export type TransactionStatus = TransactionListItem['status'];
+export type StatsResponse = Pick<TransactionStatsResponse, 'meta'>;
 
 export interface TransactionFilters {
   month: string;

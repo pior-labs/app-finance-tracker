@@ -1,4 +1,5 @@
 import { Hono } from 'hono';
+import { computeMonthBounds, getCurrentMonth, type LatestStatementSummary } from '@finlens/shared';
 import { and, desc, eq, gte, isNull, like, lt, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, schema } from '../db/index.js';
@@ -26,26 +27,6 @@ const patchSchema = z.object({
 
 export const transactionsRouter = new Hono<{ Variables: AuthVariables }>();
 
-function computeMonthBounds(month: string): { start: string; endExclusive: string } | null {
-  const match = month.match(/^(\d{4})-(\d{2})$/);
-  if (!match) {
-    return null;
-  }
-
-  const year = Number(match[1]);
-  const monthIndex = Number(match[2]);
-  if (monthIndex < 1 || monthIndex > 12) {
-    return null;
-  }
-
-  const start = `${String(year).padStart(4, '0')}-${String(monthIndex).padStart(2, '0')}-01`;
-  const nextMonthYear = monthIndex === 12 ? year + 1 : year;
-  const nextMonth = monthIndex === 12 ? 1 : monthIndex + 1;
-  const endExclusive = `${String(nextMonthYear).padStart(4, '0')}-${String(nextMonth).padStart(2, '0')}-01`;
-
-  return { start, endExclusive };
-}
-
 transactionsRouter.get('/stats', async (c) => {
   const query = statsQuerySchema.safeParse(c.req.query());
 
@@ -63,8 +44,7 @@ transactionsRouter.get('/stats', async (c) => {
     .map((row) => row.month)
     .filter((availableMonth) => availableMonth.length === 7);
 
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const currentMonth = getCurrentMonth();
   const month = query.data.month ?? uploadedMonths[0] ?? currentMonth;
   const bounds = computeMonthBounds(month);
 
@@ -145,12 +125,7 @@ transactionsRouter.get('/stats', async (c) => {
     .orderBy(desc(schema.statements.createdAt))
     .limit(1);
 
-  let latestStatement: {
-    periodStart: string | null;
-    periodEnd: string | null;
-    transactionCount: number;
-    uploadedByName: string;
-  } | undefined;
+  let latestStatement: LatestStatementSummary | undefined;
 
   if (latestStatementRow) {
     const [statementTxCountRow] = await db

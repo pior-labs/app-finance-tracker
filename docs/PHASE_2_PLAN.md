@@ -156,6 +156,9 @@ Both apps should start and behave exactly as in Phase 1.
 
 **Time:** 1-2 hours
 
+**Status:** Complete on 2026-06-06. Shared finance contracts and pure date/money
+helpers now live in `@finlens/shared` and are consumed by both API and web.
+
 Create `packages/shared` so API and MCP server speak the same contract language.
 
 **Do this:**

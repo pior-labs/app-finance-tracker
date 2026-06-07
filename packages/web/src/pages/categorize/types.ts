@@ -1,19 +1,13 @@
-export interface Category {
-  id: number;
-  name: string;
-  color: string;
-  isFavorite?: boolean;
-  favoritedAt?: string | null;
-}
+import type {
+  CategoriesResponse,
+  Category,
+  Transaction as SharedTransaction,
+  TransactionType
+} from '@finlens/shared/types';
 
-export interface Transaction {
-  id: number;
-  date: string;
-  description: string;
-  merchant: string | null;
-  amount: number;
-  type: 'debit' | 'credit';
-}
+export type { Category };
+
+export type Transaction = Pick<SharedTransaction, 'id' | 'date' | 'description' | 'merchant' | 'amount' | 'type'>;
 
 export interface ConfirmedItem {
   txId: number;
@@ -21,7 +15,7 @@ export interface ConfirmedItem {
   category: string;
   categoryColor: string;
   amount: number;
-  type: 'debit' | 'credit';
+  type: TransactionType;
   at: number;
 }
 
@@ -31,10 +25,6 @@ export interface UndoAction {
   transaction: Transaction;
 }
 
-export interface CategoriesResponse {
-  data: Category[];
-}
-
 export interface TransactionsResponse {
   data: Transaction[];
   pagination: {
@@ -42,8 +32,6 @@ export interface TransactionsResponse {
   };
 }
 
-export interface TransactionStatsResponse {
-  data: {
-    totalTransactionCount: number;
-  };
-}
+export type { CategoriesResponse };
+
+export type TransactionStatsResponse = Pick<import('@finlens/shared/types').TransactionStatsResponse, 'data'>;

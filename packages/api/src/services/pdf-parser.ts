@@ -1,11 +1,12 @@
 import { PDFParse } from 'pdf-parse';
+import type { TransactionType } from '@finlens/shared';
 
 export interface ParsedTransaction {
   date: string;
   description: string;
   merchant: string | null;
   amount: number;
-  type: 'debit' | 'credit';
+  type: TransactionType;
 }
 
 export interface ParsedStatementRow {

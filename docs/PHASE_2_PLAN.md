@@ -245,6 +245,11 @@ Process starts cleanly and advertises tool capabilities without crashing.
 
 **Time:** 3-5 hours
 
+**Status:** Complete on 2026-06-07. `@finlens/db` now provides validated,
+bounded read-only queries for summaries, comparisons, category and merchant
+analytics, and transaction listing/search. Real-data smoke checks matched the
+existing stats aggregate and covered no-data and invalid-limit behavior.
+
 Keep tool handlers thin by pushing SQL/Drizzle access into a dedicated query module.
 
 **Do this:**

@@ -215,6 +215,10 @@ API behavior should remain unchanged, and the database schema should have one so
 
 **Time:** 1-2 hours
 
+**Status:** Complete on 2026-06-07. The standalone stdio MCP process loads root
+or package-local environment configuration, advertises tool capabilities, emits
+structured logs to stderr, and shuts down cleanly on termination signals.
+
 Set up a standalone process for MCP transport and tool registration.
 
 **Do this:**

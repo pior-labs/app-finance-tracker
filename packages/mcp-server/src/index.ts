@@ -1,23 +1,28 @@
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { createDatabase, createFinanceQueries } from '@finlens/db';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { env } from './env.js';
 import { createLogger } from './logger.js';
+import { registerCategoryTools } from './tools/categories.js';
+import { registerMerchantTools } from './tools/merchants.js';
+import { registerSpendingTools } from './tools/spending.js';
+import { registerTransactionTools } from './tools/transactions.js';
 
 const logger = createLogger(env.logLevel);
-const server = new Server(
-  {
-    name: 'finlens',
-    version: '0.1.0'
-  },
-  {
-    capabilities: {
-      tools: {}
-    }
-  }
-);
+const server = new McpServer({
+  name: 'finlens',
+  version: '0.1.0'
+});
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: [] }));
+const database = createDatabase(env.databaseUrl);
+const queries = createFinanceQueries(database.db);
+
+const registeredTools = [
+  ...registerSpendingTools(server, queries, logger),
+  ...registerCategoryTools(server, queries, logger),
+  ...registerMerchantTools(server, queries, logger),
+  ...registerTransactionTools(server, queries, logger)
+];
 
 let shuttingDown = false;
 
@@ -31,6 +36,7 @@ async function shutdown(signal: NodeJS.Signals) {
 
   try {
     await server.close();
+    await database.close();
     process.exitCode = 0;
   } catch (error) {
     logger.error('Failed to shut down MCP server cleanly', {
@@ -48,7 +54,8 @@ async function main() {
   await server.connect(transport);
   logger.info('MCP server started', {
     transport: 'stdio',
-    toolsRegistered: 0,
+    toolsRegistered: registeredTools.length,
+    tools: registeredTools,
     databaseConfigured: env.databaseUrl.length > 0
   });
 }

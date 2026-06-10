@@ -1,13 +1,13 @@
 {
   "name": "finlens",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "packageManager": "pnpm@10.8.1",
   "scripts": {
     "dev": "pnpm --filter @finlens/shared build && pnpm --filter @finlens/db build && pnpm --parallel --filter @finlens/api --filter @finlens/web dev",
     "dev:api": "pnpm --filter @finlens/shared build && pnpm --filter @finlens/db build && pnpm --filter @finlens/api dev",
     "dev:web": "pnpm --filter @finlens/shared build && pnpm --filter @finlens/web dev",
-    "dev:mcp": "pnpm --filter @finlens/mcp-server dev",
+    "dev:mcp": "pnpm --filter @finlens/shared build && pnpm --filter @finlens/db build && pnpm --filter @finlens/mcp-server dev",
     "build": "pnpm --recursive build",
     "typecheck": "pnpm --recursive typecheck",
     "db:migrate": "pnpm --filter @finlens/api db:migrate",

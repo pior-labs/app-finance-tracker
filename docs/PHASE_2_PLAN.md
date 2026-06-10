@@ -279,6 +279,12 @@ Run query module smoke checks against real local DB data and verify totals match
 
 **Time:** 3-5 hours
 
+**Status:** Complete on 2026-06-09. All seven read-only tools are registered
+with zod-validated inputs, paired text + structured JSON outputs, read-only
+annotations, and normalized `isError` handling. An stdio MCP client smoke
+script (`pnpm --filter @finlens/mcp-server smoke`, after a build) verified
+valid, invalid, and no-data calls for every tool against real local data.
+
 Expose query layer through well-designed MCP tool contracts.
 
 **Tool set for Phase 2:**

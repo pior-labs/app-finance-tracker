@@ -9,12 +9,24 @@ services:
       NODE_ENV: production
       API_PORT: ${API_PORT:-3000}
       UPLOAD_DIR: /app/data/uploads
+      # DOCKER_DATABASE_URL lets a local run reach the host Postgres
+      # (e.g. postgresql://...@host.docker.internal:5432/finlens_dev)
+      # without touching the DATABASE_URL used by local pnpm dev.
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-${DATABASE_URL}}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-me-in-production}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
     ports:
       - "127.0.0.1:${API_PORT:-3000}:3000"
     volumes:
       - ./data:/app/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     networks:
       - default
       - finlens_private
@@ -26,9 +38,43 @@ services:
       args:
         VITE_API_BASE_URL: /api
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8080:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: packages/mcp-server/Dockerfile
+    container_name: finlens-mcp-server
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-${DATABASE_URL}}
+      MCP_LOG_LEVEL: ${MCP_LOG_LEVEL:-info}
+    # stdio transport: keep stdin open so the long-running container stays
+    # alive; MCP clients attach with `docker exec -i finlens-mcp-server
+    # node dist/index.js`. No ports — internal-only by design (Phase 2).
+    stdin_open: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "node", "dist/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - default
+      - finlens_private
 
 networks:
   finlens_private:

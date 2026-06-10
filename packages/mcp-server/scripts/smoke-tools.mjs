@@ -25,10 +25,15 @@ function check(label, condition, detail = '') {
   console.log(`${status}  ${label}${detail ? ` — ${detail}` : ''}`);
 }
 
+// Override the server command to smoke a different runtime, e.g. the
+// Docker Compose container:
+//   MCP_SMOKE_COMMAND=docker \
+//   MCP_SMOKE_ARGS="exec -i finlens-mcp-server node dist/index.js" \
+//   node scripts/smoke-tools.mjs
 const client = new Client({ name: 'finlens-smoke', version: '0.1.0' });
 const transport = new StdioClientTransport({
-  command: process.execPath,
-  args: ['dist/index.js'],
+  command: process.env.MCP_SMOKE_COMMAND ?? process.execPath,
+  args: process.env.MCP_SMOKE_ARGS?.split(' ') ?? ['dist/index.js'],
   stderr: 'ignore'
 });
 await client.connect(transport);

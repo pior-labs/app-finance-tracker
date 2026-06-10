@@ -342,7 +342,14 @@ Wire local MCP server into Claude Desktop and verify real conversational usage.
 
 **Time:** 2-3 hours
 
-Deploy all three processes together in Phase 2 structure.
+**Status:** Complete on 2026-06-09. The `mcp-server` service runs alongside API
+and web with the same `env_file` and `finlens_private` network, no published
+ports, and health checks on all three services. The full stack was validated
+against a Postgres container on `finlens_private` (alias `postgres`) restored
+from live data: web and login worked end to end, and the Step 7 MCP smoke
+suite passed against the server running inside the container. The optional
+`DOCKER_DATABASE_URL` compose variable overrides `DATABASE_URL` for container
+runs without changing local development configuration.
 
 **Do this:**
 

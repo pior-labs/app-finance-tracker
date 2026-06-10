@@ -12,6 +12,9 @@ export function createDatabase(databaseUrl: string) {
 
   return {
     db,
+    ping: async () => {
+      await client`select 1`;
+    },
     close: () => client.end()
   };
 }

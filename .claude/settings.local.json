@@ -4,7 +4,29 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm --filter @finlens/shared build)",
+      "Bash(pnpm --filter @finlens/db build)",
+      "Bash(pnpm --filter @finlens/mcp-server typecheck)",
+      "Bash(pnpm --version)",
+      "Bash(node -e \"console.log\\(require\\('fs'\\).existsSync\\('/home/pior/Github/finance-tracker/node_modules/.pnpm'\\)\\)\")",
+      "Bash(pnpm typecheck *)",
+      "Bash(pnpm --filter @finlens/mcp-server build)",
+      "Bash(echo \"exit=$?\")",
+      "Read(//tmp/**)",
+      "Bash(node scripts/smoke-tools.mjs)",
+      "Bash(timeout 8s pnpm --filter @finlens/mcp-server dev)",
+      "Bash(docker network *)",
+      "Bash(pnpm --filter @finlens/db typecheck)",
+      "Bash(pnpm --filter @finlens/api typecheck)",
+      "Bash(pg_dump -Fc \"postgresql://pior:duda@localhost:5432/finlens_dev\" -f /tmp/finlens-step9.dump)",
+      "Bash(docker run *)",
+      "Bash(docker compose *)",
+      "Bash(curl -s -o /dev/null -w \"web: %{http_code}\\\\n\" http://localhost:8080/)",
+      "Bash(curl -s http://localhost:3000/health)",
+      "Bash(docker rm *)",
+      "Bash(rm /tmp/finlens-step9.dump)"
     ]
   }
 }

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-export type ThemeId = 'bloom' | 'midnight' | 'slate';
+export type ThemeId = 'bloom' | 'slate';
 
 export interface ThemeOption {
   id: ThemeId;
@@ -19,7 +19,6 @@ export interface ThemeOption {
  */
 export const THEMES: ThemeOption[] = [
   { id: 'bloom', name: 'Bloom', hint: 'Warm light', swatch: ['#fdf9f0', '#f8d7c0', '#c5704a'] },
-  { id: 'midnight', name: 'Midnight', hint: 'Deep blue', swatch: ['#0c1322', '#1c2842', '#5b9dff'] },
   { id: 'slate', name: 'Slate', hint: 'Cool neutral', swatch: ['#eef1f6', '#ffffff', '#3b6ea5'] }
 ];
 

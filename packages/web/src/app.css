@@ -7,7 +7,7 @@
  *  A theme is just a `[data-theme="…"]` block that overrides those tokens —
  *  no component edits required. The active theme is set on <html data-theme>
  *  by the theme switcher (see hooks/useTheme.tsx). To add a theme, copy the
- *  `[data-theme="midnight"]` block, rename it, and recolor the tokens.
+ *  `[data-theme="slate"]` block, rename it, and recolor the tokens.
  * ============================================================================
  */
 
@@ -124,55 +124,6 @@
   --animate-bloom-toast-in: bloom-toast-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   --animate-bloom-overlay-in: bloom-overlay-in 0.55s cubic-bezier(0.22, 1, 0.36, 1);
   --animate-bloom-overlay-item-in: bloom-overlay-item-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* ──────────────────────────────────────────────────────────────────────────
- *  Midnight — deep indigo, steel-blue glass, electric-azure accent.
- *  A darker, more restrained scheme. Frost flips from white to cool slate so
- *  every frosted panel reads as smoked glass instead of bright white.
- * ────────────────────────────────────────────────────────────────────────── */
-[data-theme="midnight"] {
-  color-scheme: dark;
-
-  --cream: #0c1322;   /* page backdrop */
-  --ink: #e9eef7;     /* primary text */
-  --ink-2: #a7b4cc;   /* secondary text */
-  --ink-3: #6a7894;   /* muted text */
-  --accent: #5b9dff;  /* electric azure */
-  --pistachio: #2f6d6a; /* repurposed accent tints */
-  --peach: #314a7a;
-  --lavender: #2c3b66;
-
-  --surface-rgb: 28, 40, 66;     /* steel-navy glass fill */
-  --frost-rgb: 132, 150, 188;    /* cool highlight instead of white */
-  --frost: #8496bc;
-
-  --blob-1: #1d3a6b;
-  --blob-2: #163a5c;
-  --blob-3: #2a2f6b;
-  --blob-4: #14506b;
-  --blob-5: #1a2a52;
-  --blob-blend: screen;          /* lighten on dark so the mesh glows softly */
-  --blob-opacity: 0.55;
-  --grain-opacity: 0.22;
-
-  --glass-bg: rgba(var(--surface-rgb), 0.55);
-  --glass-border: rgba(var(--frost-rgb), 0.22);
-  --glass-shadow: 0 18px 50px -16px rgba(0, 0, 0, 0.6),
-    inset 0 0 0 1px rgba(var(--frost-rgb), 0.14);
-
-  /* Legacy sketch tokens used by components/ui base */
-  --background: #0c1322;
-  --foreground: #e9eef7;
-  --card: #131d33;
-  --card-foreground: #e9eef7;
-  --muted: #18233c;
-  --muted-foreground: #8493ad;
-  --border: #2b3a5c;
-  --border-soft: rgba(232, 238, 247, 0.18);
-  --primary: #5b9dff;
-  --primary-foreground: #0c1322;
-  --primary-soft: #213251;
 }
 
 /* ──────────────────────────────────────────────────────────────────────────

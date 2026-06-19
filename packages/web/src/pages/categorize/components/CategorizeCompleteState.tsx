@@ -50,7 +50,7 @@ export function CategorizeCompleteState() {
         </Link>
         <Link
           to="/transactions"
-          className="inline-flex items-center gap-2 rounded-full border px-6 py-3 text-[15px] font-medium no-underline transition-colors hover:bg-white/50"
+          className="inline-flex items-center gap-2 rounded-full border px-6 py-3 text-[15px] font-medium no-underline transition-colors hover:bg-frost/50"
           style={{
             fontFamily: "'Outfit', sans-serif",
             color: 'var(--ink-2)',

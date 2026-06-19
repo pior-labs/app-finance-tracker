@@ -35,11 +35,11 @@ export const TransactionHeroCard = memo(function TransactionHeroCard({
     <div
       className="relative z-30 rounded-[28px] border sm:rounded-[36px]"
       style={{
-        background: 'rgba(255,253,247,0.6)',
-        borderColor: 'rgba(255,255,255,0.85)',
+        background: 'rgba(var(--surface-rgb),0.6)',
+        borderColor: 'rgba(var(--frost-rgb),0.85)',
         backdropFilter: 'blur(28px) saturate(150%)',
         WebkitBackdropFilter: 'blur(28px) saturate(150%)',
-        boxShadow: '0 20px 60px -15px rgba(45,36,24,0.14), inset 0 0 0 1px rgba(255,255,255,0.5)',
+        boxShadow: '0 20px 60px -15px rgba(45,36,24,0.14), inset 0 0 0 1px rgba(var(--frost-rgb),0.5)',
       }}
     >
       <div
@@ -65,7 +65,7 @@ export const TransactionHeroCard = memo(function TransactionHeroCard({
             <span
               className="inline-flex rounded-full border px-3 py-1 text-xs font-medium"
               style={{
-                borderColor: 'rgba(255,255,255,0.6)',
+                borderColor: 'rgba(var(--frost-rgb),0.6)',
                 background: isCredit ? 'rgba(202,224,168,0.7)' : 'rgba(248,215,192,0.7)',
                 color: isCredit ? '#3d6b1f' : 'var(--ink-2)',
               }}
@@ -111,13 +111,13 @@ export const TransactionHeroCard = memo(function TransactionHeroCard({
 
       <div
         className="relative z-1 flex items-center justify-between gap-3 rounded-b-[28px] border-t border-dashed px-4 py-3 sm:gap-4 sm:rounded-b-[36px] sm:px-8 sm:py-4"
-        style={{ borderColor: 'rgba(45,36,24,0.1)', background: 'rgba(255,255,255,0.25)' }}
+        style={{ borderColor: 'rgba(45,36,24,0.1)', background: 'rgba(var(--frost-rgb),0.25)' }}
       >
         <button
           type="button"
           onClick={onBack}
           aria-label="Previous transaction"
-          className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border-0 bg-transparent px-3 py-2 text-sm font-medium transition-colors hover:bg-white/50 sm:px-4"
+          className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border-0 bg-transparent px-3 py-2 text-sm font-medium transition-colors hover:bg-frost/50 sm:px-4"
           style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-3)', touchAction: 'manipulation' }}
         >
           <span aria-hidden="true" className="hidden md:inline-flex"><KeyHint char="←" /></span>
@@ -150,9 +150,9 @@ export const TransactionHeroCard = memo(function TransactionHeroCard({
             className="inline-flex h-5.5 w-5.5 items-center justify-center rounded-md text-xs font-medium"
             style={{
               fontFamily: "'Fraunces', serif",
-              background: 'rgba(255,255,255,0.15)',
+              background: 'rgba(var(--frost-rgb),0.15)',
               color: 'rgba(253,249,240,0.8)',
-              boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.1)',
+              boxShadow: 'inset 0 0 0 1px rgba(var(--frost-rgb),0.1)',
             }}
           >
             <ArrowRight aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />

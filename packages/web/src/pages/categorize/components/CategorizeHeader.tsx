@@ -43,7 +43,7 @@ export const CategorizeHeader = memo(function CategorizeHeader({
             style={{
               width: `${Math.max(progressPct, 2)}%`,
               background: 'linear-gradient(90deg, #cae0a8, #8eb567)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
+              boxShadow: 'inset 0 1px 0 rgba(var(--frost-rgb),0.5)',
             }}
           />
         </div>

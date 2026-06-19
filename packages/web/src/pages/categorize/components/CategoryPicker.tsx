@@ -124,7 +124,7 @@ export const CategoryPicker = memo(function CategoryPicker({
             style={{
               fontFamily: "'Outfit', sans-serif",
               color: 'var(--ink)',
-              borderColor: 'rgba(255,255,255,0.7)',
+              borderColor: 'rgba(var(--frost-rgb),0.7)',
               background: `linear-gradient(135deg, ${lighten(cat.color, 0.7)}, ${lighten(cat.color, 0.82)})`,
               boxShadow: '0 4px 14px -4px rgba(45,36,24,0.1)',
               touchAction: 'manipulation',
@@ -135,7 +135,7 @@ export const CategoryPicker = memo(function CategoryPicker({
               className="hidden h-5 w-5 shrink-0 items-center justify-center rounded-md text-xs md:inline-flex"
               style={{
                 fontFamily: "'Fraunces', serif",
-                background: 'rgba(255,255,255,0.65)',
+                background: 'rgba(var(--frost-rgb),0.65)',
                 color: 'var(--ink-2)',
                 boxShadow: 'inset 0 0 0 1px rgba(45,36,24,0.08)',
               }}
@@ -145,7 +145,7 @@ export const CategoryPicker = memo(function CategoryPicker({
             <span
               aria-hidden="true"
               className="mr-0.5 h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ background: cat.color, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.5)' }}
+              style={{ background: cat.color, boxShadow: 'inset 0 0 0 1px rgba(var(--frost-rgb),0.5)' }}
             />
             <span className="whitespace-nowrap">{cat.name}</span>
           </button>
@@ -162,12 +162,12 @@ export const CategoryPicker = memo(function CategoryPicker({
           aria-controls="categorize-category-listbox"
           onClick={() => (isOpen ? closeAndReturnFocus() : openMenu('current'))}
           onKeyDown={onTriggerKeyDown}
-          className="flex min-h-11 w-full items-center justify-between rounded-full border px-5 py-2.5 text-sm italic transition-colors enabled:cursor-pointer enabled:hover:bg-white/75 disabled:cursor-not-allowed disabled:opacity-55"
+          className="flex min-h-11 w-full items-center justify-between rounded-full border px-5 py-2.5 text-sm italic transition-colors enabled:cursor-pointer enabled:hover:bg-frost/75 disabled:cursor-not-allowed disabled:opacity-55"
           style={{
             fontFamily: "'Fraunces', serif",
             color: 'var(--ink-3)',
-            background: 'rgba(255,255,255,0.5)',
-            borderColor: 'rgba(255,255,255,0.8)',
+            background: 'rgba(var(--frost-rgb),0.5)',
+            borderColor: 'rgba(var(--frost-rgb),0.8)',
             backdropFilter: 'blur(12px)',
             touchAction: 'manipulation',
           }}
@@ -188,10 +188,10 @@ export const CategoryPicker = memo(function CategoryPicker({
             onKeyDown={onListboxKeyDown}
             className="absolute left-0 right-0 top-[calc(100%+8px)] z-20 max-h-65 overflow-y-auto rounded-[22px] border p-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none"
             style={{
-              background: 'rgba(255,253,247,0.94)',
-              borderColor: 'rgba(255,255,255,0.8)',
+              background: 'rgba(var(--surface-rgb),0.94)',
+              borderColor: 'rgba(var(--frost-rgb),0.8)',
               backdropFilter: 'blur(24px) saturate(140%)',
-              boxShadow: '0 16px 44px -10px rgba(45,36,24,0.2), inset 0 0 0 1px rgba(255,255,255,0.5)',
+              boxShadow: '0 16px 44px -10px rgba(45,36,24,0.2), inset 0 0 0 1px rgba(var(--frost-rgb),0.5)',
             }}
           >
             {categories.map((cat, idx) => (
@@ -215,7 +215,7 @@ export const CategoryPicker = memo(function CategoryPicker({
               >
                 <span
                   className="h-3 w-3 shrink-0 rounded-full"
-                  style={{ background: cat.color, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.5)' }}
+                  style={{ background: cat.color, boxShadow: 'inset 0 0 0 1px rgba(var(--frost-rgb),0.5)' }}
                 />
                 {cat.name}
               </button>

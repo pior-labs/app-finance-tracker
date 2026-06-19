@@ -14,7 +14,7 @@ export const StatementFileCell = memo(function StatementFileCell({ filename, mob
         style={{
           background: 'linear-gradient(135deg, rgba(220,211,240,0.5), rgba(248,215,192,0.4))',
           color: 'var(--ink-3)',
-          border: '1px solid rgba(255,255,255,0.6)',
+          border: '1px solid rgba(var(--frost-rgb),0.6)',
         }}
       >
         PDF

@@ -49,8 +49,8 @@ export const TransactionsMobileList = memo(function TransactionsMobileList({
             aria-hidden="true"
             className="rounded-[20px] border p-4"
             style={{
-              background: 'rgba(255,253,247,0.55)',
-              borderColor: 'rgba(255,255,255,0.8)',
+              background: 'rgba(var(--surface-rgb),0.55)',
+              borderColor: 'rgba(var(--frost-rgb),0.8)',
               backdropFilter: 'blur(20px) saturate(140%)',
               WebkitBackdropFilter: 'blur(20px) saturate(140%)',
             }}
@@ -73,8 +73,8 @@ export const TransactionsMobileList = memo(function TransactionsMobileList({
         <div
           className="rounded-3xl border px-5 py-12 text-center"
           style={{
-            background: 'rgba(255,253,247,0.55)',
-            borderColor: 'rgba(255,255,255,0.8)',
+            background: 'rgba(var(--surface-rgb),0.55)',
+            borderColor: 'rgba(var(--frost-rgb),0.8)',
             backdropFilter: 'blur(20px) saturate(140%)',
             WebkitBackdropFilter: 'blur(20px) saturate(140%)',
           }}
@@ -161,8 +161,8 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
         isFocused ? 'bg-(--accent)/15' : ''
       }`}
       style={{
-        background: isFocused ? undefined : 'rgba(255,253,247,0.55)',
-        borderColor: 'rgba(255,255,255,0.8)',
+        background: isFocused ? undefined : 'rgba(var(--surface-rgb),0.55)',
+        borderColor: 'rgba(var(--frost-rgb),0.8)',
         backdropFilter: 'blur(20px) saturate(140%)',
         WebkitBackdropFilter: 'blur(20px) saturate(140%)',
         boxShadow: '0 6px 22px -10px rgba(45,36,24,0.08)',
@@ -205,14 +205,14 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
       ) : null}
 
       {isEditing ? (
-        <div className="grid gap-2.5 rounded-[18px] border border-white/70 bg-white/35 p-3">
+        <div className="grid gap-2.5 rounded-[18px] border border-frost/70 bg-frost/35 p-3">
           <label className="grid gap-1.5 text-[12px] font-medium" style={{ color: 'var(--ink-3)' }}>
             Merchant
             <input
               value={merchant}
               onChange={(event) => setMerchant(event.target.value)}
               disabled={isBusy}
-              className="h-11 rounded-full border border-white/75 bg-white/65 px-3.5 text-[14px] outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
+              className="h-11 rounded-full border border-frost/75 bg-frost/65 px-3.5 text-[14px] outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
               style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
             />
           </label>
@@ -224,7 +224,7 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
               disabled={isBusy}
               required
               rows={3}
-              className="min-h-22 resize-y rounded-[16px] border border-white/75 bg-white/65 px-3.5 py-2.5 text-[14px] leading-snug outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
+              className="min-h-22 resize-y rounded-[16px] border border-frost/75 bg-frost/65 px-3.5 py-2.5 text-[14px] leading-snug outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
               style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
             />
           </label>
@@ -254,7 +254,7 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
               onClick={() => void saveEdit()}
               disabled={isBusy || description.trim().length === 0}
               aria-label="Save transaction"
-              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-white/60 disabled:cursor-default disabled:opacity-50"
+              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-frost/60 disabled:cursor-default disabled:opacity-50"
               style={{ fontFamily: "'Outfit', sans-serif", color: '#3d6b1f', touchAction: 'manipulation' }}
             >
               <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
@@ -265,7 +265,7 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
               onClick={cancelEdit}
               disabled={isBusy}
               aria-label="Cancel editing transaction"
-              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-white/60 disabled:cursor-default disabled:opacity-50"
+              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-frost/60 disabled:cursor-default disabled:opacity-50"
               style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', touchAction: 'manipulation' }}
             >
               <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.3} />
@@ -289,7 +289,7 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
             onClick={() => setIsEditing(true)}
             disabled={isBusy}
             aria-label="Edit transaction"
-            className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-white/60 disabled:cursor-default disabled:opacity-50"
+            className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-frost/60 disabled:cursor-default disabled:opacity-50"
             style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', touchAction: 'manipulation' }}
           >
             <Pencil aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.3} />

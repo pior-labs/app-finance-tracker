@@ -28,7 +28,7 @@ function TopMerchantsCardComponent({
                 className="-mx-1.5 -my-1 flex w-full items-center gap-3.5 rounded-[14px] px-1.5 py-1 text-inherit no-underline transition-colors hover:bg-ink/5"
               >
                 <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-serif text-lg font-medium text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5),0_4px_12px_rgba(45,36,24,0.08)] sm:h-11 sm:w-11 sm:text-xl"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-serif text-lg font-medium text-ink shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.5),0_4px_12px_rgba(45,36,24,0.08)] sm:h-11 sm:w-11 sm:text-xl"
                   style={{
                     background: `linear-gradient(135deg, ${PALETTE[i % PALETTE.length]}, ${
                       PALETTE[(i + 2) % PALETTE.length]

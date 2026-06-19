@@ -28,7 +28,7 @@ export const StatementsErrorBanner = memo(function StatementsErrorBanner({
         onClick={onRetry}
         disabled={loading}
         className="inline-flex min-h-9 cursor-pointer items-center gap-2 rounded-full border-0 px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60"
-        style={{ fontFamily: "'Outfit', sans-serif", background: 'rgba(255,255,255,0.65)', color: 'var(--ink)' }}
+        style={{ fontFamily: "'Outfit', sans-serif", background: 'rgba(var(--frost-rgb),0.65)', color: 'var(--ink)' }}
       >
         <RefreshCw aria-hidden="true" className="h-3.5 w-3.5" />
         Retry

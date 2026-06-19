@@ -28,8 +28,8 @@ export const TransactionsFilters = memo(function TransactionsFilters({
     <div
       className="flex flex-col gap-2 rounded-[28px] border p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2.5 sm:rounded-full sm:px-4 sm:py-2.5"
       style={{
-        background: 'rgba(255,253,247,0.55)',
-        borderColor: 'rgba(255,255,255,0.8)',
+        background: 'rgba(var(--surface-rgb),0.55)',
+        borderColor: 'rgba(var(--frost-rgb),0.8)',
         backdropFilter: 'blur(20px) saturate(140%)',
         WebkitBackdropFilter: 'blur(20px) saturate(140%)',
         boxShadow: '0 6px 22px -8px rgba(45,36,24,0.08)',
@@ -48,7 +48,7 @@ export const TransactionsFilters = memo(function TransactionsFilters({
           placeholder="Search merchant..."
           aria-label="Search by merchant"
           inputMode="search"
-          className="h-11 w-full rounded-full border-0 bg-white/50 pl-9 pr-3 text-[15px] outline-none transition-colors placeholder:text-ink-3 focus:bg-white/80 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:w-44 sm:pl-8 sm:text-sm"
+          className="h-11 w-full rounded-full border-0 bg-frost/50 pl-9 pr-3 text-[15px] outline-none transition-colors placeholder:text-ink-3 focus:bg-frost/80 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:w-44 sm:pl-8 sm:text-sm"
           style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
         />
       </div>
@@ -60,7 +60,7 @@ export const TransactionsFilters = memo(function TransactionsFilters({
           value={month}
           onChange={(event) => onFilterChange('month', event.target.value)}
           aria-label="Filter by month"
-          className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:text-sm"
+          className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-frost/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-frost/70 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:text-sm"
           style={{ fontFamily: "'Outfit', sans-serif", color: month === 'all' ? 'var(--ink-3)' : 'var(--ink)', touchAction: 'manipulation' }}
         >
           {monthOptions.map((option) => (
@@ -72,7 +72,7 @@ export const TransactionsFilters = memo(function TransactionsFilters({
           value={category}
           onChange={(event) => onFilterChange('category', event.target.value)}
           aria-label="Filter by category"
-          className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:text-sm"
+          className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-frost/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-frost/70 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:text-sm"
           style={{ fontFamily: "'Outfit', sans-serif", color: category === 'all' ? 'var(--ink-3)' : 'var(--ink)', touchAction: 'manipulation' }}
         >
           {categoryFilterOptions.map((option) => (
@@ -84,7 +84,7 @@ export const TransactionsFilters = memo(function TransactionsFilters({
           value={status}
           onChange={(event) => onFilterChange('status', event.target.value)}
           aria-label="Filter by status"
-          className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-white/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-white/70 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:text-sm"
+          className="h-11 min-w-0 cursor-pointer appearance-none rounded-full border-0 bg-frost/40 px-3.5 pr-7 text-[15px] outline-none transition-colors hover:bg-frost/70 focus:ring-2 focus:ring-(--accent)/30 sm:h-9 sm:text-sm"
           style={{ fontFamily: "'Outfit', sans-serif", color: status === 'all' ? 'var(--ink-3)' : 'var(--ink)', touchAction: 'manipulation' }}
         >
           {statusOptions.map((option) => (

@@ -34,7 +34,7 @@ export const CategoryColorPicker = memo(function CategoryColorPicker({
             className={`${swatchSizeClassName} cursor-pointer rounded-full border-2 transition-transform hover:scale-110 motion-reduce:transform-none`}
             style={{
               background: swatch,
-              borderColor: selected ? 'var(--ink)' : 'rgba(255,255,255,0.6)',
+              borderColor: selected ? 'var(--ink)' : 'rgba(var(--frost-rgb),0.6)',
               boxShadow: selected ? `0 0 0 3px ${lighten(swatch, 0.6)}` : '0 2px 6px -2px rgba(45,36,24,0.15)',
               touchAction: 'manipulation',
             }}
@@ -50,8 +50,8 @@ export const CategoryColorPicker = memo(function CategoryColorPicker({
         placeholder="#6b8db5"
         maxLength={7}
         aria-label={customColorLabel}
-        className="h-9 w-24 rounded-full border bg-white/50 px-2.5 text-center text-xs uppercase outline-none transition-colors focus:bg-white/80 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-8"
-        style={{ borderColor: 'rgba(255,255,255,0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
+        className="h-9 w-24 rounded-full border bg-frost/50 px-2.5 text-center text-xs uppercase outline-none transition-colors focus:bg-frost/80 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-8"
+        style={{ borderColor: 'rgba(var(--frost-rgb),0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
       />
     </div>
   );

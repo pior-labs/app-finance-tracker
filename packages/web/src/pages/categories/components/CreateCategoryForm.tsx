@@ -24,8 +24,8 @@ export const CreateCategoryForm = memo(function CreateCategoryForm({
     <div
       className="rounded-[24px] border p-4 sm:p-6"
       style={{
-        background: 'linear-gradient(135deg, rgba(245,227,160,0.3), rgba(255,253,247,0.55))',
-        borderColor: 'rgba(255,255,255,0.8)',
+        background: 'linear-gradient(135deg, rgba(245,227,160,0.3), rgba(var(--surface-rgb),0.55))',
+        borderColor: 'rgba(var(--frost-rgb),0.8)',
         backdropFilter: 'blur(20px) saturate(140%)',
         WebkitBackdropFilter: 'blur(20px) saturate(140%)',
         boxShadow: '0 10px 32px -8px rgba(45,36,24,0.1)',
@@ -47,8 +47,8 @@ export const CreateCategoryForm = memo(function CreateCategoryForm({
           }}
           autoFocus
           aria-label="Category name"
-          className="h-11 w-full rounded-full border bg-white/60 px-4 text-[15px] outline-none transition-colors placeholder:text-[var(--ink-3)] focus:bg-white/90 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-10 sm:w-56 sm:text-sm"
-          style={{ borderColor: 'rgba(255,255,255,0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
+          className="h-11 w-full rounded-full border bg-frost/60 px-4 text-[15px] outline-none transition-colors placeholder:text-[var(--ink-3)] focus:bg-frost/90 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-10 sm:w-56 sm:text-sm"
+          style={{ borderColor: 'rgba(var(--frost-rgb),0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
         />
         <CategoryColorPicker
           selectedColor={newColor}
@@ -63,7 +63,7 @@ export const CreateCategoryForm = memo(function CreateCategoryForm({
           <button
             type="button"
             onClick={onCancel}
-            className="min-h-11 flex-1 cursor-pointer rounded-full border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50 sm:flex-none"
+            className="min-h-11 flex-1 cursor-pointer rounded-full border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-frost/50 sm:flex-none"
             style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)', touchAction: 'manipulation' }}
           >
             Cancel

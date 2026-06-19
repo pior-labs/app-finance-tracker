@@ -48,7 +48,7 @@ export const TransactionsHeader = memo(function TransactionsHeader({
             className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs"
             style={{
               background: 'linear-gradient(135deg, rgba(248,215,192,0.7), rgba(245,227,160,0.5))',
-              borderColor: 'rgba(255,255,255,0.6)',
+              borderColor: 'rgba(var(--frost-rgb),0.6)',
               color: 'var(--ink-2)',
             }}
           >
@@ -59,7 +59,7 @@ export const TransactionsHeader = memo(function TransactionsHeader({
           className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs"
           style={{
             background: 'linear-gradient(135deg, rgba(202,224,168,0.7), rgba(198,227,212,0.5))',
-            borderColor: 'rgba(255,255,255,0.6)',
+            borderColor: 'rgba(var(--frost-rgb),0.6)',
             color: '#3d6b1f',
           }}
         >

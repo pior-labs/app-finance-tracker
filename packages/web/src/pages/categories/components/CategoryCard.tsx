@@ -48,8 +48,8 @@ export const CategoryCard = memo(function CategoryCard({
     <div
       className="group rounded-[22px] border p-4 transition-shadow hover:shadow-lg motion-reduce:transition-none"
       style={{
-        background: `linear-gradient(135deg, ${lighten(color, 0.88)}, rgba(255,253,247,0.55))`,
-        borderColor: 'rgba(255,255,255,0.8)',
+        background: `linear-gradient(135deg, ${lighten(color, 0.88)}, rgba(var(--surface-rgb),0.55))`,
+        borderColor: 'rgba(var(--frost-rgb),0.8)',
         backdropFilter: 'blur(20px) saturate(140%)',
         WebkitBackdropFilter: 'blur(20px) saturate(140%)',
         boxShadow: '0 6px 22px -8px rgba(45,36,24,0.08)',
@@ -61,7 +61,7 @@ export const CategoryCard = memo(function CategoryCard({
           className="h-9 w-9 shrink-0 rounded-full"
           style={{
             background: `linear-gradient(135deg, ${color}, ${lighten(color, 0.3)})`,
-            boxShadow: `0 4px 12px -2px ${color}55, inset 0 0 0 1px rgba(255,255,255,0.4)`,
+            boxShadow: `0 4px 12px -2px ${color}55, inset 0 0 0 1px rgba(var(--frost-rgb),0.4)`,
           }}
         />
 
@@ -77,8 +77,8 @@ export const CategoryCard = memo(function CategoryCard({
                 }}
                 autoFocus
                 aria-label="Category name"
-                className="h-11 w-full min-w-0 rounded-full border bg-white/60 px-3.5 text-[15px] outline-none transition-colors focus:bg-white/90 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-8 sm:flex-1 sm:text-sm"
-                style={{ borderColor: 'rgba(255,255,255,0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
+                className="h-11 w-full min-w-0 rounded-full border bg-frost/60 px-3.5 text-[15px] outline-none transition-colors focus:bg-frost/90 focus:ring-2 focus:ring-[var(--accent)]/30 sm:h-8 sm:flex-1 sm:text-sm"
+                style={{ borderColor: 'rgba(var(--frost-rgb),0.8)', color: 'var(--ink)', fontFamily: "'Outfit', sans-serif" }}
               />
               <div className="flex shrink-0 items-center gap-2">
                 <button
@@ -93,7 +93,7 @@ export const CategoryCard = memo(function CategoryCard({
                   type="button"
                   onClick={onCancelRename}
                   aria-label="Cancel rename"
-                  className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-sm transition-colors hover:bg-white/80 sm:h-6 sm:w-6 sm:text-xs"
+                  className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 text-sm transition-colors hover:bg-frost/80 sm:h-6 sm:w-6 sm:text-xs"
                   style={{ color: 'var(--ink-3)', touchAction: 'manipulation' }}
                 >
                   <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
@@ -116,7 +116,7 @@ export const CategoryCard = memo(function CategoryCard({
             className="hidden h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-medium md:inline-flex"
             style={{
               fontFamily: "'Fraunces', serif",
-              background: 'rgba(255,255,255,0.6)',
+              background: 'rgba(var(--frost-rgb),0.6)',
               color: 'var(--ink-2)',
               boxShadow: 'inset 0 0 0 1px rgba(45,36,24,0.08)',
             }}
@@ -135,7 +135,7 @@ export const CategoryCard = memo(function CategoryCard({
               aria-pressed={!!category.isFavorite}
               className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 text-sm transition-all hover:scale-110 motion-reduce:transform-none"
               style={{
-                background: category.isFavorite ? 'rgba(248,215,192,0.7)' : 'rgba(255,255,255,0.4)',
+                background: category.isFavorite ? 'rgba(248,215,192,0.7)' : 'rgba(var(--frost-rgb),0.4)',
                 color: category.isFavorite ? 'var(--accent)' : 'var(--ink-3)',
               }}
               title={category.isFavorite ? 'Unfavorite' : 'Favorite'}
@@ -151,7 +151,7 @@ export const CategoryCard = memo(function CategoryCard({
               type="button"
               onClick={() => onStartRename(category)}
               aria-label="Rename"
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 text-xs transition-colors hover:bg-frost/80"
               style={{ color: 'var(--ink-2)' }}
               title="Rename"
             >
@@ -162,7 +162,7 @@ export const CategoryCard = memo(function CategoryCard({
               onClick={() => onToggleColorEditor(category)}
               aria-label="Edit color"
               aria-expanded={isColorEditing}
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-white/80"
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 text-xs transition-colors hover:bg-frost/80"
               style={{ color: 'var(--ink-2)' }}
               title="Edit color"
             >
@@ -172,7 +172,7 @@ export const CategoryCard = memo(function CategoryCard({
               type="button"
               onClick={() => onRequestDelete(category)}
               aria-label="Delete"
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
               style={{ color: 'var(--accent)' }}
               title="Delete"
             >
@@ -212,7 +212,7 @@ export const CategoryCard = memo(function CategoryCard({
             type="button"
             onClick={() => onStartRename(category)}
             aria-label="Rename"
-            className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60"
+            className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-frost/60"
             style={{ color: 'var(--ink-2)', touchAction: 'manipulation' }}
           >
             <Pencil aria-hidden="true" className="h-4 w-4" strokeWidth={2.3} />
@@ -222,7 +222,7 @@ export const CategoryCard = memo(function CategoryCard({
             onClick={() => onToggleColorEditor(category)}
             aria-label="Edit color"
             aria-expanded={isColorEditing}
-            className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60"
+            className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-frost/60"
             style={{ color: 'var(--ink-2)', touchAction: 'manipulation' }}
           >
             <Palette aria-hidden="true" className="h-4 w-4" strokeWidth={2.2} />

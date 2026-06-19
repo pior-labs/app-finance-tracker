@@ -4,6 +4,7 @@ import type { LucideIcon } from 'lucide-react';
 import { FolderTree, LayoutDashboard, ReceiptText, ScanSearch, Tags } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { BrandMark } from '@/components/BrandMark';
+import { ThemeSwitcher } from '@/components/ThemeSwitcher';
 import { ToastViewport } from '@/hooks/useToast';
 import { useUncategorizedCount } from '@/hooks/useUncategorizedCount';
 
@@ -173,7 +174,7 @@ export function AppShell() {
           aria-hidden="true"
           style={{ transition: 'opacity 300ms ease-out' }}
           className={[
-            'pointer-events-none absolute inset-0 border-b border-white/70 bg-[rgba(255,252,244,0.85)] backdrop-blur-xl backdrop-saturate-150',
+            'pointer-events-none absolute inset-0 border-b border-frost/70 bg-[rgba(var(--surface-rgb),0.85)] backdrop-blur-xl backdrop-saturate-150',
             scrolled ? 'opacity-0' : 'opacity-100',
           ].join(' ')}
         />
@@ -221,7 +222,7 @@ export function AppShell() {
       <div className="relative z-2 mx-auto grid max-w-330 grid-cols-1 gap-0 px-4 pt-[calc(68px+env(safe-area-inset-top))] pb-12 md:grid-cols-[220px_1fr] md:gap-7 md:px-8 md:pt-6 md:pb-15">
         <aside
           id="bloom-desktop-nav"
-          className="hidden flex-col gap-1.5 rounded-4xl border border-white/80 bg-[rgba(255,252,244,0.55)] p-[22px_16px_18px] shadow-[0_8px_32px_rgba(45,36,24,0.07),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150 md:sticky md:top-6 md:flex md:max-h-[calc(100vh-52px)] md:self-start md:overflow-y-auto"
+          className="hidden flex-col gap-1.5 rounded-4xl border border-frost/80 bg-[rgba(var(--surface-rgb),0.55)] p-[22px_16px_18px] shadow-[0_8px_32px_rgba(45,36,24,0.07),inset_0_0_0_1px_rgba(var(--frost-rgb),0.5)] backdrop-blur-xl backdrop-saturate-150 md:sticky md:top-6 md:flex md:max-h-[calc(100vh-52px)] md:self-start md:overflow-y-auto"
         >
           <Link
             to="/"
@@ -244,7 +245,7 @@ export function AppShell() {
                     <NavIcon active={isActive} icon={item.icon} />
                     <span className="flex-1">{item.name}</span>
                     {item.badgeKey === 'uncategorized' && uncategorizedTotal > 0 && (
-                      <span className="ml-auto rounded-full bg-[linear-gradient(135deg,#f8d7c0,#f5b893)] px-2.5 py-px font-serif text-xs font-semibold text-[#6b3a1f] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+                      <span className="ml-auto rounded-full bg-[linear-gradient(135deg,#f8d7c0,#f5b893)] px-2.5 py-px font-serif text-xs font-semibold text-[#6b3a1f] shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.5)]">
                         {uncategorizedTotal}
                       </span>
                     )}
@@ -281,11 +282,11 @@ export function AppShell() {
               aria-haspopup="menu"
               aria-expanded={profileMenuOpen}
               className={[
-                'flex w-full cursor-pointer items-center gap-2.5 rounded-2xl border-0 bg-transparent p-[8px_10px] text-left font-[inherit] transition-colors hover:bg-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
-                profileMenuOpen ? 'bg-white/70' : '',
+                'flex w-full cursor-pointer items-center gap-2.5 rounded-2xl border-0 bg-transparent p-[8px_10px] text-left font-[inherit] transition-colors hover:bg-frost/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
+                profileMenuOpen ? 'bg-frost/70' : '',
               ].join(' ')}
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#dcd3f0,#f8d7c0)] font-serif text-[15px] text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#dcd3f0,#f8d7c0)] font-serif text-[15px] text-ink shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.6)]">
                 {user?.name?.[0]?.toUpperCase() ?? '?'}
               </span>
               <span className="flex min-w-0 flex-1 flex-col leading-[1.15]">
@@ -296,8 +297,10 @@ export function AppShell() {
             {profileMenuOpen && (
               <div
                 role="menu"
-                className="absolute bottom-full left-0 right-0 z-20 mb-1 rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150"
+                className="absolute bottom-full left-0 right-0 z-20 mb-1 rounded-[18px] border border-frost/80 bg-[rgba(var(--surface-rgb),0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(var(--frost-rgb),0.5)] backdrop-blur-xl backdrop-saturate-150"
               >
+                <ThemeSwitcher />
+                <div className="my-1 border-t border-dashed border-ink/10" />
                 <button
                   type="button"
                   role="menuitem"
@@ -328,7 +331,7 @@ function navLinkClass(isActive: boolean) {
     'flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm font-medium no-underline transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream';
   return isActive
     ? `${base} bg-ink text-cream shadow-[0_6px_18px_-6px_rgba(45,36,24,0.35)]`
-    : `${base} text-ink-2 hover:bg-white/50 hover:text-ink`;
+    : `${base} text-ink-2 hover:bg-frost/50 hover:text-ink`;
 }
 
 function NavIcon({ active, icon: Icon }: { active: boolean; icon: LucideIcon }) {
@@ -336,7 +339,7 @@ function NavIcon({ active, icon: Icon }: { active: boolean; icon: LucideIcon }) 
     <span
       className={[
         'inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full text-xs shadow-[inset_0_0_0_1px_rgba(45,36,24,0.08)]',
-        active ? 'bg-pistachio text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)]' : 'bg-white/70 text-ink-2',
+        active ? 'bg-pistachio text-ink shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.4)]' : 'bg-frost/70 text-ink-2',
       ].join(' ')}
       style={{ width: 22, height: 22 }}
     >
@@ -387,7 +390,7 @@ function MobileNavOverlay({ navRef, uncategorizedTotal, userName, onClose, onSig
           type="button"
           aria-label="Close navigation"
           onClick={onClose}
-          className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-ink/10 bg-white/60 p-0 text-ink shadow-[0_4px_14px_-4px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-md transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-px hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream motion-reduce:hover:translate-y-0"
+          className="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-ink/10 bg-frost/60 p-0 text-ink shadow-[0_4px_14px_-4px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(var(--frost-rgb),0.5)] backdrop-blur-md transition-[transform,box-shadow,background-color] duration-200 ease-out hover:-translate-y-px hover:bg-frost/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream motion-reduce:hover:translate-y-0"
         >
           <CloseIcon />
         </button>
@@ -433,7 +436,7 @@ function MobileNavOverlay({ navRef, uncategorizedTotal, userName, onClose, onSig
                       {item.name}
                     </span>
                     {item.badgeKey === 'uncategorized' && uncategorizedTotal > 0 && (
-                      <span className="rounded-full bg-[linear-gradient(135deg,#f8d7c0,#f5b893)] px-2.5 py-0.5 font-serif text-xs font-semibold text-[#6b3a1f] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+                      <span className="rounded-full bg-[linear-gradient(135deg,#f8d7c0,#f5b893)] px-2.5 py-0.5 font-serif text-xs font-semibold text-[#6b3a1f] shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.5)]">
                         {uncategorizedTotal}
                       </span>
                     )}
@@ -450,9 +453,13 @@ function MobileNavOverlay({ navRef, uncategorizedTotal, userName, onClose, onSig
         })}
       </nav>
 
+      <div className="relative border-t border-dashed border-ink/15 px-4 pt-3 pb-1">
+        <ThemeSwitcher />
+      </div>
+
       <div className="relative flex items-center justify-between gap-3 border-t border-dashed border-ink/15 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#dcd3f0,#f8d7c0)] font-serif text-[16px] text-ink shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#dcd3f0,#f8d7c0)] font-serif text-[16px] text-ink shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.6)]">
             {userName?.[0]?.toUpperCase() ?? '?'}
           </span>
           <span className="flex min-w-0 flex-col leading-[1.15]">

@@ -44,11 +44,11 @@ export const DeleteCategoryModal = memo(function DeleteCategoryModal({
       <div
         className="relative w-full max-w-md rounded-t-[28px] border p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] sm:rounded-[28px] sm:p-7 sm:pb-7"
         style={{
-          background: 'rgba(255,253,247,0.94)',
-          borderColor: 'rgba(255,255,255,0.8)',
+          background: 'rgba(var(--surface-rgb),0.94)',
+          borderColor: 'rgba(var(--frost-rgb),0.8)',
           backdropFilter: 'blur(24px) saturate(140%)',
           WebkitBackdropFilter: 'blur(24px) saturate(140%)',
-          boxShadow: '0 24px 60px -12px rgba(45,36,24,0.25), inset 0 0 0 1px rgba(255,255,255,0.5)',
+          boxShadow: '0 24px 60px -12px rgba(45,36,24,0.25), inset 0 0 0 1px rgba(var(--frost-rgb),0.5)',
         }}
       >
         <div className="mb-4 flex items-center justify-between gap-3 sm:mb-5">
@@ -64,7 +64,7 @@ export const DeleteCategoryModal = memo(function DeleteCategoryModal({
             onClick={onClose}
             disabled={deleting}
             aria-label="Close"
-            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 text-sm transition-colors hover:bg-white/80 disabled:opacity-50 sm:h-7 sm:w-7 sm:text-xs"
+            className="flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 text-sm transition-colors hover:bg-frost/80 disabled:opacity-50 sm:h-7 sm:w-7 sm:text-xs"
             style={{ color: 'var(--ink-3)', touchAction: 'manipulation' }}
           >
             <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
@@ -81,7 +81,7 @@ export const DeleteCategoryModal = memo(function DeleteCategoryModal({
             type="button"
             onClick={onClose}
             disabled={deleting}
-            className="min-h-11 cursor-pointer rounded-full border bg-transparent px-5 py-2.5 text-sm font-medium transition-colors hover:bg-white/50 disabled:opacity-50"
+            className="min-h-11 cursor-pointer rounded-full border bg-transparent px-5 py-2.5 text-sm font-medium transition-colors hover:bg-frost/50 disabled:opacity-50"
             style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)', touchAction: 'manipulation' }}
           >
             Cancel

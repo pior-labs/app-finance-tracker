@@ -1,7 +1,19 @@
 @import "tailwindcss";
 
-:root {
-  /* Bloom palette — current design system */
+/*
+ * ============================================================================
+ *  THEME SYSTEM
+ *  Every color a theme can change lives in the `:root` token block below.
+ *  A theme is just a `[data-theme="…"]` block that overrides those tokens —
+ *  no component edits required. The active theme is set on <html data-theme>
+ *  by the theme switcher (see hooks/useTheme.tsx). To add a theme, copy the
+ *  `[data-theme="midnight"]` block, rename it, and recolor the tokens.
+ * ============================================================================
+ */
+
+:root,
+[data-theme="bloom"] {
+  /* Bloom palette — default (warm light) */
   --cream: #fdf9f0;
   --pistachio: #cae0a8;
   --peach: #f8d7c0;
@@ -10,6 +22,27 @@
   --ink-2: #574532;
   --ink-3: #9c8a73;
   --accent: #c5704a;
+
+  /* Themeable surfaces — referenced by components as rgba(var(--…), α) */
+  --surface-rgb: 255, 253, 247; /* frosted glass card fill */
+  --frost-rgb: 255, 255, 255;   /* inline highlights / inset rims */
+  --frost: #ffffff;             /* `*-frost/α` utility color (borders, fills) */
+
+  /* Animated mesh blobs + atmosphere */
+  --blob-1: #cae0a8;
+  --blob-2: #f8d7c0;
+  --blob-3: #dcd3f0;
+  --blob-4: #f5e3a0;
+  --blob-5: #c6e3d4;
+  --blob-blend: multiply;
+  --blob-opacity: 0.8;
+  --grain-opacity: 0.45;
+
+  /* Glass helper surface */
+  --glass-bg: rgba(var(--surface-rgb), 0.55);
+  --glass-border: rgba(var(--frost-rgb), 0.8);
+  --glass-shadow: 0 14px 44px -10px rgba(45, 36, 24, 0.1),
+    inset 0 0 0 1px rgba(var(--frost-rgb), 0.45);
 
   /* Sketch palette — legacy, retained for components/ui base */
   --background: #f0eee9;
@@ -52,6 +85,7 @@
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
   --color-accent: var(--accent);
+  --color-frost: var(--frost);
 
   /* Sketch palette */
   --color-background: var(--background);
@@ -90,6 +124,97 @@
   --animate-bloom-toast-in: bloom-toast-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   --animate-bloom-overlay-in: bloom-overlay-in 0.55s cubic-bezier(0.22, 1, 0.36, 1);
   --animate-bloom-overlay-item-in: bloom-overlay-item-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ *  Midnight — deep indigo, steel-blue glass, electric-azure accent.
+ *  A darker, more restrained scheme. Frost flips from white to cool slate so
+ *  every frosted panel reads as smoked glass instead of bright white.
+ * ────────────────────────────────────────────────────────────────────────── */
+[data-theme="midnight"] {
+  color-scheme: dark;
+
+  --cream: #0c1322;   /* page backdrop */
+  --ink: #e9eef7;     /* primary text */
+  --ink-2: #a7b4cc;   /* secondary text */
+  --ink-3: #6a7894;   /* muted text */
+  --accent: #5b9dff;  /* electric azure */
+  --pistachio: #2f6d6a; /* repurposed accent tints */
+  --peach: #314a7a;
+  --lavender: #2c3b66;
+
+  --surface-rgb: 28, 40, 66;     /* steel-navy glass fill */
+  --frost-rgb: 132, 150, 188;    /* cool highlight instead of white */
+  --frost: #8496bc;
+
+  --blob-1: #1d3a6b;
+  --blob-2: #163a5c;
+  --blob-3: #2a2f6b;
+  --blob-4: #14506b;
+  --blob-5: #1a2a52;
+  --blob-blend: screen;          /* lighten on dark so the mesh glows softly */
+  --blob-opacity: 0.55;
+  --grain-opacity: 0.22;
+
+  --glass-bg: rgba(var(--surface-rgb), 0.55);
+  --glass-border: rgba(var(--frost-rgb), 0.22);
+  --glass-shadow: 0 18px 50px -16px rgba(0, 0, 0, 0.6),
+    inset 0 0 0 1px rgba(var(--frost-rgb), 0.14);
+
+  /* Legacy sketch tokens used by components/ui base */
+  --background: #0c1322;
+  --foreground: #e9eef7;
+  --card: #131d33;
+  --card-foreground: #e9eef7;
+  --muted: #18233c;
+  --muted-foreground: #8493ad;
+  --border: #2b3a5c;
+  --border-soft: rgba(232, 238, 247, 0.18);
+  --primary: #5b9dff;
+  --primary-foreground: #0c1322;
+  --primary-soft: #213251;
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ *  Slate — cool neutral light. Professional, low-chroma alternative to Bloom.
+ * ────────────────────────────────────────────────────────────────────────── */
+[data-theme="slate"] {
+  --cream: #eef1f6;
+  --ink: #1e2733;
+  --ink-2: #4a5566;
+  --ink-3: #8794a6;
+  --accent: #3b6ea5;
+  --pistachio: #b6cfd6;
+  --peach: #d8dee9;
+  --lavender: #ccd3e3;
+
+  --surface-rgb: 255, 255, 255;
+  --frost-rgb: 255, 255, 255;
+  --frost: #ffffff;
+
+  --blob-1: #cdd9e6;
+  --blob-2: #dfe5ee;
+  --blob-3: #d2dae8;
+  --blob-4: #e6ebf2;
+  --blob-5: #cfe0e4;
+  --blob-blend: multiply;
+  --blob-opacity: 0.7;
+  --grain-opacity: 0.18;
+
+  --glass-bg: rgba(var(--surface-rgb), 0.6);
+  --glass-border: rgba(var(--frost-rgb), 0.8);
+  --glass-shadow: 0 14px 44px -12px rgba(30, 39, 51, 0.14),
+    inset 0 0 0 1px rgba(var(--frost-rgb), 0.5);
+
+  /* Legacy sketch tokens (overscroll backdrop + components/ui base) */
+  --background: #eef1f6;
+  --foreground: #1e2733;
+  --card: #ffffff;
+  --card-foreground: #1e2733;
+  --muted: #e4e8f0;
+  --muted-foreground: #6b7689;
+  --border: #c2cad8;
+  --border-soft: rgba(30, 39, 51, 0.2);
 }
 
 @keyframes bloom-drift {
@@ -216,19 +341,19 @@
 /* ---------- Bloom shared helpers ---------- */
 
 /* Animated soft-blob mesh background */
-.bloom-mesh { position: fixed; inset: 0; z-index: 0; filter: blur(60px); pointer-events: none; opacity: 0.8; overflow: hidden; }
-.bloom-blob { position: absolute; border-radius: 9999px; mix-blend-mode: multiply; animation: var(--animate-bloom-drift); }
-.bloom-blob.b1 { width: 50vw; height: 50vw; top: -10vw; left: -10vw; background: #cae0a8; }
-.bloom-blob.b2 { width: 45vw; height: 45vw; top: 10vw; right: -15vw; background: #f8d7c0; animation-direction: alternate-reverse; animation-duration: 28s; }
-.bloom-blob.b3 { width: 40vw; height: 40vw; bottom: -10vw; left: 15vw; background: #dcd3f0; animation-duration: 26s; }
-.bloom-blob.b4 { width: 30vw; height: 30vw; top: 40vw; left: 30vw; background: #f5e3a0; opacity: 0.7; animation-direction: alternate-reverse; animation-duration: 32s; }
-.bloom-blob.b5 { width: 28vw; height: 28vw; bottom: 5vw; right: 10vw; background: #c6e3d4; animation-duration: 30s; }
+.bloom-mesh { position: fixed; inset: 0; z-index: 0; filter: blur(60px); pointer-events: none; opacity: var(--blob-opacity); overflow: hidden; }
+.bloom-blob { position: absolute; border-radius: 9999px; mix-blend-mode: var(--blob-blend); animation: var(--animate-bloom-drift); }
+.bloom-blob.b1 { width: 50vw; height: 50vw; top: -10vw; left: -10vw; background: var(--blob-1); }
+.bloom-blob.b2 { width: 45vw; height: 45vw; top: 10vw; right: -15vw; background: var(--blob-2); animation-direction: alternate-reverse; animation-duration: 28s; }
+.bloom-blob.b3 { width: 40vw; height: 40vw; bottom: -10vw; left: 15vw; background: var(--blob-3); animation-duration: 26s; }
+.bloom-blob.b4 { width: 30vw; height: 30vw; top: 40vw; left: 30vw; background: var(--blob-4); opacity: 0.7; animation-direction: alternate-reverse; animation-duration: 32s; }
+.bloom-blob.b5 { width: 28vw; height: 28vw; bottom: 5vw; right: 10vw; background: var(--blob-5); animation-duration: 30s; }
 
 /* Grain overlay (SVG noise) */
 .bloom-grain {
   position: fixed; inset: 0; z-index: 1; pointer-events: none;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-  opacity: 0.45;
+  opacity: var(--grain-opacity);
   mix-blend-mode: multiply;
 }
 
@@ -267,19 +392,19 @@
   .bloom-blob { animation: none; }
 }
 
-/* Glass card surface (Bloom) */
+/* Glass card surface — driven by theme tokens */
 .bloom-glass {
-  background: rgba(255,253,247,0.55);
-  border: 1px solid rgba(255,255,255,0.8);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   backdrop-filter: blur(24px) saturate(140%);
   -webkit-backdrop-filter: blur(24px) saturate(140%);
-  box-shadow: 0 14px 44px -10px rgba(45,36,24,0.1), inset 0 0 0 1px rgba(255,255,255,0.45);
+  box-shadow: var(--glass-shadow);
 }
 
-/* Stat card tint variants */
-.stat-card-peach     { background: linear-gradient(135deg, rgba(248,215,192,0.75), rgba(245,227,160,0.55)); }
-.stat-card-pistachio { background: linear-gradient(135deg, rgba(202,224,168,0.75), rgba(198,227,212,0.55)); }
-.stat-card-lavender  { background: linear-gradient(135deg, rgba(220,211,240,0.75), rgba(248,215,192,0.4)); }
+/* Stat card tint variants — recoloured by the theme's accent tints */
+.stat-card-peach     { background: linear-gradient(135deg, color-mix(in srgb, var(--peach) 80%, transparent), color-mix(in srgb, var(--peach) 45%, transparent)); }
+.stat-card-pistachio { background: linear-gradient(135deg, color-mix(in srgb, var(--pistachio) 80%, transparent), color-mix(in srgb, var(--pistachio) 45%, transparent)); }
+.stat-card-lavender  { background: linear-gradient(135deg, color-mix(in srgb, var(--lavender) 80%, transparent), color-mix(in srgb, var(--lavender) 45%, transparent)); }
 
 /* Action-card radial background overlay */
 .action-bg {
@@ -287,11 +412,11 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(circle at 10% 100%, rgba(202,224,168,0.5), transparent 40%),
-    radial-gradient(circle at 90% 0%, rgba(248,215,192,0.6), transparent 50%);
+    radial-gradient(circle at 10% 100%, color-mix(in srgb, var(--pistachio) 55%, transparent), transparent 40%),
+    radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--peach) 60%, transparent), transparent 50%);
 }
 .action-bg.all-caught {
   background:
-    radial-gradient(circle at 10% 100%, rgba(202,224,168,0.7), transparent 50%),
-    radial-gradient(circle at 90% 0%, rgba(198,227,212,0.6), transparent 50%);
+    radial-gradient(circle at 10% 100%, color-mix(in srgb, var(--pistachio) 70%, transparent), transparent 50%),
+    radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--lavender) 60%, transparent), transparent 50%);
 }

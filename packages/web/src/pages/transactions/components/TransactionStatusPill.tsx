@@ -19,7 +19,7 @@ export function TransactionStatusPill({
         style={{
           background: 'rgba(202,224,168,0.6)',
           color: '#3d6b1f',
-          border: '1px solid rgba(255,255,255,0.5)',
+          border: '1px solid rgba(var(--frost-rgb),0.5)',
         }}
       >
         <Check aria-hidden="true" className="h-3 w-3" strokeWidth={2.6} />
@@ -34,7 +34,7 @@ export function TransactionStatusPill({
       style={{
         background: 'rgba(248,215,192,0.6)',
         color: 'var(--ink-2)',
-        border: '1px solid rgba(255,255,255,0.5)',
+        border: '1px solid rgba(var(--frost-rgb),0.5)',
       }}
     >
       <AlertCircle aria-hidden="true" className="h-3 w-3" strokeWidth={2.4} />

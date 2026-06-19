@@ -12,8 +12,8 @@ export const CategoriesLoadingState = memo(function CategoriesLoadingState() {
           aria-hidden="true"
           className="h-16 animate-pulse rounded-[22px] border"
           style={{
-            background: 'rgba(255,253,247,0.5)',
-            borderColor: 'rgba(255,255,255,0.6)',
+            background: 'rgba(var(--surface-rgb),0.5)',
+            borderColor: 'rgba(var(--frost-rgb),0.6)',
             animationDelay: `${index * 0.08}s`,
           }}
         />

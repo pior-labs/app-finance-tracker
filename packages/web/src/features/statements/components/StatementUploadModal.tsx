@@ -115,11 +115,11 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
       <div
         className="relative w-full max-w-lg rounded-[28px] border p-7"
         style={{
-          background: 'rgba(255,253,247,0.94)',
-          borderColor: 'rgba(255,255,255,0.8)',
+          background: 'rgba(var(--surface-rgb),0.94)',
+          borderColor: 'rgba(var(--frost-rgb),0.8)',
           backdropFilter: 'blur(24px) saturate(140%)',
           WebkitBackdropFilter: 'blur(24px) saturate(140%)',
-          boxShadow: '0 24px 60px -12px rgba(45,36,24,0.25), inset 0 0 0 1px rgba(255,255,255,0.5)',
+          boxShadow: '0 24px 60px -12px rgba(45,36,24,0.25), inset 0 0 0 1px rgba(var(--frost-rgb),0.5)',
         }}
       >
         {/* Header */}
@@ -133,7 +133,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
           <button
             onClick={handleClose}
             aria-label="Close upload dialog"
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 transition-colors hover:bg-white/80"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 transition-colors hover:bg-frost/80"
             style={{ color: 'var(--ink-3)' }}
           >
             <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.25} />
@@ -153,7 +153,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
                 borderColor: dragOver ? 'rgba(142,181,103,0.6)' : 'rgba(45,36,24,0.15)',
                 background: dragOver
                   ? 'linear-gradient(135deg, rgba(202,224,168,0.3), rgba(198,227,212,0.2))'
-                  : 'rgba(255,255,255,0.3)',
+                  : 'rgba(var(--frost-rgb),0.3)',
               }}
             >
               {/* PDF badge */}
@@ -162,7 +162,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
                 style={{
                   background: 'linear-gradient(135deg, rgba(220,211,240,0.5), rgba(248,215,192,0.4))',
                   color: 'var(--ink-3)',
-                  border: '1px solid rgba(255,255,255,0.6)',
+                  border: '1px solid rgba(var(--frost-rgb),0.6)',
                   boxShadow: '0 4px 14px -4px rgba(45,36,24,0.08)',
                 }}
               >
@@ -194,7 +194,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
             <div className="mt-4 flex justify-end">
               <button
                 onClick={handleClose}
-                className="cursor-pointer rounded-full border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50"
+                className="cursor-pointer rounded-full border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-frost/50"
                 style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)' }}
               >
                 Cancel
@@ -209,8 +209,8 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
             <div
               className="flex flex-col items-center gap-4 rounded-[20px] border p-10 text-center"
               style={{
-                background: 'rgba(255,255,255,0.3)',
-                borderColor: 'rgba(255,255,255,0.7)',
+                background: 'rgba(var(--frost-rgb),0.3)',
+                borderColor: 'rgba(var(--frost-rgb),0.7)',
               }}
             >
               <span
@@ -218,7 +218,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
                 style={{
                   background: 'linear-gradient(135deg, rgba(202,224,168,0.5), rgba(248,215,192,0.3))',
                   color: 'var(--ink-3)',
-                  border: '1px solid rgba(255,255,255,0.6)',
+                  border: '1px solid rgba(var(--frost-rgb),0.6)',
                 }}
               >
                 PDF
@@ -234,7 +234,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
                   className="h-full w-3/5 animate-pulse rounded-full"
                   style={{
                     background: 'linear-gradient(90deg, #cae0a8, #8eb567)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)',
+                    boxShadow: 'inset 0 1px 0 rgba(var(--frost-rgb),0.5)',
                   }}
                 />
               </div>
@@ -245,7 +245,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
             <div className="mt-4 flex justify-end">
               <button
                 onClick={handleClose}
-                className="cursor-pointer rounded-full border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50"
+                className="cursor-pointer rounded-full border bg-transparent px-4 py-2 text-sm font-medium transition-colors hover:bg-frost/50"
                 style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)' }}
               >
                 Cancel
@@ -261,7 +261,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
               className="rounded-[20px] border p-5"
               style={{
                 background: 'linear-gradient(135deg, rgba(202,224,168,0.35), rgba(198,227,212,0.2))',
-                borderColor: 'rgba(255,255,255,0.6)',
+                borderColor: 'rgba(var(--frost-rgb),0.6)',
               }}
             >
               <div className="flex items-center gap-3.5">
@@ -299,7 +299,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
             <div className="mt-5 flex justify-end gap-2.5">
               <button
                 onClick={handleClose}
-                className="cursor-pointer rounded-full border bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/50"
+                className="cursor-pointer rounded-full border bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:bg-frost/50"
                 style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)' }}
               >
                 Close
@@ -328,7 +328,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
               className="rounded-[20px] border p-5"
               style={{
                 background: 'linear-gradient(135deg, rgba(248,215,192,0.4), rgba(245,227,160,0.2))',
-                borderColor: 'rgba(255,255,255,0.6)',
+                borderColor: 'rgba(var(--frost-rgb),0.6)',
               }}
             >
               <div className="flex items-center gap-3.5">
@@ -362,14 +362,14 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
             <div className="mt-5 flex justify-end gap-2.5">
               <button
                 onClick={handleClose}
-                className="cursor-pointer rounded-full border bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/50"
+                className="cursor-pointer rounded-full border bg-transparent px-4 py-2.5 text-sm font-medium transition-colors hover:bg-frost/50"
                 style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink-2)', borderColor: 'rgba(45,36,24,0.15)' }}
               >
                 Cancel
               </button>
               <button
                 onClick={reset}
-                className="cursor-pointer rounded-full border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/50"
+                className="cursor-pointer rounded-full border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-frost/50"
                 style={{
                   fontFamily: "'Outfit', sans-serif",
                   color: 'var(--ink)',

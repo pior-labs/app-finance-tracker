@@ -41,7 +41,7 @@ export const TransactionsPagination = memo(function TransactionsPagination({
           <button
             type="button"
             onClick={onPreviousPage}
-            className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors hover:bg-white/50"
+            className="inline-flex min-h-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border px-4 py-2 text-sm font-medium transition-colors hover:bg-frost/50"
             style={{
               fontFamily: "'Outfit', sans-serif",
               color: 'var(--ink-2)',

@@ -12,8 +12,8 @@ export const CategoriesEmptyState = memo(function CategoriesEmptyState({
     <section
       className="rounded-[24px] border px-5 py-12 text-center"
       style={{
-        background: 'rgba(255,253,247,0.55)',
-        borderColor: 'rgba(255,255,255,0.8)',
+        background: 'rgba(var(--surface-rgb),0.55)',
+        borderColor: 'rgba(var(--frost-rgb),0.8)',
         backdropFilter: 'blur(20px) saturate(140%)',
         WebkitBackdropFilter: 'blur(20px) saturate(140%)',
       }}

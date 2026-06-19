@@ -50,11 +50,11 @@ export const StatementsEmptyState = memo(function StatementsEmptyState({
     <div
       className="rounded-[24px] border p-8 text-center"
       style={{
-        background: 'rgba(255,253,247,0.55)',
-        borderColor: 'rgba(255,255,255,0.8)',
+        background: 'rgba(var(--surface-rgb),0.55)',
+        borderColor: 'rgba(var(--frost-rgb),0.8)',
         backdropFilter: 'blur(24px) saturate(140%)',
         WebkitBackdropFilter: 'blur(24px) saturate(140%)',
-        boxShadow: '0 14px 44px -10px rgba(45,36,24,0.1), inset 0 0 0 1px rgba(255,255,255,0.45)',
+        boxShadow: '0 14px 44px -10px rgba(45,36,24,0.1), inset 0 0 0 1px rgba(var(--frost-rgb),0.45)',
       }}
     >
       <div className="mx-auto flex flex-col items-center gap-4">{content}</div>

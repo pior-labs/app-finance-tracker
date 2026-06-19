@@ -46,7 +46,7 @@ function SummaryStatsGridComponent({
           preserveAspectRatio="none"
           aria-hidden="true"
         >
-          <path d="M0 28 Q 25 18 50 22 T 100 24 T 150 16 T 200 22 L 200 40 L 0 40 Z" fill="rgba(255,255,255,0.4)" />
+          <path d="M0 28 Q 25 18 50 22 T 100 24 T 150 16 T 200 22 L 200 40 L 0 40 Z" fill="rgba(var(--frost-rgb),0.4)" />
           <path d="M0 28 Q 25 18 50 22 T 100 24 T 150 16 T 200 22" stroke="#9c5a3a" strokeWidth="1.5" fill="none" />
         </svg>
       </StatCard>

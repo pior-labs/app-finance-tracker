@@ -17,7 +17,7 @@ export const StatementStatusPill = memo(function StatementStatusPill({
         style={{
           background: 'rgba(248,215,192,0.7)',
           color: 'var(--accent)',
-          border: '1px solid rgba(255,255,255,0.5)',
+          border: '1px solid rgba(var(--frost-rgb),0.5)',
         }}
       >
         failed
@@ -31,7 +31,7 @@ export const StatementStatusPill = memo(function StatementStatusPill({
       style={{
         background: 'rgba(202,224,168,0.6)',
         color: '#3d6b1f',
-        border: '1px solid rgba(255,255,255,0.5)',
+        border: '1px solid rgba(var(--frost-rgb),0.5)',
       }}
     >
       <Check aria-hidden="true" className="h-3 w-3" />

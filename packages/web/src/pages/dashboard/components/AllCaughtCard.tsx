@@ -27,7 +27,7 @@ export function AllCaughtCard({
       <div className="relative z-1">
         <div
           className={[
-            'inline-flex items-center gap-1.5 rounded-full border border-white/60 px-3.5 py-1.5 text-[13px] font-medium',
+            'inline-flex items-center gap-1.5 rounded-full border border-frost/60 px-3.5 py-1.5 text-[13px] font-medium',
             tagClass,
           ].join(' ')}
         >

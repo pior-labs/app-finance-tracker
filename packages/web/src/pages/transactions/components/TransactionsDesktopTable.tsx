@@ -45,11 +45,11 @@ export const TransactionsDesktopTable = memo(function TransactionsDesktopTable({
       aria-busy={loading}
       className="hidden min-h-0 flex-1 overflow-hidden rounded-[28px] border md:block"
       style={{
-        background: 'rgba(255,253,247,0.55)',
-        borderColor: 'rgba(255,255,255,0.8)',
+        background: 'rgba(var(--surface-rgb),0.55)',
+        borderColor: 'rgba(var(--frost-rgb),0.8)',
         backdropFilter: 'blur(24px) saturate(140%)',
         WebkitBackdropFilter: 'blur(24px) saturate(140%)',
-        boxShadow: '0 14px 44px -10px rgba(45,36,24,0.1), inset 0 0 0 1px rgba(255,255,255,0.45)',
+        boxShadow: '0 14px 44px -10px rgba(45,36,24,0.1), inset 0 0 0 1px rgba(var(--frost-rgb),0.45)',
       }}
     >
       <div className="h-full overflow-x-auto">
@@ -79,7 +79,7 @@ export const TransactionsDesktopTable = memo(function TransactionsDesktopTable({
                     <div
                       className="h-4 animate-pulse rounded-full"
                       style={{
-                        background: 'rgba(255,253,247,0.6)',
+                        background: 'rgba(var(--surface-rgb),0.6)',
                         width: `${65 + (index % 3) * 12}%`,
                         animationDelay: `${index * 0.08}s`,
                       }}
@@ -178,7 +178,7 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
         if (node) rowRefs.current.set(transaction.id, node);
         else rowRefs.current.delete(transaction.id);
       }}
-      className={`border-b border-dashed transition-colors ${isFocused ? 'bg-(--accent)/15' : 'hover:bg-white/40'}`}
+      className={`border-b border-dashed transition-colors ${isFocused ? 'bg-(--accent)/15' : 'hover:bg-frost/40'}`}
       style={{
         borderColor: 'rgba(45,36,24,0.08)',
         ...(rowHeightPx ? { height: `${rowHeightPx}px` } : {}),
@@ -194,7 +194,7 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
             onChange={(event) => setMerchant(event.target.value)}
             disabled={isBusy}
             aria-label={`Merchant for transaction ${transaction.id}`}
-            className="h-9 w-full rounded-xl border border-white/70 bg-white/60 px-3 text-[13px] outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
+            className="h-9 w-full rounded-xl border border-frost/70 bg-frost/60 px-3 text-[13px] outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
             style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
           />
         ) : (
@@ -211,7 +211,7 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
             disabled={isBusy}
             required
             aria-label={`Description for transaction ${transaction.id}`}
-            className="h-9 w-full rounded-xl border border-white/70 bg-white/60 px-3 text-[13px] outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
+            className="h-9 w-full rounded-xl border border-frost/70 bg-frost/60 px-3 text-[13px] outline-none focus:ring-2 focus:ring-(--accent)/30 disabled:opacity-50"
             style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--ink)' }}
           />
         ) : (
@@ -252,7 +252,7 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
                 onClick={() => void saveEdit()}
                 disabled={isBusy || description.trim().length === 0}
                 aria-label={`Save transaction ${transaction.id}`}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/50 text-xs transition-colors hover:bg-white/85 disabled:cursor-default disabled:opacity-50"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-frost/50 text-xs transition-colors hover:bg-frost/85 disabled:cursor-default disabled:opacity-50"
                 style={{ color: '#3d6b1f' }}
                 title="Save"
               >
@@ -263,7 +263,7 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
                 onClick={cancelEdit}
                 disabled={isBusy}
                 aria-label={`Cancel editing transaction ${transaction.id}`}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/40 text-xs transition-colors hover:bg-white/80 disabled:cursor-default disabled:opacity-50"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-frost/40 text-xs transition-colors hover:bg-frost/80 disabled:cursor-default disabled:opacity-50"
                 style={{ color: 'var(--ink-2)' }}
                 title="Cancel"
               >
@@ -274,7 +274,7 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
                 onClick={() => onDeleteTransaction(transaction)}
                 disabled={isBusy}
                 aria-label={`Delete transaction ${transaction.id}`}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-default disabled:opacity-50"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-frost/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-default disabled:opacity-50"
                 style={{ color: 'var(--accent)' }}
                 title="Delete"
               >
@@ -287,7 +287,7 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
               onClick={() => setIsEditing(true)}
               disabled={isBusy}
               aria-label={`Edit transaction ${transaction.id}`}
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-white/40 text-xs transition-colors hover:bg-white/80 disabled:cursor-default disabled:opacity-50"
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-frost/40 text-xs transition-colors hover:bg-frost/80 disabled:cursor-default disabled:opacity-50"
               style={{ color: 'var(--ink-2)' }}
               title="Edit"
             >
@@ -323,7 +323,7 @@ export function CategorySelect({
         <span
           aria-hidden="true"
           className={`${mobile ? 'pointer-events-none absolute left-3' : 'absolute left-2.5'} h-2 w-2 rounded-full`}
-          style={{ background: categoryColor, boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.5)' }}
+          style={{ background: categoryColor, boxShadow: 'inset 0 0 0 1px rgba(var(--frost-rgb),0.5)' }}
         />
       ) : null}
       <select
@@ -338,8 +338,8 @@ export function CategorySelect({
         aria-label={`Set category for transaction ${transaction.id}`}
         className={
           mobile
-            ? 'h-11 w-full min-w-0 cursor-pointer appearance-none rounded-full border border-white/70 bg-white/50 pr-7 text-[13px] font-medium outline-none transition-colors hover:bg-white/80 focus:ring-2 focus:ring-(--accent)/30 disabled:cursor-default disabled:opacity-50'
-            : 'h-9 cursor-pointer appearance-none rounded-full border border-white/70 bg-white/50 pr-6 text-[13px] font-medium outline-none transition-colors hover:bg-white/80 focus:ring-2 focus:ring-(--accent)/30 disabled:cursor-default disabled:opacity-50'
+            ? 'h-11 w-full min-w-0 cursor-pointer appearance-none rounded-full border border-frost/70 bg-frost/50 pr-7 text-[13px] font-medium outline-none transition-colors hover:bg-frost/80 focus:ring-2 focus:ring-(--accent)/30 disabled:cursor-default disabled:opacity-50'
+            : 'h-9 cursor-pointer appearance-none rounded-full border border-frost/70 bg-frost/50 pr-6 text-[13px] font-medium outline-none transition-colors hover:bg-frost/80 focus:ring-2 focus:ring-(--accent)/30 disabled:cursor-default disabled:opacity-50'
         }
         style={{
           fontFamily: "'Outfit', sans-serif",

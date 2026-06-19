@@ -76,7 +76,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
   return (
     <div
       role={toast.variant === 'error' ? 'alert' : 'status'}
-      className="pointer-events-auto flex items-start gap-3 rounded-2xl border border-white/70 p-3.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.22),inset_0_0_0_1px_rgba(255,255,255,0.55)] backdrop-blur-xl backdrop-saturate-150 animate-bloom-toast-in motion-reduce:animate-none"
+      className="pointer-events-auto flex items-start gap-3 rounded-2xl border border-frost/70 p-3.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.22),inset_0_0_0_1px_rgba(var(--frost-rgb),0.55)] backdrop-blur-xl backdrop-saturate-150 animate-bloom-toast-in motion-reduce:animate-none"
       style={{ background: variantStyle.background }}
     >
       <span
@@ -96,7 +96,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss notification"
-        className="-mr-1 -mt-1 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-ink-3 transition-colors hover:bg-white/60 hover:text-ink"
+        className="-mr-1 -mt-1 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-ink-3 transition-colors hover:bg-frost/60 hover:text-ink"
       >
         <X aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.25} />
       </button>
@@ -109,19 +109,19 @@ const VARIANT_STYLES: Record<
   { background: string; Icon: ComponentType<SVGProps<SVGSVGElement>>; iconBg: string; iconShadow: string }
 > = {
   success: {
-    background: 'linear-gradient(135deg, rgba(202,224,168,0.85), rgba(255,253,247,0.92))',
+    background: 'linear-gradient(135deg, rgba(202,224,168,0.85), rgba(var(--surface-rgb),0.92))',
     Icon: Check,
     iconBg: 'linear-gradient(135deg, #cae0a8, #8eb567)',
     iconShadow: '0 4px 14px -2px rgba(93,138,63,0.3)',
   },
   error: {
-    background: 'linear-gradient(135deg, rgba(248,215,192,0.85), rgba(255,253,247,0.92))',
+    background: 'linear-gradient(135deg, rgba(248,215,192,0.85), rgba(var(--surface-rgb),0.92))',
     Icon: TriangleAlert,
     iconBg: 'linear-gradient(135deg, #f8d7c0, #c5704a)',
     iconShadow: '0 4px 14px -2px rgba(197,112,74,0.3)',
   },
   info: {
-    background: 'linear-gradient(135deg, rgba(220,211,240,0.85), rgba(255,253,247,0.92))',
+    background: 'linear-gradient(135deg, rgba(220,211,240,0.85), rgba(var(--surface-rgb),0.92))',
     Icon: Info,
     iconBg: 'linear-gradient(135deg, #dcd3f0, #a89bd1)',
     iconShadow: '0 4px 14px -2px rgba(120,104,170,0.3)',

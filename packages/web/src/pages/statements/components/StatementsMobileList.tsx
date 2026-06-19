@@ -45,8 +45,8 @@ export const StatementsMobileList = memo(function StatementsMobileList({
               key={row}
               className="rounded-[20px] border p-4"
               style={{
-                background: 'rgba(255,253,247,0.55)',
-                borderColor: 'rgba(255,255,255,0.8)',
+                background: 'rgba(var(--surface-rgb),0.55)',
+                borderColor: 'rgba(var(--frost-rgb),0.8)',
                 backdropFilter: 'blur(20px) saturate(140%)',
                 WebkitBackdropFilter: 'blur(20px) saturate(140%)',
               }}
@@ -81,8 +81,8 @@ export const StatementsMobileList = memo(function StatementsMobileList({
               key={statement.id}
               className="flex flex-col gap-3 rounded-[22px] border p-4"
               style={{
-                background: status === 'failed' ? 'rgba(248,215,192,0.18)' : 'rgba(255,253,247,0.55)',
-                borderColor: 'rgba(255,255,255,0.8)',
+                background: status === 'failed' ? 'rgba(248,215,192,0.18)' : 'rgba(var(--surface-rgb),0.55)',
+                borderColor: 'rgba(var(--frost-rgb),0.8)',
                 backdropFilter: 'blur(20px) saturate(140%)',
                 WebkitBackdropFilter: 'blur(20px) saturate(140%)',
                 boxShadow: '0 6px 22px -10px rgba(45,36,24,0.08)',
@@ -129,7 +129,7 @@ export const StatementsMobileList = memo(function StatementsMobileList({
                   onClick={() => onViewStatementTransactions(statement.id)}
                   aria-label="View transactions"
                   disabled={isRowPending}
-                  className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60 disabled:cursor-not-allowed disabled:opacity-55"
+                  className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-frost/60 disabled:cursor-not-allowed disabled:opacity-55"
                   style={{ color: 'var(--ink-2)', touchAction: 'manipulation' }}
                 >
                   <Eye aria-hidden="true" className={`h-4 w-4 ${isViewing ? 'animate-pulse' : ''}`} />
@@ -139,7 +139,7 @@ export const StatementsMobileList = memo(function StatementsMobileList({
                   onClick={() => onReparseStatement(statement.id)}
                   aria-label="Re-parse statement"
                   disabled={isRowPending}
-                  className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-white/60 disabled:cursor-not-allowed disabled:opacity-55"
+                  className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-frost/60 disabled:cursor-not-allowed disabled:opacity-55"
                   style={{ color: 'var(--ink-2)', touchAction: 'manipulation' }}
                 >
                   <RefreshCw aria-hidden="true" className={`h-4 w-4 ${isReparsing ? 'animate-spin' : ''}`} />

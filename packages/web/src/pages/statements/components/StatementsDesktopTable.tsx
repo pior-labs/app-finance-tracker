@@ -38,11 +38,11 @@ export const StatementsDesktopTable = memo(function StatementsDesktopTable({
       className="hidden overflow-hidden rounded-[28px] border md:block"
       aria-busy={loading}
       style={{
-        background: 'rgba(255,253,247,0.55)',
-        borderColor: 'rgba(255,255,255,0.8)',
+        background: 'rgba(var(--surface-rgb),0.55)',
+        borderColor: 'rgba(var(--frost-rgb),0.8)',
         backdropFilter: 'blur(24px) saturate(140%)',
         WebkitBackdropFilter: 'blur(24px) saturate(140%)',
-        boxShadow: '0 14px 44px -10px rgba(45,36,24,0.1), inset 0 0 0 1px rgba(255,255,255,0.45)',
+        boxShadow: '0 14px 44px -10px rgba(45,36,24,0.1), inset 0 0 0 1px rgba(var(--frost-rgb),0.45)',
       }}
     >
       <div className="overflow-x-auto">
@@ -80,7 +80,7 @@ export const StatementsDesktopTable = memo(function StatementsDesktopTable({
                       <div
                         className="h-4 animate-pulse rounded-full"
                         style={{
-                          background: 'rgba(255,253,247,0.6)',
+                          background: 'rgba(var(--surface-rgb),0.6)',
                           width: `${60 + (row % 3) * 15}%`,
                           animationDelay: `${row * 0.1}s`,
                         }}
@@ -106,7 +106,7 @@ export const StatementsDesktopTable = memo(function StatementsDesktopTable({
                 return (
                   <tr
                     key={statement.id}
-                    className="border-b border-dashed transition-colors hover:bg-white/40"
+                    className="border-b border-dashed transition-colors hover:bg-frost/40"
                     style={{
                       borderColor: 'rgba(45,36,24,0.08)',
                       background: status === 'failed' ? 'rgba(248,215,192,0.15)' : undefined,
@@ -144,7 +144,7 @@ export const StatementsDesktopTable = memo(function StatementsDesktopTable({
                           onClick={() => onViewStatementTransactions(statement.id)}
                           aria-label="View transactions"
                           disabled={isRowPending}
-                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 transition-colors hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-55"
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 transition-colors hover:bg-frost/80 disabled:cursor-not-allowed disabled:opacity-55"
                           style={{ color: 'var(--ink-2)' }}
                           title="View transactions"
                         >
@@ -155,7 +155,7 @@ export const StatementsDesktopTable = memo(function StatementsDesktopTable({
                           onClick={() => onReparseStatement(statement.id)}
                           aria-label="Re-parse statement"
                           disabled={isRowPending}
-                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 transition-colors hover:bg-white/80 disabled:cursor-not-allowed disabled:opacity-55"
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 transition-colors hover:bg-frost/80 disabled:cursor-not-allowed disabled:opacity-55"
                           style={{ color: 'var(--ink-2)' }}
                           title="Re-parse"
                         >
@@ -166,7 +166,7 @@ export const StatementsDesktopTable = memo(function StatementsDesktopTable({
                           onClick={() => onDeleteStatement(statement.id)}
                           aria-label="Delete statement"
                           disabled={isRowPending}
-                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-white/40 transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-not-allowed disabled:opacity-55"
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-not-allowed disabled:opacity-55"
                           style={{ color: 'var(--accent)' }}
                           title="Delete"
                         >

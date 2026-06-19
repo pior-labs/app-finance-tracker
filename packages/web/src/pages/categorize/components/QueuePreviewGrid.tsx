@@ -27,8 +27,8 @@ export const QueuePreviewGrid = memo(function QueuePreviewGrid({
       <div
         className="rounded-[20px] border p-4 sm:rounded-3xl sm:p-5"
         style={{
-          background: 'rgba(255,253,247,0.45)',
-          borderColor: 'rgba(255,255,255,0.7)',
+          background: 'rgba(var(--surface-rgb),0.45)',
+          borderColor: 'rgba(var(--frost-rgb),0.7)',
           backdropFilter: 'blur(20px) saturate(140%)',
           boxShadow: '0 8px 28px -8px rgba(45,36,24,0.08)',
         }}
@@ -69,7 +69,7 @@ export const QueuePreviewGrid = memo(function QueuePreviewGrid({
                     className="h-2 w-2 rounded-full"
                     style={{
                       background: tx.type === 'credit' ? '#cae0a8' : '#f8d7c0',
-                      boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.6)',
+                      boxShadow: 'inset 0 0 0 1px rgba(var(--frost-rgb),0.6)',
                     }}
                   />
                   <div className="flex min-w-0 flex-col">
@@ -96,8 +96,8 @@ export const QueuePreviewGrid = memo(function QueuePreviewGrid({
       <div
         className="rounded-[20px] border p-4 sm:rounded-3xl sm:p-5"
         style={{
-          background: 'rgba(255,253,247,0.45)',
-          borderColor: 'rgba(255,255,255,0.7)',
+          background: 'rgba(var(--surface-rgb),0.45)',
+          borderColor: 'rgba(var(--frost-rgb),0.7)',
           backdropFilter: 'blur(20px) saturate(140%)',
           boxShadow: '0 8px 28px -8px rgba(45,36,24,0.08)',
         }}
@@ -117,12 +117,12 @@ export const QueuePreviewGrid = memo(function QueuePreviewGrid({
             onClick={onUndo}
             disabled={undoStack.length === 0 || isLocked}
             aria-label="Undo last categorization"
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12px] not-italic transition-all enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:bg-white/90 disabled:cursor-default disabled:opacity-35 motion-reduce:enabled:hover:translate-y-0 sm:text-[11px]"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[12px] not-italic transition-all enabled:cursor-pointer enabled:hover:-translate-y-px enabled:hover:bg-frost/90 disabled:cursor-default disabled:opacity-35 motion-reduce:enabled:hover:translate-y-0 sm:text-[11px]"
             style={{
               fontFamily: "'Outfit', sans-serif",
               color: 'var(--ink-2)',
-              background: 'rgba(255,255,255,0.6)',
-              borderColor: 'rgba(255,255,255,0.8)',
+              background: 'rgba(var(--frost-rgb),0.6)',
+              borderColor: 'rgba(var(--frost-rgb),0.8)',
               touchAction: 'manipulation',
             }}
           >

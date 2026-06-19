@@ -36,7 +36,7 @@ function CategoryBreakdownCardComponent({
                 className="mb-1.5 flex items-baseline gap-2.5 rounded-xl text-inherit no-underline transition-colors hover:bg-ink/5"
               >
                 <span
-                  className="h-2.5 w-2.5 shrink-0 self-center rounded-full shadow-[inset_0_0_0_1px_rgba(255,255,255,0.6)]"
+                  className="h-2.5 w-2.5 shrink-0 self-center rounded-full shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.6)]"
                   style={{ background: PALETTE[i % PALETTE.length] }}
                 />
                 <span className="flex-1 text-[15px] font-medium text-ink">{c.category}</span>
@@ -46,7 +46,7 @@ function CategoryBreakdownCardComponent({
               </Link>
               <div className="h-3 overflow-hidden rounded-full bg-ink/5">
                 <div
-                  className="h-full rounded-full shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-[width] duration-600 motion-reduce:transition-none"
+                  className="h-full rounded-full shadow-[inset_0_1px_0_rgba(var(--frost-rgb),0.4)] transition-[width] duration-600 motion-reduce:transition-none"
                   style={{
                     width: `${(c.totalCents / maxCategoryCents) * 100}%`,
                     background: `linear-gradient(90deg, ${PALETTE[i % PALETTE.length]}, ${

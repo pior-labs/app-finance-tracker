@@ -153,7 +153,7 @@ function DashboardHeaderComponent({
           type="button"
           onClick={() => (pickerOpen ? closePickerAndReturnFocus() : openPicker('selected'))}
           onKeyDown={onTriggerKeyDown}
-          className="flex cursor-pointer items-center gap-2 rounded-full border border-white/80 bg-white/55 px-4 py-2 font-serif text-[15px] italic text-ink shadow-[0_6px_18px_rgba(45,36,24,0.05)] backdrop-blur-xl hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 sm:px-4.5 sm:text-[17px]"
+          className="flex cursor-pointer items-center gap-2 rounded-full border border-frost/80 bg-frost/55 px-4 py-2 font-serif text-[15px] italic text-ink shadow-[0_6px_18px_rgba(45,36,24,0.05)] backdrop-blur-xl hover:bg-frost/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 sm:px-4.5 sm:text-[17px]"
           aria-haspopup="listbox"
           aria-expanded={pickerOpen}
           aria-controls="bloom-month-listbox"
@@ -169,7 +169,7 @@ function DashboardHeaderComponent({
             tabIndex={-1}
             onKeyDown={onListboxKeyDown}
             style={pickerMenuStyle}
-            className="z-20 rounded-[18px] border border-white/80 bg-[rgba(255,253,247,0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(255,255,255,0.5)] backdrop-blur-xl backdrop-saturate-150 focus-visible:outline-none"
+            className="z-20 rounded-[18px] border border-frost/80 bg-[rgba(var(--surface-rgb),0.92)] p-1.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.18),inset_0_0_0_1px_rgba(var(--frost-rgb),0.5)] backdrop-blur-xl backdrop-saturate-150 focus-visible:outline-none"
           >
             {availableMonths.length === 0 ? (
               <div className="px-3 py-2.5 text-[13px] text-ink-3">No months yet</div>

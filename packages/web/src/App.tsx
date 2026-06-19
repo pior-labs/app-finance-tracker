@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/AppShell';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AuthProvider } from '@/hooks/useAuth';
+import { ThemeProvider } from '@/hooks/useTheme';
 import { ToastProvider } from '@/hooks/useToast';
 import { UncategorizedCountProvider } from '@/hooks/useUncategorizedCount';
 import { DashboardPage } from '@/pages/dashboard';
@@ -14,29 +15,31 @@ import { StatementsPage } from '@/pages/statements';
 export function App() {
   return (
     <AuthProvider>
-      <ToastProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
-            <Route
-              element={
-                <ProtectedRoute>
-                  <UncategorizedCountProvider>
-                    <AppShell />
-                  </UncategorizedCountProvider>
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/categorize" element={<CategorizePage />} />
-              <Route path="/transactions" element={<TransactionsPage />} />
-              <Route path="/categories" element={<CategoriesPage />} />
-              <Route path="/statements" element={<StatementsPage />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </ToastProvider>
+      <ThemeProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <UncategorizedCountProvider>
+                      <AppShell />
+                    </UncategorizedCountProvider>
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/" element={<DashboardPage />} />
+                <Route path="/categorize" element={<CategorizePage />} />
+                <Route path="/transactions" element={<TransactionsPage />} />
+                <Route path="/categories" element={<CategoriesPage />} />
+                <Route path="/statements" element={<StatementsPage />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </ToastProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

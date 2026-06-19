@@ -17,7 +17,7 @@ export const StatementUploader = memo(function StatementUploader({ statement, mo
           fontFamily: "'Fraunces', serif",
           background: 'linear-gradient(135deg, #dcd3f0, #f8d7c0)',
           color: 'var(--ink)',
-          boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.5)',
+          boxShadow: 'inset 0 0 0 1px rgba(var(--frost-rgb),0.5)',
         }}
       >
         {getStatementUserInitial(statement)}

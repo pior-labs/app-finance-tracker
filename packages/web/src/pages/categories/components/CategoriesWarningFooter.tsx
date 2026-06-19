@@ -6,8 +6,8 @@ export const CategoriesWarningFooter = memo(function CategoriesWarningFooter() {
     <div
       className="flex items-start gap-2.5 rounded-[20px] border px-4 py-3 text-[12px] leading-snug sm:items-center sm:px-5 sm:py-3.5 sm:text-[13px]"
       style={{
-        background: 'rgba(255,253,247,0.45)',
-        borderColor: 'rgba(255,255,255,0.7)',
+        background: 'rgba(var(--surface-rgb),0.45)',
+        borderColor: 'rgba(var(--frost-rgb),0.7)',
         backdropFilter: 'blur(16px) saturate(130%)',
         WebkitBackdropFilter: 'blur(16px) saturate(130%)',
         color: 'var(--ink-3)',

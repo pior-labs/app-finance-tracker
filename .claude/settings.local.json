@@ -26,7 +26,11 @@
       "Bash(curl -s -o /dev/null -w \"web: %{http_code}\\\\n\" http://localhost:8080/)",
       "Bash(curl -s http://localhost:3000/health)",
       "Bash(docker rm *)",
-      "Bash(rm /tmp/finlens-step9.dump)"
+      "Bash(rm /tmp/finlens-step9.dump)",
+      "Bash(pnpm add *)",
+      "Bash(pnpm build *)",
+      "Bash(pkill -f \"vite --port 5199\")",
+      "Bash(fuser -k 5199/tcp)"
     ]
   }
 }

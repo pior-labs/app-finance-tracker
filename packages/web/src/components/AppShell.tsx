@@ -153,14 +153,14 @@ export function AppShell() {
       >
         Skip to main content
       </a>
-      <div className="bloom-mesh">
-        <div className="bloom-blob b1" />
-        <div className="bloom-blob b2" />
-        <div className="bloom-blob b3" />
-        <div className="bloom-blob b4" />
-        <div className="bloom-blob b5" />
+      <div className="theme-mesh">
+        <div className="theme-blob b1" />
+        <div className="theme-blob b2" />
+        <div className="theme-blob b3" />
+        <div className="theme-blob b4" />
+        <div className="theme-blob b5" />
       </div>
-      <div className="bloom-grain" />
+      <div className="theme-grain" />
 
       <header
         aria-hidden={mobileNavOpen}
@@ -368,12 +368,12 @@ function MobileNavOverlay({ navRef, uncategorizedTotal, userName, onClose, onSig
       role="dialog"
       aria-modal="true"
       aria-label="Navigation"
-      className="bloom-overlay-anim fixed inset-0 z-50 flex flex-col bg-cream motion-reduce:animate-none md:hidden"
+      className="theme-overlay-anim fixed inset-0 z-50 flex flex-col bg-cream motion-reduce:animate-none md:hidden"
     >
-      <div className="bloom-mesh pointer-events-none" aria-hidden="true">
-        <div className="bloom-blob b1" />
-        <div className="bloom-blob b3" />
-        <div className="bloom-blob b5" />
+      <div className="theme-mesh pointer-events-none" aria-hidden="true">
+        <div className="theme-blob b1" />
+        <div className="theme-blob b3" />
+        <div className="theme-blob b5" />
       </div>
 
       <div className="relative flex items-center justify-between gap-3 px-5 pb-3 pt-[max(0.875rem,env(safe-area-inset-top))]">
@@ -400,7 +400,7 @@ function MobileNavOverlay({ navRef, uncategorizedTotal, userName, onClose, onSig
         {allItems.map((item, idx) => {
           const showAdminHeader = item.group === 'admin' && allItems[idx - 1]?.group !== 'admin';
           return (
-            <div key={item.path} style={{ animationDelay: `${120 + idx * 70}ms` }} className="bloom-overlay-item-anim motion-reduce:animate-none">
+            <div key={item.path} style={{ animationDelay: `${120 + idx * 70}ms` }} className="theme-overlay-item-anim motion-reduce:animate-none">
               {showAdminHeader && (
                 <div className="mb-2 mt-5 font-serif text-xs italic tracking-[0.18em] uppercase text-ink-2">Admin</div>
               )}

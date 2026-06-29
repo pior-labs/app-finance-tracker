@@ -20,7 +20,7 @@ function Progress({ className, value = 0, variant = 'default', ...props }: Progr
       <div
         className={cn(
           'h-full transition-all',
-          variant === 'good' ? 'bar-fill-good' : 'bar-fill'
+          variant === 'good' ? 'theme-bar-fill-good' : 'theme-bar-fill'
         )}
         style={{ width: `${safeValue}%` }}
       />

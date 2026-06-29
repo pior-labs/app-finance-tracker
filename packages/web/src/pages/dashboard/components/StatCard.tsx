@@ -4,7 +4,7 @@ export function StatCard({
   tint,
   children,
 }: {
-  tint: 'stat-card-peach' | 'stat-card-pistachio' | 'stat-card-lavender';
+  tint: 'tone-card-1' | 'tone-card-2' | 'tone-card-3';
   children: ReactNode;
 }) {
   return (

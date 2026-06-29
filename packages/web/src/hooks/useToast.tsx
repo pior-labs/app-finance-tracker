@@ -76,7 +76,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
   return (
     <div
       role={toast.variant === 'error' ? 'alert' : 'status'}
-      className="pointer-events-auto flex items-start gap-3 rounded-2xl border border-frost/70 p-3.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.22),inset_0_0_0_1px_rgba(var(--frost-rgb),0.55)] backdrop-blur-xl backdrop-saturate-150 animate-bloom-toast-in motion-reduce:animate-none"
+      className="pointer-events-auto flex items-start gap-3 rounded-2xl border border-frost/70 p-3.5 shadow-[0_14px_36px_-8px_rgba(45,36,24,0.22),inset_0_0_0_1px_rgba(var(--frost-rgb),0.55)] backdrop-blur-xl backdrop-saturate-150 animate-theme-toast-in motion-reduce:animate-none"
       style={{ background: variantStyle.background }}
     >
       <span

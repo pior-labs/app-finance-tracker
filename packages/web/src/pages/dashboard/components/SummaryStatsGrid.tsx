@@ -30,7 +30,7 @@ function SummaryStatsGridComponent({
 
   return (
     <section className="grid grid-cols-1 gap-5 lg:grid-cols-[1.3fr_1fr_1.1fr]">
-      <StatCard tint="stat-card-peach">
+      <StatCard tint="tone-card-1">
         <div className="font-serif text-[15px] italic text-ink-2">
           {isCurrentMonth ? 'Spent this month' : `Spent in ${monthLabel}`}
         </div>
@@ -51,7 +51,7 @@ function SummaryStatsGridComponent({
         </svg>
       </StatCard>
 
-      <StatCard tint="stat-card-pistachio">
+      <StatCard tint="tone-card-2">
         <div className="font-serif text-[15px] italic text-ink-2">Categorized</div>
         <div className="my-1.5 font-serif text-[64px] font-normal leading-[1.05] tracking-[-0.03em] text-ink lining-nums sm:text-[80px]">
           {categorizedPct}
@@ -68,7 +68,7 @@ function SummaryStatsGridComponent({
         </div>
       </StatCard>
 
-      <StatCard tint="stat-card-lavender">
+      <StatCard tint="tone-card-3">
         <div className="font-serif text-[15px] italic text-ink-2">Latest statement</div>
         {latestStatement ? (
           <>

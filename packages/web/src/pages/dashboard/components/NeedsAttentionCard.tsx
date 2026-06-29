@@ -21,8 +21,8 @@ function NeedsAttentionCardComponent({
   month: string;
 }) {
   return (
-    <section className="bloom-glass relative grid grid-cols-1 gap-5 overflow-hidden rounded-[36px] p-5 sm:p-7 lg:grid-cols-[1.4fr_1fr] lg:gap-8 lg:p-9">
-      <div className="action-bg" />
+    <section className="theme-glass relative grid grid-cols-1 gap-5 overflow-hidden rounded-[36px] p-5 sm:p-7 lg:grid-cols-[1.4fr_1fr] lg:gap-8 lg:p-9">
+      <div className="theme-action-bg" />
       <div className="relative z-1">
         <div className="inline-flex items-center gap-1.5 rounded-full border border-frost/60 bg-peach/80 px-3.5 py-1.5 text-[13px] font-medium text-ink-2">
           <Flower2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />

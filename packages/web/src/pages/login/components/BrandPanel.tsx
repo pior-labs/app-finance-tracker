@@ -4,7 +4,7 @@ export function BrandPanel() {
   return (
     <section
       aria-labelledby="login-brand-heading"
-      className="bloom-overlay-anim relative flex flex-col justify-between gap-10 py-2 md:py-6"
+      className="theme-overlay-anim relative flex flex-col justify-between gap-10 py-2 md:py-6"
     >
       <header className="flex items-center gap-3">
         <BrandMark size={36} />

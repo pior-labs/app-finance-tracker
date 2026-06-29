@@ -22,8 +22,8 @@ export function AllCaughtCard({
   ctaLabel: string;
 }) {
   return (
-    <section className="bloom-glass relative overflow-hidden rounded-[36px] p-5 sm:p-7 lg:p-9">
-      <div className="action-bg all-caught" />
+    <section className="theme-glass relative overflow-hidden rounded-[36px] p-5 sm:p-7 lg:p-9">
+      <div className="theme-action-bg all-caught" />
       <div className="relative z-1">
         <div
           className={[

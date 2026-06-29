@@ -117,7 +117,7 @@ importers:
         version: link:../shared
       '@ipior/custom-tailwind-shadcn-themes':
         specifier: github:iPior/custom-tailwind-shadcn-themes#pkg
-        version: https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/3560c373c062aed81f423444b377a6f88c495ab5(react@19.2.7)
+        version: https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/07bd369bc5ea434a3f54bfe9be6283e0c5ee5dcb(react@19.2.7)
       '@radix-ui/react-slot':
         specifier: ^1.2.2
         version: 1.2.5(@types/react@19.2.17)(react@19.2.7)
@@ -796,8 +796,8 @@ packages:
     peerDependencies:
       hono: ^4
 
-  '@ipior/custom-tailwind-shadcn-themes@https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/3560c373c062aed81f423444b377a6f88c495ab5':
-    resolution: {tarball: https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/3560c373c062aed81f423444b377a6f88c495ab5}
+  '@ipior/custom-tailwind-shadcn-themes@https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/07bd369bc5ea434a3f54bfe9be6283e0c5ee5dcb':
+    resolution: {tarball: https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/07bd369bc5ea434a3f54bfe9be6283e0c5ee5dcb}
     version: 0.1.0
     peerDependencies:
       react: ^19.0.0
@@ -2488,7 +2488,7 @@ snapshots:
     dependencies:
       hono: 4.12.23
 
-  '@ipior/custom-tailwind-shadcn-themes@https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/3560c373c062aed81f423444b377a6f88c495ab5(react@19.2.7)':
+  '@ipior/custom-tailwind-shadcn-themes@https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/07bd369bc5ea434a3f54bfe9be6283e0c5ee5dcb(react@19.2.7)':
     dependencies:
       react: 19.2.7
 

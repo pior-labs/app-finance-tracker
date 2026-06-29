@@ -30,7 +30,8 @@
       "Bash(pnpm add *)",
       "Bash(pnpm build *)",
       "Bash(pkill -f \"vite --port 5199\")",
-      "Bash(fuser -k 5199/tcp)"
+      "Bash(fuser -k 5199/tcp)",
+      "Bash(awk '/\\\\[data-theme=\"slate\"\\\\]/{f=1} f{print} /^}/{if\\(f\\) exit}' packages/themes/dist/styles.css)"
     ]
   }
 }

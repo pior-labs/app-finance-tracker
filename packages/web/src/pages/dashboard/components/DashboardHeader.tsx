@@ -156,14 +156,14 @@ function DashboardHeaderComponent({
           className="flex cursor-pointer items-center gap-2 rounded-full border border-frost/80 bg-frost/55 px-4 py-2 font-serif text-[15px] italic text-ink shadow-[0_6px_18px_rgba(45,36,24,0.05)] backdrop-blur-xl hover:bg-frost/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 sm:px-4.5 sm:text-[17px]"
           aria-haspopup="listbox"
           aria-expanded={pickerOpen}
-          aria-controls="bloom-month-listbox"
+          aria-controls="finlens-month-listbox"
         >
           <span>{monthLabel}</span>
           <ChevronDown aria-hidden="true" className="h-4 w-4 text-ink-3" strokeWidth={2.25} />
         </button>
         {pickerOpen && (
           <div
-            id="bloom-month-listbox"
+            id="finlens-month-listbox"
             role="listbox"
             aria-label="Choose month"
             tabIndex={-1}

@@ -146,7 +146,7 @@ export function AppShell() {
   }, [profileMenuOpen]);
 
   return (
-    <div className="bloom-root relative min-h-screen bg-cream text-ink font-sans text-[15px] leading-[1.55]">
+    <div className="finlens-root relative min-h-screen bg-cream text-ink font-sans text-[15px] leading-[1.55]">
       <a
         href="#main-content"
         className="absolute left-3 top-3 z-70 -translate-y-20 rounded-full border border-ink/20 bg-cream px-4 py-2 text-sm font-medium text-ink shadow-[0_10px_24px_-10px_rgba(45,36,24,0.35)] transition-transform focus:translate-y-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
@@ -197,7 +197,7 @@ export function AppShell() {
             type="button"
             aria-label="Open navigation"
             aria-expanded={mobileNavOpen}
-            aria-controls="bloom-mobile-nav"
+            aria-controls="finlens-mobile-nav"
             onClick={() => setMobileNavOpen(true)}
             className="pointer-events-auto inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-2xl border border-ink/10 bg-ink p-0 text-cream shadow-[0_8px_22px_-6px_rgba(45,36,24,0.4)] transition-[transform,box-shadow,background-color] duration-300 ease-out hover:-translate-y-px hover:bg-ink/95 hover:shadow-[0_10px_26px_-6px_rgba(45,36,24,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream motion-reduce:hover:translate-y-0"
           >
@@ -221,7 +221,7 @@ export function AppShell() {
 
       <div className="relative z-2 mx-auto grid max-w-330 grid-cols-1 gap-0 px-4 pt-[calc(68px+env(safe-area-inset-top))] pb-12 md:grid-cols-[220px_1fr] md:gap-7 md:px-8 md:pt-6 md:pb-15">
         <aside
-          id="bloom-desktop-nav"
+          id="finlens-desktop-nav"
           className="hidden flex-col gap-1.5 rounded-4xl border border-frost/80 bg-[rgba(var(--surface-rgb),0.55)] p-[22px_16px_18px] shadow-[0_8px_32px_rgba(45,36,24,0.07),inset_0_0_0_1px_rgba(var(--frost-rgb),0.5)] backdrop-blur-xl backdrop-saturate-150 md:sticky md:top-6 md:flex md:max-h-[calc(100vh-52px)] md:self-start md:overflow-y-auto"
         >
           <Link
@@ -364,7 +364,7 @@ function MobileNavOverlay({ navRef, uncategorizedTotal, userName, onClose, onSig
   return (
     <div
       ref={navRef}
-      id="bloom-mobile-nav"
+      id="finlens-mobile-nav"
       role="dialog"
       aria-modal="true"
       aria-label="Navigation"

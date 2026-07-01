@@ -51,7 +51,7 @@ export const StatementsDesktopTable = memo(function StatementsDesktopTable({
             <tr
               className="border-b"
               style={{
-                background: 'linear-gradient(135deg, rgba(220,211,240,0.2), rgba(248,215,192,0.25), rgba(202,224,168,0.15))',
+                background: 'var(--finlens-table-head-bg)',
                 borderColor: 'rgba(45,36,24,0.08)',
               }}
             >
@@ -109,7 +109,7 @@ export const StatementsDesktopTable = memo(function StatementsDesktopTable({
                     className="border-b border-dashed transition-colors hover:bg-frost/40"
                     style={{
                       borderColor: 'rgba(45,36,24,0.08)',
-                      background: status === 'failed' ? 'rgba(248,215,192,0.15)' : undefined,
+                      background: status === 'failed' ? 'var(--finlens-danger-surface)' : undefined,
                     }}
                   >
                     <td className="whitespace-nowrap px-5 py-3">
@@ -166,8 +166,8 @@ export const StatementsDesktopTable = memo(function StatementsDesktopTable({
                           onClick={() => onDeleteStatement(statement.id)}
                           aria-label="Delete statement"
                           disabled={isRowPending}
-                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-not-allowed disabled:opacity-55"
-                          style={{ color: 'var(--accent)' }}
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 transition-colors hover:bg-[var(--finlens-danger-surface)] disabled:cursor-not-allowed disabled:opacity-55"
+                          style={{ color: 'var(--finlens-danger-ink)' }}
                           title="Delete"
                         >
                           <Trash2 aria-hidden="true" className={`h-4 w-4 ${isDeleting ? 'animate-pulse' : ''}`} />

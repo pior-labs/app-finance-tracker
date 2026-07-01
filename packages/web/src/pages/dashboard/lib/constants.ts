@@ -1,12 +1,12 @@
 export const PALETTE = [
-  '#cae0a8',
-  '#f8d7c0',
-  '#dcd3f0',
-  '#f5e3a0',
-  '#c6e3d4',
-  '#f1c8d6',
-  '#d4cdf2',
-  '#ffd6b3',
+  'var(--accent-1)',
+  'var(--accent-2)',
+  'var(--accent-3)',
+  'var(--warn-soft)',
+  'var(--good-soft)',
+  'var(--finlens-danger-surface)',
+  'var(--finlens-info-surface)',
+  'var(--finlens-warning-surface)',
 ];
 
 const PILL_BASE =

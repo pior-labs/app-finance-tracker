@@ -47,7 +47,7 @@ function SummaryStatsGridComponent({
           aria-hidden="true"
         >
           <path d="M0 28 Q 25 18 50 22 T 100 24 T 150 16 T 200 22 L 200 40 L 0 40 Z" fill="rgba(var(--frost-rgb),0.4)" />
-          <path d="M0 28 Q 25 18 50 22 T 100 24 T 150 16 T 200 22" stroke="#9c5a3a" strokeWidth="1.5" fill="none" />
+          <path d="M0 28 Q 25 18 50 22 T 100 24 T 150 16 T 200 22" stroke="var(--finlens-accent-ink)" strokeWidth="1.5" fill="none" />
         </svg>
       </StatCard>
 
@@ -76,7 +76,7 @@ function SummaryStatsGridComponent({
               {formatStatementPeriod(latestStatement.periodStart, latestStatement.periodEnd)}
             </div>
             <div className="flex items-center gap-3 text-[13px]">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#f8d7c0,#c5704a)] font-serif text-[17px] text-white shadow-[0_4px_10px_rgba(45,36,24,0.15)]">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-serif text-[17px] text-white shadow-[0_4px_10px_rgba(45,36,24,0.15)]" style={{ background: 'var(--finlens-accent-icon)' }}>
                 {latestStatement.uploadedByName?.[0]?.toUpperCase() ?? '?'}
               </span>
               <div>

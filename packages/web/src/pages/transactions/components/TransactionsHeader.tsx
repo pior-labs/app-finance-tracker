@@ -47,7 +47,7 @@ export const TransactionsHeader = memo(function TransactionsHeader({
           <span
             className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs"
             style={{
-              background: 'linear-gradient(135deg, rgba(248,215,192,0.7), rgba(245,227,160,0.5))',
+              background: 'linear-gradient(135deg, var(--finlens-danger-surface), var(--finlens-warning-surface))',
               borderColor: 'rgba(var(--frost-rgb),0.6)',
               color: 'var(--ink-2)',
             }}
@@ -58,9 +58,9 @@ export const TransactionsHeader = memo(function TransactionsHeader({
         <span
           className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold sm:px-3 sm:py-1.5 sm:text-xs"
           style={{
-            background: 'linear-gradient(135deg, rgba(202,224,168,0.7), rgba(198,227,212,0.5))',
+            background: 'linear-gradient(135deg, var(--finlens-success-surface-strong), var(--finlens-success-surface))',
             borderColor: 'rgba(var(--frost-rgb),0.6)',
-            color: '#3d6b1f',
+            color: 'var(--finlens-success-ink)',
           }}
         >
           <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} /> {completePct}% sorted

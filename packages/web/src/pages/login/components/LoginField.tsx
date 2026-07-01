@@ -41,7 +41,7 @@ export function LoginField({
           inputMode={inputMode}
           placeholder={placeholder}
           onChange={onChange}
-          className="peer w-full min-h-12 rounded-2xl border border-ink/15 bg-frost/65 px-4 py-3 pr-12 font-sans text-[15px] text-ink shadow-[inset_0_1px_0_rgba(var(--frost-rgb),0.6)] outline-none transition-[border-color,box-shadow,background-color] duration-200 placeholder:font-sans placeholder:text-ink-3/70 hover:border-ink/25 hover:bg-frost/80 focus:border-accent/60 focus:bg-frost/95 focus:shadow-[0_0_0_4px_rgba(197,112,74,0.12),inset_0_1px_0_rgba(var(--frost-rgb),0.7)]"
+          className="peer w-full min-h-12 rounded-2xl border border-ink/15 bg-frost/65 px-4 py-3 pr-12 font-sans text-[15px] text-ink shadow-[inset_0_1px_0_rgba(var(--frost-rgb),0.6)] outline-none transition-[border-color,box-shadow,background-color] duration-200 placeholder:font-sans placeholder:text-ink-3/70 hover:border-ink/25 hover:bg-frost/80 focus:border-accent/60 focus:bg-frost/95 focus:shadow-[var(--finlens-focus-shadow),inset_0_1px_0_rgba(var(--frost-rgb),0.7)]"
         />
         {trailing ? (
           <div className="absolute right-1.5 flex items-center justify-center">{trailing}</div>

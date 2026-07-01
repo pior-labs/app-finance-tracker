@@ -33,6 +33,53 @@
   --finlens-mark-petal-3: var(--accent-3);
   --finlens-mark-core-bg: var(--cream);
   --finlens-mark-core-border: var(--ink);
+
+  --finlens-success-surface: color-mix(in srgb, var(--good) 18%, rgba(var(--surface-rgb),1) 82%);
+  --finlens-success-surface-strong: color-mix(in srgb, var(--good) 34%, rgba(var(--surface-rgb),1) 66%);
+  --finlens-success-ink: var(--good);
+  --finlens-success-icon: linear-gradient(135deg, var(--good-soft), var(--good));
+  --finlens-success-shadow: 0 4px 14px -2px color-mix(in srgb, var(--good) 38%, transparent);
+  --finlens-success-wash: radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--good) 26%, transparent), transparent 50%), radial-gradient(ellipse at 100% 100%, color-mix(in srgb, var(--good-soft) 58%, transparent), transparent 50%);
+
+  --finlens-danger-surface: color-mix(in srgb, var(--destructive) 16%, rgba(var(--surface-rgb),1) 84%);
+  --finlens-danger-surface-strong: color-mix(in srgb, var(--destructive) 30%, rgba(var(--surface-rgb),1) 70%);
+  --finlens-danger-border: color-mix(in srgb, var(--destructive) 34%, transparent);
+  --finlens-danger-ink: var(--destructive);
+  --finlens-danger-ink-strong: color-mix(in srgb, var(--destructive) 62%, var(--ink));
+  --finlens-danger-icon: linear-gradient(135deg, var(--destructive), color-mix(in srgb, var(--destructive) 72%, var(--ink)));
+  --finlens-danger-shadow: 0 4px 14px -2px color-mix(in srgb, var(--destructive) 38%, transparent);
+  --finlens-danger-wash: radial-gradient(ellipse at 0% 0%, color-mix(in srgb, var(--destructive) 18%, transparent), transparent 50%), radial-gradient(ellipse at 100% 100%, color-mix(in srgb, var(--warn) 16%, transparent), transparent 50%);
+
+  --finlens-warning-surface: color-mix(in srgb, var(--warn) 18%, rgba(var(--surface-rgb),1) 82%);
+  --finlens-warning-surface-strong: color-mix(in srgb, var(--warn) 30%, rgba(var(--surface-rgb),1) 70%);
+  --finlens-warning-ink: var(--warn);
+
+  --finlens-info-surface: color-mix(in srgb, var(--accent-3) 44%, rgba(var(--surface-rgb),1) 56%);
+  --finlens-info-surface-strong: color-mix(in srgb, var(--accent-3) 68%, rgba(var(--surface-rgb),1) 32%);
+  --finlens-info-ink: color-mix(in srgb, var(--accent-3) 58%, var(--ink));
+  --finlens-info-icon: linear-gradient(135deg, var(--accent-3), color-mix(in srgb, var(--accent-3) 72%, var(--ink)));
+  --finlens-info-shadow: 0 4px 14px -2px color-mix(in srgb, var(--accent-3) 44%, transparent);
+
+  --finlens-accent-surface: color-mix(in srgb, var(--accent) 14%, rgba(var(--surface-rgb),1) 86%);
+  --finlens-accent-surface-strong: color-mix(in srgb, var(--accent) 24%, rgba(var(--surface-rgb),1) 76%);
+  --finlens-accent-ink: var(--accent);
+  --finlens-accent-icon: linear-gradient(135deg, var(--accent-soft), var(--accent));
+  --finlens-accent-shadow: 0 4px 14px -2px color-mix(in srgb, var(--accent) 38%, transparent);
+  --finlens-focus-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
+
+  --finlens-muted-track: color-mix(in srgb, var(--ink) 6%, transparent);
+  --finlens-soft-divider: color-mix(in srgb, var(--ink) 10%, transparent);
+  --finlens-category-favorite-bg: color-mix(in srgb, var(--accent) 18%, rgba(var(--surface-rgb),1) 82%);
+  --finlens-categorize-progress: linear-gradient(90deg, var(--good-soft), var(--good));
+  --finlens-count-badge-bg: linear-gradient(135deg, var(--accent-soft), color-mix(in srgb, var(--accent) 28%, var(--accent-soft)));
+  --finlens-avatar-bg: linear-gradient(135deg, var(--accent-3), var(--accent-soft));
+  --finlens-mixed-pastel-bg: linear-gradient(135deg, color-mix(in srgb, var(--accent-3) 46%, transparent), color-mix(in srgb, var(--accent) 14%, transparent));
+  --finlens-table-head-bg: linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, transparent), color-mix(in srgb, var(--accent-3) 10%, transparent), color-mix(in srgb, var(--good) 8%, transparent));
+  --finlens-complete-confetti-1: var(--good-soft);
+  --finlens-complete-confetti-2: var(--accent-soft);
+  --finlens-complete-confetti-3: var(--accent-3);
+  --finlens-complete-confetti-4: var(--warn-soft);
+  --finlens-complete-confetti-5: color-mix(in srgb, var(--good-soft) 72%, var(--accent-3));
 }
 
 @layer base {

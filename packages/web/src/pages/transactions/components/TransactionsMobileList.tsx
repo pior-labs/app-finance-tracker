@@ -184,7 +184,7 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
           className="shrink-0 text-right text-[19px] font-medium tabular-nums"
           style={{
             fontFamily: "'Fraunces', serif",
-            color: transaction.type === 'credit' ? '#3d6b1f' : 'var(--ink)',
+            color: transaction.type === 'credit' ? 'var(--finlens-success-ink)' : 'var(--ink)',
             fontFeatureSettings: "'lnum', 'tnum'",
           }}
           aria-label={`${transaction.type === 'credit' ? 'Credit' : 'Debit'} ${formatAmount(transaction.amount)}`}
@@ -255,7 +255,7 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
               disabled={isBusy || description.trim().length === 0}
               aria-label="Save transaction"
               className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-frost/60 disabled:cursor-default disabled:opacity-50"
-              style={{ fontFamily: "'Outfit', sans-serif", color: '#3d6b1f', touchAction: 'manipulation' }}
+              style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--finlens-success-ink)', touchAction: 'manipulation' }}
             >
               <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.4} />
               Save
@@ -276,8 +276,8 @@ const TransactionsMobileCard = memo(function TransactionsMobileCard({
               onClick={() => onDeleteTransaction(transaction)}
               disabled={isBusy}
               aria-label="Delete transaction"
-              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-default disabled:opacity-50"
-              style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--accent)', touchAction: 'manipulation' }}
+              className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-[var(--finlens-danger-surface)] disabled:cursor-default disabled:opacity-50"
+              style={{ fontFamily: "'Outfit', sans-serif", color: 'var(--finlens-danger-ink)', touchAction: 'manipulation' }}
             >
               <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.2} />
               Delete

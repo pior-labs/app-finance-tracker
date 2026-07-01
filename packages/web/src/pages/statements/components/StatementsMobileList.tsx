@@ -81,7 +81,7 @@ export const StatementsMobileList = memo(function StatementsMobileList({
               key={statement.id}
               className="flex flex-col gap-3 rounded-[22px] border p-4"
               style={{
-                background: status === 'failed' ? 'rgba(248,215,192,0.18)' : 'rgba(var(--surface-rgb),0.55)',
+                background: status === 'failed' ? 'var(--finlens-danger-surface)' : 'rgba(var(--surface-rgb),0.55)',
                 borderColor: 'rgba(var(--frost-rgb),0.8)',
                 backdropFilter: 'blur(20px) saturate(140%)',
                 WebkitBackdropFilter: 'blur(20px) saturate(140%)',
@@ -149,8 +149,8 @@ export const StatementsMobileList = memo(function StatementsMobileList({
                   onClick={() => onDeleteStatement(statement.id)}
                   aria-label="Delete statement"
                   disabled={isRowPending}
-                  className="inline-flex h-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-not-allowed disabled:opacity-55"
-                  style={{ color: 'var(--accent)', fontFamily: "'Outfit', sans-serif", touchAction: 'manipulation' }}
+                  className="inline-flex h-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-[var(--finlens-danger-surface)] disabled:cursor-not-allowed disabled:opacity-55"
+                  style={{ color: 'var(--finlens-danger-ink)', fontFamily: "'Outfit', sans-serif", touchAction: 'manipulation' }}
                 >
                   <Trash2 aria-hidden="true" className={`h-4 w-4 ${isDeleting ? 'animate-pulse' : ''}`} />
                   Delete

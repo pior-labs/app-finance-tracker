@@ -17,9 +17,9 @@ export const StatementsErrorBanner = memo(function StatementsErrorBanner({
       role="alert"
       className="flex flex-col items-start gap-3 rounded-2xl border px-5 py-3 sm:flex-row sm:items-center sm:justify-between"
       style={{
-        background: 'rgba(245,180,160,0.4)',
-        borderColor: 'rgba(197,112,74,0.4)',
-        color: '#6b3a1f',
+        background: 'var(--finlens-danger-surface)',
+        borderColor: 'var(--finlens-danger-border)',
+        color: 'var(--finlens-danger-ink-strong)',
       }}
     >
       <p className="m-0 text-sm">{error}</p>

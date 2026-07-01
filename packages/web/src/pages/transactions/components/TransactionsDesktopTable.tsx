@@ -58,7 +58,7 @@ export const TransactionsDesktopTable = memo(function TransactionsDesktopTable({
             <tr
               className="border-b"
               style={{
-                background: 'linear-gradient(135deg, rgba(248,215,192,0.25), rgba(220,211,240,0.2), rgba(202,224,168,0.15))',
+                background: 'var(--finlens-table-head-bg)',
                 borderColor: 'rgba(45,36,24,0.08)',
               }}
             >
@@ -223,7 +223,7 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
           className="text-[15px] font-medium"
           style={{
             fontFamily: "'Fraunces', serif",
-            color: transaction.type === 'credit' ? '#3d6b1f' : 'var(--ink)',
+            color: transaction.type === 'credit' ? 'var(--finlens-success-ink)' : 'var(--ink)',
           }}
         >
           {transaction.type === 'credit' ? '+' : ''}
@@ -253,7 +253,7 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
                 disabled={isBusy || description.trim().length === 0}
                 aria-label={`Save transaction ${transaction.id}`}
                 className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-frost/50 text-xs transition-colors hover:bg-frost/85 disabled:cursor-default disabled:opacity-50"
-                style={{ color: '#3d6b1f' }}
+                style={{ color: 'var(--finlens-success-ink)' }}
                 title="Save"
               >
                 <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />
@@ -274,8 +274,8 @@ const TransactionsTableRow = memo(function TransactionsTableRow({
                 onClick={() => onDeleteTransaction(transaction)}
                 disabled={isBusy}
                 aria-label={`Delete transaction ${transaction.id}`}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-frost/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)] disabled:cursor-default disabled:opacity-50"
-                style={{ color: 'var(--accent)' }}
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border-0 bg-frost/40 text-xs transition-colors hover:bg-[var(--finlens-danger-surface)] disabled:cursor-default disabled:opacity-50"
+                style={{ color: 'var(--finlens-danger-ink)' }}
                 title="Delete"
               >
                 <Trash2 aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.2} />

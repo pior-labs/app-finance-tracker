@@ -17,8 +17,8 @@ export function TransactionStatusPill({
       <span
         className={className}
         style={{
-          background: 'rgba(202,224,168,0.6)',
-          color: '#3d6b1f',
+          background: 'var(--finlens-success-surface)',
+          color: 'var(--finlens-success-ink)',
           border: '1px solid rgba(var(--frost-rgb),0.5)',
         }}
       >
@@ -32,8 +32,8 @@ export function TransactionStatusPill({
     <span
       className={className}
       style={{
-        background: 'rgba(248,215,192,0.6)',
-        color: 'var(--ink-2)',
+        background: 'var(--finlens-danger-surface)',
+        color: 'var(--finlens-danger-ink)',
         border: '1px solid rgba(var(--frost-rgb),0.5)',
       }}
     >

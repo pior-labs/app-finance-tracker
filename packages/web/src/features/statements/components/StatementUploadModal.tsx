@@ -150,9 +150,9 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
               onClick={() => fileInputRef.current?.click()}
               className="flex cursor-pointer flex-col items-center gap-4 rounded-[20px] border-2 border-dashed p-10 text-center transition-all"
               style={{
-                borderColor: dragOver ? 'rgba(142,181,103,0.6)' : 'rgba(45,36,24,0.15)',
+                borderColor: dragOver ? 'var(--finlens-success-ink)' : 'rgba(45,36,24,0.15)',
                 background: dragOver
-                  ? 'linear-gradient(135deg, rgba(202,224,168,0.3), rgba(198,227,212,0.2))'
+                  ? 'linear-gradient(135deg, var(--finlens-success-surface), color-mix(in srgb, var(--finlens-success-surface) 55%, transparent))'
                   : 'rgba(var(--frost-rgb),0.3)',
               }}
             >
@@ -160,7 +160,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
               <span
                 className="flex h-14 w-11 items-center justify-center rounded-xl text-[11px] font-bold uppercase"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(220,211,240,0.5), rgba(248,215,192,0.4))',
+                  background: 'var(--finlens-mixed-pastel-bg)',
                   color: 'var(--ink-3)',
                   border: '1px solid rgba(var(--frost-rgb),0.6)',
                   boxShadow: '0 4px 14px -4px rgba(45,36,24,0.08)',
@@ -216,7 +216,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
               <span
                 className="flex h-14 w-11 items-center justify-center rounded-xl text-[11px] font-bold uppercase"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(202,224,168,0.5), rgba(248,215,192,0.3))',
+                  background: 'linear-gradient(135deg, var(--finlens-success-surface), var(--finlens-accent-surface))',
                   color: 'var(--ink-3)',
                   border: '1px solid rgba(var(--frost-rgb),0.6)',
                 }}
@@ -233,7 +233,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
                 <div
                   className="h-full w-3/5 animate-pulse rounded-full"
                   style={{
-                    background: 'linear-gradient(90deg, #cae0a8, #8eb567)',
+                    background: 'var(--finlens-categorize-progress)',
                     boxShadow: 'inset 0 1px 0 rgba(var(--frost-rgb),0.5)',
                   }}
                 />
@@ -260,7 +260,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
             <div
               className="rounded-[20px] border p-5"
               style={{
-                background: 'linear-gradient(135deg, rgba(202,224,168,0.35), rgba(198,227,212,0.2))',
+                background: 'linear-gradient(135deg, var(--finlens-success-surface), color-mix(in srgb, var(--finlens-success-surface) 48%, transparent))',
                 borderColor: 'rgba(var(--frost-rgb),0.6)',
               }}
             >
@@ -269,8 +269,8 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
                   aria-hidden="true"
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white"
                   style={{
-                    background: 'linear-gradient(135deg, #cae0a8, #8eb567)',
-                    boxShadow: '0 4px 14px -2px rgba(93,138,63,0.3)',
+                    background: 'var(--finlens-success-icon)',
+                    boxShadow: 'var(--finlens-success-shadow)',
                   }}
                 >
                   <Check className="h-4 w-4" strokeWidth={2.5} />
@@ -327,7 +327,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
             <div
               className="rounded-[20px] border p-5"
               style={{
-                background: 'linear-gradient(135deg, rgba(248,215,192,0.4), rgba(245,227,160,0.2))',
+                background: 'linear-gradient(135deg, var(--finlens-danger-surface), var(--finlens-warning-surface))',
                 borderColor: 'rgba(var(--frost-rgb),0.6)',
               }}
             >
@@ -336,9 +336,9 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
                   aria-hidden="true"
                   className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
                   style={{
-                    background: 'linear-gradient(135deg, #f8d7c0, #c5704a)',
+                    background: 'var(--finlens-danger-icon)',
                     color: 'white',
-                    boxShadow: '0 4px 14px -2px rgba(197,112,74,0.3)',
+                    boxShadow: 'var(--finlens-danger-shadow)',
                   }}
                 >
                   <TriangleAlert className="h-4 w-4" strokeWidth={2.25} />

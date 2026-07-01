@@ -61,7 +61,7 @@ function NeedsAttentionCardComponent({
               aria-label={`Categorize ${prettyName(t.merchant ?? t.description)} on ${formatShortDate(t.date)}, ${formatMoney(t.amount)}`}
               className="-mx-2 grid grid-cols-[8px_auto_1fr_auto] items-center gap-2 rounded-xl border-b border-dashed border-ink/10 px-2 py-2.5 text-[13px] text-inherit no-underline transition-colors last:border-b-0 hover:bg-frost/55 focus-visible:bg-frost/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 sm:grid-cols-[8px_56px_1fr_auto] sm:gap-2.5 sm:text-sm"
             >
-              <span className="h-2 w-2 rounded-full bg-[linear-gradient(135deg,#f8d7c0,#c5704a)]" />
+              <span className="h-2 w-2 rounded-full bg-[var(--finlens-danger-icon)]" />
               <span className="text-[11px] text-ink-3 sm:text-xs">{formatShortDate(t.date)}</span>
               <span className="overflow-hidden truncate whitespace-nowrap font-medium">
                 {prettyName(t.merchant ?? t.description)}

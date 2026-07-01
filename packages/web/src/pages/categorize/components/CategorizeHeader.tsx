@@ -42,7 +42,7 @@ export const CategorizeHeader = memo(function CategorizeHeader({
             className="h-full rounded-full transition-all duration-500 ease-out motion-reduce:transition-none"
             style={{
               width: `${Math.max(progressPct, 2)}%`,
-              background: 'linear-gradient(90deg, #cae0a8, #8eb567)',
+              background: 'var(--finlens-categorize-progress)',
               boxShadow: 'inset 0 1px 0 rgba(var(--frost-rgb),0.5)',
             }}
           />

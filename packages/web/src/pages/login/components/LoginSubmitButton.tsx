@@ -19,7 +19,7 @@ export function LoginSubmitButton({ loading, errorId, hasError }: LoginSubmitBut
         className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
         style={{
           background:
-            'radial-gradient(120% 60% at 50% 0%, rgba(248,215,192,0.18), transparent 60%)',
+            'radial-gradient(120% 60% at 50% 0%, var(--finlens-accent-surface), transparent 60%)',
         }}
       />
       <span className="relative">{loading ? 'Signing in…' : 'Sign in'}</span>

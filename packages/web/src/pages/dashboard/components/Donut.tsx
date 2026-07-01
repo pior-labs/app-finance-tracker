@@ -7,8 +7,8 @@ export function Donut({ pct }: { pct: number }) {
     <svg viewBox="0 0 80 80" width="80" height="80" role="img" aria-label={`${pct} percent categorized`}>
       <defs>
         <linearGradient id="dash-donut-grad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#5d8a3f" />
-          <stop offset="100%" stopColor="#8eb567" />
+          <stop offset="0%" stopColor="var(--finlens-success-ink)" />
+          <stop offset="100%" stopColor="var(--good-soft)" />
         </linearGradient>
       </defs>
       <circle cx="40" cy="40" r={r} stroke="rgba(0,0,0,0.07)" strokeWidth="10" fill="none" />

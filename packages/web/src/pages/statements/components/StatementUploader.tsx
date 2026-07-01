@@ -15,7 +15,7 @@ export const StatementUploader = memo(function StatementUploader({ statement, mo
         className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-medium"
         style={{
           fontFamily: "'Fraunces', serif",
-          background: 'linear-gradient(135deg, #dcd3f0, #f8d7c0)',
+          background: 'var(--finlens-avatar-bg)',
           color: 'var(--ink)',
           boxShadow: 'inset 0 0 0 1px rgba(var(--frost-rgb),0.5)',
         }}

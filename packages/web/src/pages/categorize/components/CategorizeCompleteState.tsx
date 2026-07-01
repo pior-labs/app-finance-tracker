@@ -5,7 +5,13 @@ export function CategorizeCompleteState() {
   return (
     <div className="flex flex-col items-center gap-4 py-20 text-center">
       <div className="relative mb-3 h-22.5 w-22.5">
-        {['#cae0a8', '#f8d7c0', '#dcd3f0', '#f5e3a0', '#c6e3d4'].map((color, i) => (
+        {[
+          'var(--finlens-complete-confetti-1)',
+          'var(--finlens-complete-confetti-2)',
+          'var(--finlens-complete-confetti-3)',
+          'var(--finlens-complete-confetti-4)',
+          'var(--finlens-complete-confetti-5)',
+        ].map((color, i) => (
           <span
             key={color}
             className="absolute left-8.5p-0 h-9 w-5.5 origin-[50%_130%]"
@@ -19,8 +25,8 @@ export function CategorizeCompleteState() {
         <span
           className="absolute left-6.75 top-6.75 z-2 flex h-9 w-9 items-center justify-center rounded-full text-lg font-bold text-white"
           style={{
-            background: 'linear-gradient(135deg, #cae0a8, #8eb567)',
-            boxShadow: '0 6px 20px rgba(93,138,63,0.3)',
+            background: 'var(--finlens-success-icon)',
+            boxShadow: 'var(--finlens-success-shadow)',
           }}
         >
           <Check aria-hidden="true" className="h-5 w-5" strokeWidth={2.8} />

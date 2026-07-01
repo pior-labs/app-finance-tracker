@@ -245,7 +245,7 @@ export function AppShell() {
                     <NavIcon active={isActive} icon={item.icon} />
                     <span className="flex-1">{item.name}</span>
                     {item.badgeKey === 'uncategorized' && uncategorizedTotal > 0 && (
-                      <span className="ml-auto rounded-full bg-[linear-gradient(135deg,#f8d7c0,#f5b893)] px-2.5 py-px font-serif text-xs font-semibold text-[#6b3a1f] shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.5)]">
+                      <span className="ml-auto rounded-full px-2.5 py-px font-serif text-xs font-semibold text-[var(--finlens-accent-ink)] shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.5)]" style={{ background: 'var(--finlens-count-badge-bg)' }}>
                         {uncategorizedTotal}
                       </span>
                     )}
@@ -286,7 +286,7 @@ export function AppShell() {
                 profileMenuOpen ? 'bg-frost/70' : '',
               ].join(' ')}
             >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#dcd3f0,#f8d7c0)] font-serif text-[15px] text-ink shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.6)]">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-serif text-[15px] text-ink shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.6)]" style={{ background: 'var(--finlens-avatar-bg)' }}>
                 {user?.name?.[0]?.toUpperCase() ?? '?'}
               </span>
               <span className="flex min-w-0 flex-1 flex-col leading-[1.15]">
@@ -339,7 +339,7 @@ function NavIcon({ active, icon: Icon }: { active: boolean; icon: LucideIcon }) 
     <span
       className={[
         'inline-flex h-5.5 w-5.5 shrink-0 items-center justify-center rounded-full text-xs shadow-[inset_0_0_0_1px_rgba(45,36,24,0.08)]',
-        active ? 'bg-pistachio text-ink shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.4)]' : 'bg-frost/70 text-ink-2',
+        active ? 'bg-[var(--finlens-success-surface-strong)] text-ink shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.4)]' : 'bg-frost/70 text-ink-2',
       ].join(' ')}
       style={{ width: 22, height: 22 }}
     >
@@ -436,7 +436,7 @@ function MobileNavOverlay({ navRef, uncategorizedTotal, userName, onClose, onSig
                       {item.name}
                     </span>
                     {item.badgeKey === 'uncategorized' && uncategorizedTotal > 0 && (
-                      <span className="rounded-full bg-[linear-gradient(135deg,#f8d7c0,#f5b893)] px-2.5 py-0.5 font-serif text-xs font-semibold text-[#6b3a1f] shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.5)]">
+                      <span className="rounded-full px-2.5 py-0.5 font-serif text-xs font-semibold text-[var(--finlens-accent-ink)] shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.5)]" style={{ background: 'var(--finlens-count-badge-bg)' }}>
                         {uncategorizedTotal}
                       </span>
                     )}
@@ -459,7 +459,7 @@ function MobileNavOverlay({ navRef, uncategorizedTotal, userName, onClose, onSig
 
       <div className="relative flex items-center justify-between gap-3 border-t border-dashed border-ink/15 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="flex items-center gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,#dcd3f0,#f8d7c0)] font-serif text-[16px] text-ink shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.6)]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-serif text-[16px] text-ink shadow-[inset_0_0_0_1px_rgba(var(--frost-rgb),0.6)]" style={{ background: 'var(--finlens-avatar-bg)' }}>
             {userName?.[0]?.toUpperCase() ?? '?'}
           </span>
           <span className="flex min-w-0 flex-col leading-[1.15]">

@@ -15,7 +15,7 @@ export function LoginErrorMessage({ id, error }: LoginErrorMessageProps) {
       ].join(' ')}
     >
       {error ? (
-        <span className="flex items-start gap-2 rounded-2xl border border-accent/25 bg-[rgba(248,215,192,0.45)] px-3.5 py-2.5">
+        <span className="flex items-start gap-2 rounded-2xl border border-[var(--finlens-danger-border)] bg-[var(--finlens-danger-surface)] px-3.5 py-2.5">
           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
           <span>{error}</span>
         </span>

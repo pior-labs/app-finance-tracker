@@ -93,9 +93,9 @@ export const DeleteCategoryModal = memo(function DeleteCategoryModal({
             className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-full border-0 px-5 py-2.5 text-sm font-medium transition-transform hover:-translate-y-px motion-reduce:hover:translate-y-0 disabled:cursor-default disabled:opacity-50"
             style={{
               fontFamily: "'Outfit', sans-serif",
-              background: 'var(--accent)',
+              background: 'var(--finlens-danger-ink)',
               color: 'white',
-              boxShadow: '0 6px 18px -6px rgba(197,112,74,0.4)',
+              boxShadow: 'var(--finlens-danger-shadow)',
               touchAction: 'manipulation',
             }}
           >

@@ -135,8 +135,8 @@ export const CategoryCard = memo(function CategoryCard({
               aria-pressed={!!category.isFavorite}
               className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 text-sm transition-all hover:scale-110 motion-reduce:transform-none"
               style={{
-                background: category.isFavorite ? 'rgba(248,215,192,0.7)' : 'rgba(var(--frost-rgb),0.4)',
-                color: category.isFavorite ? 'var(--accent)' : 'var(--ink-3)',
+                background: category.isFavorite ? 'var(--finlens-category-favorite-bg)' : 'rgba(var(--frost-rgb),0.4)',
+                color: category.isFavorite ? 'var(--finlens-accent-ink)' : 'var(--ink-3)',
               }}
               title={category.isFavorite ? 'Unfavorite' : 'Favorite'}
             >
@@ -172,8 +172,8 @@ export const CategoryCard = memo(function CategoryCard({
               type="button"
               onClick={() => onRequestDelete(category)}
               aria-label="Delete"
-              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 text-xs transition-colors hover:bg-[rgba(248,215,192,0.7)]"
-              style={{ color: 'var(--accent)' }}
+              className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 text-xs transition-colors hover:bg-[var(--finlens-danger-surface)]"
+              style={{ color: 'var(--finlens-danger-ink)' }}
               title="Delete"
             >
               <Trash2 aria-hidden="true" className="h-4 w-4" strokeWidth={2.2} />
@@ -194,8 +194,8 @@ export const CategoryCard = memo(function CategoryCard({
             aria-pressed={!!category.isFavorite}
             className="inline-flex h-11 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 text-[13px] font-medium transition-colors"
             style={{
-              background: category.isFavorite ? 'rgba(248,215,192,0.7)' : 'transparent',
-              color: category.isFavorite ? 'var(--accent)' : 'var(--ink-3)',
+              background: category.isFavorite ? 'var(--finlens-category-favorite-bg)' : 'transparent',
+              color: category.isFavorite ? 'var(--finlens-accent-ink)' : 'var(--ink-3)',
               fontFamily: "'Outfit', sans-serif",
               touchAction: 'manipulation',
             }}
@@ -231,8 +231,8 @@ export const CategoryCard = memo(function CategoryCard({
             type="button"
             onClick={() => onRequestDelete(category)}
             aria-label="Delete"
-            className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-[rgba(248,215,192,0.7)]"
-            style={{ color: 'var(--accent)', touchAction: 'manipulation' }}
+            className="inline-flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent text-base transition-colors hover:bg-[var(--finlens-danger-surface)]"
+            style={{ color: 'var(--finlens-danger-ink)', touchAction: 'manipulation' }}
           >
             <Trash2 aria-hidden="true" className="h-4 w-4" strokeWidth={2.2} />
           </button>

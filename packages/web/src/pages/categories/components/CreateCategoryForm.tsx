@@ -24,7 +24,7 @@ export const CreateCategoryForm = memo(function CreateCategoryForm({
     <div
       className="rounded-[24px] border p-4 sm:p-6"
       style={{
-        background: 'linear-gradient(135deg, rgba(245,227,160,0.3), rgba(var(--surface-rgb),0.55))',
+        background: 'linear-gradient(135deg, var(--finlens-warning-surface), rgba(var(--surface-rgb),0.55))',
         borderColor: 'rgba(var(--frost-rgb),0.8)',
         backdropFilter: 'blur(20px) saturate(140%)',
         WebkitBackdropFilter: 'blur(20px) saturate(140%)',

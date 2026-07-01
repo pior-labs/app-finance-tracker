@@ -109,21 +109,21 @@ const VARIANT_STYLES: Record<
   { background: string; Icon: ComponentType<SVGProps<SVGSVGElement>>; iconBg: string; iconShadow: string }
 > = {
   success: {
-    background: 'linear-gradient(135deg, rgba(202,224,168,0.85), rgba(var(--surface-rgb),0.92))',
+    background: 'linear-gradient(135deg, var(--finlens-success-surface-strong), rgba(var(--surface-rgb),0.92))',
     Icon: Check,
-    iconBg: 'linear-gradient(135deg, #cae0a8, #8eb567)',
-    iconShadow: '0 4px 14px -2px rgba(93,138,63,0.3)',
+    iconBg: 'var(--finlens-success-icon)',
+    iconShadow: 'var(--finlens-success-shadow)',
   },
   error: {
-    background: 'linear-gradient(135deg, rgba(248,215,192,0.85), rgba(var(--surface-rgb),0.92))',
+    background: 'linear-gradient(135deg, var(--finlens-danger-surface-strong), rgba(var(--surface-rgb),0.92))',
     Icon: TriangleAlert,
-    iconBg: 'linear-gradient(135deg, #f8d7c0, #c5704a)',
-    iconShadow: '0 4px 14px -2px rgba(197,112,74,0.3)',
+    iconBg: 'var(--finlens-danger-icon)',
+    iconShadow: 'var(--finlens-danger-shadow)',
   },
   info: {
-    background: 'linear-gradient(135deg, rgba(220,211,240,0.85), rgba(var(--surface-rgb),0.92))',
+    background: 'linear-gradient(135deg, var(--finlens-info-surface-strong), rgba(var(--surface-rgb),0.92))',
     Icon: Info,
-    iconBg: 'linear-gradient(135deg, #dcd3f0, #a89bd1)',
-    iconShadow: '0 4px 14px -2px rgba(120,104,170,0.3)',
+    iconBg: 'var(--finlens-info-icon)',
+    iconShadow: 'var(--finlens-info-shadow)',
   },
 };

@@ -128,7 +128,7 @@ export function DashboardPage() {
         />
       ) : monthTx === 0 ? (
         <AllCaughtCard
-          tagClass="bg-pistachio/80 text-[#3d6b1f]"
+          tagClass="bg-[var(--finlens-success-surface-strong)] text-[var(--finlens-success-ink)]"
           tagText={
             <>
               <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2} />
@@ -153,7 +153,7 @@ export function DashboardPage() {
         />
       ) : (
         <AllCaughtCard
-          tagClass="bg-pistachio/80 text-[#3d6b1f]"
+          tagClass="bg-[var(--finlens-success-surface-strong)] text-[var(--finlens-success-ink)]"
           tagText={
             <>
               <Check aria-hidden="true" className="h-3.5 w-3.5" strokeWidth={2.5} />

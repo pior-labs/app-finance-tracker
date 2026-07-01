@@ -45,9 +45,7 @@ export const TransactionHeroCard = memo(function TransactionHeroCard({
       <div
         className="pointer-events-none absolute inset-0 overflow-hidden rounded-[28px] sm:rounded-[36px]"
         style={{
-          background: isCredit
-            ? 'radial-gradient(ellipse at 0% 0%, rgba(202,224,168,0.6), transparent 50%), radial-gradient(ellipse at 100% 100%, rgba(198,227,212,0.4), transparent 50%)'
-            : 'radial-gradient(ellipse at 0% 0%, rgba(248,215,192,0.6), transparent 50%), radial-gradient(ellipse at 100% 100%, rgba(245,227,160,0.4), transparent 50%)',
+          background: isCredit ? 'var(--finlens-success-wash)' : 'var(--finlens-danger-wash)',
         }}
       />
 
@@ -66,11 +64,11 @@ export const TransactionHeroCard = memo(function TransactionHeroCard({
               className="inline-flex rounded-full border px-3 py-1 text-xs font-medium"
               style={{
                 borderColor: 'rgba(var(--frost-rgb),0.6)',
-                background: isCredit ? 'rgba(202,224,168,0.7)' : 'rgba(248,215,192,0.7)',
-                color: isCredit ? '#3d6b1f' : 'var(--ink-2)',
+                background: isCredit ? 'var(--finlens-success-surface-strong)' : 'var(--finlens-danger-surface)',
+                color: isCredit ? 'var(--finlens-success-ink)' : 'var(--finlens-danger-ink)',
               }}
             >
-              Credit
+              {isCredit ? 'Credit' : 'Debit'}
             </span>
           </div>
           <div

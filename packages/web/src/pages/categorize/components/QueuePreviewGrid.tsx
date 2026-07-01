@@ -68,7 +68,7 @@ export const QueuePreviewGrid = memo(function QueuePreviewGrid({
                   <span
                     className="h-2 w-2 rounded-full"
                     style={{
-                      background: tx.type === 'credit' ? '#cae0a8' : '#f8d7c0',
+                      background: tx.type === 'credit' ? 'var(--finlens-success-surface-strong)' : 'var(--finlens-danger-surface)',
                       boxShadow: 'inset 0 0 0 1px rgba(var(--frost-rgb),0.6)',
                     }}
                   />

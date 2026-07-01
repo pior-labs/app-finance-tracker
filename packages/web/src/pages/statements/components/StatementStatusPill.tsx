@@ -15,8 +15,8 @@ export const StatementStatusPill = memo(function StatementStatusPill({
       <span
         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${className}`}
         style={{
-          background: 'rgba(248,215,192,0.7)',
-          color: 'var(--accent)',
+          background: 'var(--finlens-danger-surface)',
+          color: 'var(--finlens-danger-ink)',
           border: '1px solid rgba(var(--frost-rgb),0.5)',
         }}
       >
@@ -29,8 +29,8 @@ export const StatementStatusPill = memo(function StatementStatusPill({
     <span
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${className}`}
       style={{
-        background: 'rgba(202,224,168,0.6)',
-        color: '#3d6b1f',
+        background: 'var(--finlens-success-surface)',
+        color: 'var(--finlens-success-ink)',
         border: '1px solid rgba(var(--frost-rgb),0.5)',
       }}
     >

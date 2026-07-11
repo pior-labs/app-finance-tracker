@@ -58,3 +58,12 @@ docker compose up --build
 
 - API: `http://localhost:3000`
 - Web: `http://localhost:8080`
+
+### Platform edge networking
+
+The production `web` and `api` services also join the external `pior_edge` Docker network so the shared platform Caddy instance can reach them through stable aliases:
+
+- `finance-web:80`
+- `finance-api:3000`
+
+The localhost port bindings remain in place during the Caddy migration so the existing host proxy continues to work while the containerized edge is tested. The MCP server remains internal and does not join `pior_edge`.

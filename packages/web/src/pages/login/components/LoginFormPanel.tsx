@@ -9,6 +9,7 @@ type LoginFormPanelProps = {
   password: string;
   showPassword: boolean;
   loading: boolean;
+  ssoLoading: boolean;
   error: string | null;
   emailId: string;
   passwordId: string;
@@ -17,6 +18,7 @@ type LoginFormPanelProps = {
   onPasswordChange: ChangeEventHandler<HTMLInputElement>;
   onTogglePassword: () => void;
   onSubmit: FormEventHandler<HTMLFormElement>;
+  onSsoLogin: () => void;
 };
 
 export function LoginFormPanel({
@@ -24,6 +26,7 @@ export function LoginFormPanel({
   password,
   showPassword,
   loading,
+  ssoLoading,
   error,
   emailId,
   passwordId,
@@ -32,6 +35,7 @@ export function LoginFormPanel({
   onPasswordChange,
   onTogglePassword,
   onSubmit,
+  onSsoLogin,
 }: LoginFormPanelProps) {
   return (
     <section
@@ -89,6 +93,21 @@ export function LoginFormPanel({
 
             <LoginSubmitButton loading={loading} errorId={errorId} hasError={Boolean(error)} />
           </form>
+
+          <div className="my-6 flex items-center gap-4" aria-hidden="true">
+            <span className="h-px flex-1 bg-ink/10" />
+            <span className="text-[12px] font-medium uppercase tracking-wider text-ink-3">or</span>
+            <span className="h-px flex-1 bg-ink/10" />
+          </div>
+
+          <button
+            type="button"
+            onClick={onSsoLogin}
+            disabled={ssoLoading || loading}
+            className="inline-flex w-full cursor-pointer items-center justify-center rounded-full border border-ink/15 bg-transparent px-5 py-3 text-[15px] font-medium text-ink transition-colors hover:bg-ink/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {ssoLoading ? 'Redirecting…' : 'Continue with Pior Labs'}
+          </button>
         </div>
       </div>
     </section>

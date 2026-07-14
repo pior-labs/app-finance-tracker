@@ -1,4 +1,4 @@
-import { ThemeProvider as BaseThemeProvider } from '@ipior/custom-tailwind-shadcn-themes';
+import { ThemeProvider as BaseThemeProvider } from '@pior-labs/design-system';
 
 export {
   DEFAULT_THEME,
@@ -7,7 +7,7 @@ export {
   useTheme,
   type ThemeId,
   type ThemeOption
-} from '@ipior/custom-tailwind-shadcn-themes';
+} from '@pior-labs/design-system';
 
 const STORAGE_KEY = 'finlens-theme';
 

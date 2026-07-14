@@ -11,6 +11,10 @@ concurrency:
   group: finlens-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   ci:
     name: CI
@@ -32,6 +36,8 @@ jobs:
 
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Typecheck workspace
         run: pnpm typecheck
@@ -43,7 +49,9 @@ jobs:
         run: docker build -f packages/api/Dockerfile .
 
       - name: Build web Docker image
-        run: docker build -f packages/web/Dockerfile .
+        run: docker build -f packages/web/Dockerfile --secret id=node_auth_token,env=NODE_AUTH_TOKEN .
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   deploy:
     name: Deploy to OptiPlex
@@ -74,18 +82,38 @@ jobs:
           printf '%s\n' "$FINLENS_ENV" > .env
           chmod 600 .env
 
-      - name: Ensure external Docker network
-        run: docker network inspect finlens_private >/dev/null 2>&1 || docker network create finlens_private
+      - name: Validate required production settings
+        run: |
+          required=(
+            DATABASE_URL
+            BETTER_AUTH_SECRET
+            BETTER_AUTH_URL
+            BETTER_AUTH_TRUSTED_ORIGINS
+            CENTRAL_AUTH_DISCOVERY_URL
+            CENTRAL_AUTH_ISSUER
+            CENTRAL_AUTH_CLIENT_ID
+            CENTRAL_AUTH_CLIENT_SECRET
+          )
+
+          for name in "${required[@]}"; do
+            value="$(grep -E "^${name}=" .env | tail -n 1 | cut -d= -f2-)"
+            if [ -z "$value" ]; then
+              echo "Missing required setting in FINLENS_ENV: $name"
+              exit 1
+            fi
+          done
+
+      - name: Ensure external Docker networks
+        run: |
+          for network in finlens_private pior_edge; do
+            docker network inspect "$network" >/dev/null 2>&1 || docker network create "$network"
+          done
 
       - name: Validate production database URL
         run: |
           database_url="$(grep -E '^DATABASE_URL=' .env | tail -n 1 | cut -d= -f2-)"
-          if [ -z "$database_url" ]; then
-            echo "Missing DATABASE_URL in FINLENS_ENV"
-            exit 1
-          fi
-
           database_host="$(printf '%s\n' "$database_url" | sed -E 's#^postgres(ql)?://([^/@]+@)?([^/:?]+).*#\3#')"
+
           if [ -z "$database_host" ] || [ "$database_host" = "$database_url" ]; then
             echo "DATABASE_URL must be a Postgres connection URL"
             exit 1
@@ -100,6 +128,24 @@ jobs:
 
       - name: Build Compose images
         run: docker compose build
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify central Auth discovery
+        run: |
+          docker compose run --rm --no-deps api node --input-type=module -e '
+            const discoveryUrl = process.env.CENTRAL_AUTH_DISCOVERY_URL;
+            const expectedIssuer = process.env.CENTRAL_AUTH_ISSUER;
+            const response = await fetch(discoveryUrl);
+            if (!response.ok) {
+              throw new Error(`Discovery request failed with HTTP ${response.status}`);
+            }
+            const discovery = await response.json();
+            if (discovery.issuer !== expectedIssuer) {
+              throw new Error(`OIDC issuer mismatch: expected ${expectedIssuer}, received ${discovery.issuer}`);
+            }
+            console.log(`Verified central Auth issuer: ${discovery.issuer}`);
+          '
 
       - name: Run database migrations
         run: docker compose run --rm api node dist/db/migrate.js
@@ -107,5 +153,42 @@ jobs:
       - name: Restart stack
         run: docker compose up -d --remove-orphans
 
-      - name: Show running services
-        run: docker compose ps
+      - name: Verify container health
+        run: |
+          healthy=false
+          for attempt in $(seq 1 24); do
+            if docker compose exec -T api wget -qO- http://127.0.0.1:3000/health >/dev/null \
+              && docker compose exec -T web wget -qO- http://127.0.0.1:80/ >/dev/null; then
+              healthy=true
+              break
+            fi
+            sleep 5
+          done
+
+          docker compose ps
+
+          if [ "$healthy" != true ]; then
+            echo "Finance containers did not become healthy"
+            docker compose logs --tail=100 api web
+            exit 1
+          fi
+
+      - name: Verify Finance through platform Caddy
+        run: |
+          for host in finance.szarans.ca finance.ts.szarans.ca; do
+            healthy=false
+            for attempt in $(seq 1 12); do
+              if curl --fail --silent --show-error \
+                --resolve "$host:443:127.0.0.1" \
+                "https://$host/" >/dev/null; then
+                healthy=true
+                break
+              fi
+              sleep 5
+            done
+
+            if [ "$healthy" != true ]; then
+              echo "Finance did not become reachable through Caddy at https://$host/"
+              exit 1
+            fi
+          done

@@ -115,9 +115,9 @@ importers:
       '@finlens/shared':
         specifier: workspace:*
         version: link:../shared
-      '@ipior/custom-tailwind-shadcn-themes':
-        specifier: github:iPior/custom-tailwind-shadcn-themes#pkg
-        version: https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/07bd369bc5ea434a3f54bfe9be6283e0c5ee5dcb(react@19.2.7)
+      '@pior-labs/design-system':
+        specifier: 1.0.1
+        version: 1.0.1(react@19.2.7)
       '@radix-ui/react-slot':
         specifier: ^1.2.2
         version: 1.2.5(@types/react@19.2.17)(react@19.2.7)
@@ -796,12 +796,6 @@ packages:
     peerDependencies:
       hono: ^4
 
-  '@ipior/custom-tailwind-shadcn-themes@https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/07bd369bc5ea434a3f54bfe9be6283e0c5ee5dcb':
-    resolution: {tarball: https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/07bd369bc5ea434a3f54bfe9be6283e0c5ee5dcb}
-    version: 0.1.0
-    peerDependencies:
-      react: ^19.0.0
-
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
 
@@ -903,6 +897,11 @@ packages:
   '@opentelemetry/semantic-conventions@1.41.1':
     resolution: {integrity: sha512-/UhIkaZgPutTFmQ7RnIJGgDXZmtEJ7Dvi86xNTFWcnRxVRNk/aotsqDJYeEvDP+FSMB2SdW+pQzNMcWP0rwuNA==}
     engines: {node: '>=14'}
+
+  '@pior-labs/design-system@1.0.1':
+    resolution: {integrity: sha512-vfvt+Z3UjMaE87tZDe32lyJq3poxQu5LmPjxBXxu8DhtrIhPQUJPERfrP21Z2VFfvZ35gIUdF7XUWG3UjHIgzw==, tarball: https://npm.pkg.github.com/download/@pior-labs/design-system/1.0.1/45fbb033b15a21d78023c55bd63a731f75ac28a6}
+    peerDependencies:
+      react: ^19.0.0
 
   '@radix-ui/react-compose-refs@1.1.3':
     resolution: {integrity: sha512-rYOP8OMnuuPMQF1uhPVlGNcCDlkokKqGFE3JcxFViIkAXP7EvFWUliJAstrapypaBLJNHbZL6jGhbVDGTwmVhA==}
@@ -2488,10 +2487,6 @@ snapshots:
     dependencies:
       hono: 4.12.23
 
-  '@ipior/custom-tailwind-shadcn-themes@https://codeload.github.com/iPior/custom-tailwind-shadcn-themes/tar.gz/07bd369bc5ea434a3f54bfe9be6283e0c5ee5dcb(react@19.2.7)':
-    dependencies:
-      react: 19.2.7
-
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -2581,6 +2576,10 @@ snapshots:
   '@noble/hashes@2.2.0': {}
 
   '@opentelemetry/semantic-conventions@1.41.1': {}
+
+  '@pior-labs/design-system@1.0.1(react@19.2.7)':
+    dependencies:
+      react: 19.2.7
 
   '@radix-ui/react-compose-refs@1.1.3(@types/react@19.2.17)(react@19.2.7)':
     dependencies:

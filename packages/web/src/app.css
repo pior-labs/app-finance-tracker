@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@import "@ipior/custom-tailwind-shadcn-themes/styles.css";
-@import "@ipior/custom-tailwind-shadcn-themes/effects.css";
+@import "@pior-labs/design-system/styles.css";
+@import "@pior-labs/design-system/effects.css";
 
 @keyframes categorize-content-in {
   from { opacity: 0; transform: translateY(8px); }

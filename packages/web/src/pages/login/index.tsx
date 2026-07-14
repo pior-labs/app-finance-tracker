@@ -6,13 +6,14 @@ import { LoginFormPanel } from './components/LoginFormPanel';
 import { useLoginForm } from './hooks/useLoginForm';
 
 export function LoginPage() {
-  const { user, login } = useAuth();
+  const { user, login, loginWithSSO } = useAuth();
   const navigate = useNavigate();
   const onLoginSuccess = useCallback(() => {
     navigate('/');
   }, [navigate]);
   const form = useLoginForm({
     login,
+    loginWithSSO,
     onLoginSuccess,
   });
 

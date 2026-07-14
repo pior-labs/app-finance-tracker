@@ -105,7 +105,7 @@ jobs:
 
       - name: Ensure external Docker networks
         run: |
-          for network in finlens_private pior_edge; do
+          for network in finlens_private pior_edge pior_data; do
             docker network inspect "$network" >/dev/null 2>&1 || docker network create "$network"
           done
 

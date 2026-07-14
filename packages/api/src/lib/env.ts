@@ -36,9 +36,19 @@ function parseTrustedOrigins(betterAuthUrl: string, webPort: number): string[] {
   return Array.from(new Set([...configuredOrigins, ...defaults]));
 }
 
-const apiPort = Number(process.env.API_PORT ?? 3000);
+// Finance runs beside service-auth during local development, so it uses the
+// next ports by default. Production explicitly sets API_PORT and WEB_PORT.
+const apiPort = Number(process.env.API_PORT ?? 3001);
 const betterAuthUrl = process.env.BETTER_AUTH_URL ?? `http://localhost:${apiPort}`;
-const webPort = Number(process.env.WEB_PORT ?? 5173);
+const webPort = Number(process.env.WEB_PORT ?? 5174);
+
+function requiredCentralAuth(name: string): string {
+  const value = process.env[name]?.trim();
+  if (!value) {
+    throw new Error(`${name} is required to delegate authentication to the central SSO provider`);
+  }
+  return value;
+}
 
 export const env = {
   apiPort,
@@ -46,7 +56,16 @@ export const env = {
   uploadDir: process.env.UPLOAD_DIR ?? '../../data/uploads',
   betterAuthSecret: process.env.BETTER_AUTH_SECRET ?? 'change-me-in-production',
   betterAuthUrl,
-  betterAuthTrustedOrigins: parseTrustedOrigins(betterAuthUrl, webPort)
+  betterAuthTrustedOrigins: parseTrustedOrigins(betterAuthUrl, webPort),
+  centralAuth: {
+    // Provider id must match the OAuth callback path registered with the auth
+    // service: /api/auth/oauth2/callback/auth-pior
+    providerId: 'auth-pior',
+    discoveryUrl: requiredCentralAuth('CENTRAL_AUTH_DISCOVERY_URL'),
+    issuer: requiredCentralAuth('CENTRAL_AUTH_ISSUER'),
+    clientId: requiredCentralAuth('CENTRAL_AUTH_CLIENT_ID'),
+    clientSecret: requiredCentralAuth('CENTRAL_AUTH_CLIENT_SECRET')
+  }
 };
 
 export function resolveFromApiDir(relativeOrAbsolutePath: string): string {

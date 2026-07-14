@@ -40,6 +40,8 @@ services:
       dockerfile: packages/web/Dockerfile
       args:
         VITE_API_BASE_URL: /api
+      secrets:
+        - node_auth_token
     depends_on:
       api:
         condition: service_healthy
@@ -90,3 +92,9 @@ networks:
   pior_edge:
     external: true
     name: pior_edge
+
+# Provides the GitHub Packages token to the web image build so it can pull
+# @pior-labs/design-system. Reads the value from the NODE_AUTH_TOKEN env var.
+secrets:
+  node_auth_token:
+    environment: NODE_AUTH_TOKEN

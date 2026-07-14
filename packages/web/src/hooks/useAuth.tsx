@@ -10,6 +10,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithSSO: () => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -106,6 +107,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const loginWithSSO = async (): Promise<void> => {
+    const response = await fetch('/api/auth/sign-in/oauth2', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ providerId: 'auth-pior', callbackURL: '/' })
+    });
+
+    if (!response.ok) {
+      const payload = await parseJson(response);
+      throw new Error(toErrorMessage(payload, `Request failed: ${response.status}`));
+    }
+
+    const payload = await parseJson<{ url?: string }>(response);
+    if (!payload.url) {
+      throw new Error('The SSO provider did not return a redirect URL');
+    }
+
+    // Hand the browser off to the central provider; it redirects back to the
+    // registered callback, which sets the session and returns to callbackURL.
+    window.location.href = payload.url;
+  };
+
   const logout = async (): Promise<void> => {
     const response = await fetch('/api/auth/sign-out', {
       method: 'POST',
@@ -129,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       loading,
       login,
+      loginWithSSO,
       logout,
       refresh
     }),

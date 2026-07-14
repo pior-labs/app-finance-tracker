@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@finlens/shared": "workspace:*",
-    "@ipior/custom-tailwind-shadcn-themes": "github:iPior/custom-tailwind-shadcn-themes#pkg",
+    "@pior-labs/design-system": "1.0.1",
     "@radix-ui/react-slot": "^1.2.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

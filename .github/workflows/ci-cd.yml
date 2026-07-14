@@ -155,9 +155,23 @@ jobs:
 
       - name: Verify container health
         run: |
-          docker compose exec -T api wget -qO- http://127.0.0.1:3000/health
-          docker compose exec -T web wget -qO- http://127.0.0.1:80/ >/dev/null
+          healthy=false
+          for attempt in $(seq 1 24); do
+            if docker compose exec -T api wget -qO- http://127.0.0.1:3000/health >/dev/null \
+              && docker compose exec -T web wget -qO- http://127.0.0.1:80/ >/dev/null; then
+              healthy=true
+              break
+            fi
+            sleep 5
+          done
+
           docker compose ps
+
+          if [ "$healthy" != true ]; then
+            echo "Finance containers did not become healthy"
+            docker compose logs --tail=100 api web
+            exit 1
+          fi
 
       - name: Verify Finance through platform Caddy
         run: |

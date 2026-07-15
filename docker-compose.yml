@@ -33,6 +33,7 @@ services:
       pior_edge:
         aliases:
           - finance-api
+      pior_data:
 
   web:
     build:
@@ -83,8 +84,9 @@ services:
       retries: 3
       start_period: 10s
     networks:
-      - default
-      - finlens_private
+      default:
+      finlens_private:
+      pior_data:
 
 networks:
   finlens_private:
@@ -92,6 +94,9 @@ networks:
   pior_edge:
     external: true
     name: pior_edge
+  pior_data:
+    external: true
+    name: pior_data
 
 # Provides the GitHub Packages token to the web image build so it can pull
 # @pior-labs/design-system. Reads the value from the NODE_AUTH_TOKEN env var.

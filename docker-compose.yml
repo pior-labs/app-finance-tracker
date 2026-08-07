@@ -29,7 +29,6 @@ services:
       start_period: 15s
     networks:
       default:
-      finlens_private:
       pior_edge:
         aliases:
           - finance-api
@@ -85,12 +84,9 @@ services:
       start_period: 10s
     networks:
       default:
-      finlens_private:
       pior_data:
 
 networks:
-  finlens_private:
-    external: true
   pior_edge:
     external: true
     name: pior_edge

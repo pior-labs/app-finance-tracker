@@ -26,8 +26,7 @@ COPY packages/web/tsconfig.json packages/web/index.html packages/web/vite.config
 COPY packages/web/src ./src
 RUN pnpm build
 
-FROM nginx:1.27-alpine AS runtime
-COPY --from=build /app/packages/web/dist /usr/share/nginx/html
-COPY packages/web/nginx.conf /etc/nginx/conf.d/default.conf
+FROM caddy:2-alpine AS runtime
+COPY packages/web/Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/packages/web/dist /srv
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]

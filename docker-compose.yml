@@ -16,6 +16,8 @@ services:
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-change-me-in-production}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
     ports:
+      # Loopback-only binding retained for diagnostics and deployment compatibility.
+      # Normal production API traffic enters through the shared Caddy edge.
       - "127.0.0.1:${API_PORT:-3000}:3000"
     volumes:
       - ./data:/app/data
@@ -46,6 +48,8 @@ services:
       api:
         condition: service_healthy
     ports:
+      # Loopback-only binding retained for diagnostics and deployment compatibility.
+      # Normal production web traffic enters through the shared Caddy edge.
       - "127.0.0.1:8080:80"
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:80/"]
@@ -72,7 +76,7 @@ services:
       MCP_LOG_LEVEL: ${MCP_LOG_LEVEL:-info}
     # stdio transport: keep stdin open so the long-running container stays
     # alive; MCP clients attach with `docker exec -i finlens-mcp-server
-    # node dist/index.js`. No ports — internal-only by design (Phase 2).
+    # node dist/index.js`. No ports are published; the MCP interface is internal-only.
     stdin_open: true
     extra_hosts:
       - "host.docker.internal:host-gateway"

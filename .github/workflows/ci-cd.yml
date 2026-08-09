@@ -105,7 +105,7 @@ jobs:
 
       - name: Ensure external Docker networks
         run: |
-          for network in finlens_private pior_edge pior_data; do
+          for network in pior_edge pior_data; do
             docker network inspect "$network" >/dev/null 2>&1 || docker network create "$network"
           done
 
@@ -175,20 +175,18 @@ jobs:
 
       - name: Verify Finance through platform Caddy
         run: |
-          for host in finance.szarans.ca finance.ts.szarans.ca; do
-            healthy=false
-            for attempt in $(seq 1 12); do
-              if curl --fail --silent --show-error \
-                --resolve "$host:443:127.0.0.1" \
-                "https://$host/" >/dev/null; then
-                healthy=true
-                break
-              fi
-              sleep 5
-            done
-
-            if [ "$healthy" != true ]; then
-              echo "Finance did not become reachable through Caddy at https://$host/"
-              exit 1
+          healthy=false
+          for attempt in $(seq 1 12); do
+            if curl --fail --silent --show-error \
+              --resolve finance.szarans.ca:443:127.0.0.1 \
+              https://finance.szarans.ca/ >/dev/null; then
+              healthy=true
+              break
             fi
+            sleep 5
           done
+
+          if [ "$healthy" != true ]; then
+            echo "Finance did not become reachable through Caddy at https://finance.szarans.ca/"
+            exit 1
+          fi

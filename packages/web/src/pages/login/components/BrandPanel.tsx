@@ -1,4 +1,5 @@
 import { BrandMark } from '@/components/BrandMark';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function BrandPanel() {
   return (
@@ -26,6 +27,8 @@ export function BrandPanel() {
           A shared, unhurried view of your household — statements, categories, and the small
           patterns that add up over a year.
         </p>
+
+        <ThemeToggle className="mt-8" />
       </div>
 
       <div aria-hidden="true" />

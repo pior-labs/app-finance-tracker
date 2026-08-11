@@ -1,21 +1,12 @@
-import { useCallback } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { BrandPanel } from './components/BrandPanel';
-import { LoginFormPanel } from './components/LoginFormPanel';
-import { useLoginForm } from './hooks/useLoginForm';
+import { SignInPanel } from './components/SignInPanel';
+import { useSsoSignIn } from './hooks/useSsoSignIn';
 
 export function LoginPage() {
-  const { user, login, loginWithSSO } = useAuth();
-  const navigate = useNavigate();
-  const onLoginSuccess = useCallback(() => {
-    navigate('/');
-  }, [navigate]);
-  const form = useLoginForm({
-    login,
-    loginWithSSO,
-    onLoginSuccess,
-  });
+  const { user, loginWithSSO } = useAuth();
+  const signIn = useSsoSignIn({ loginWithSSO });
 
   if (user) {
     return <Navigate to="/" replace />;
@@ -37,7 +28,7 @@ export function LoginPage() {
         className="relative z-2 mx-auto grid min-h-dvh w-full max-w-310 grid-cols-1 gap-10 px-5 py-[max(2rem,env(safe-area-inset-top))] md:grid-cols-[1fr_1fr] md:gap-16 md:px-12 md:py-10 lg:gap-24 lg:px-16"
       >
         <BrandPanel />
-        <LoginFormPanel {...form} />
+        <SignInPanel {...signIn} />
       </main>
     </div>
   );

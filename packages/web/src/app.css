@@ -67,6 +67,10 @@
   --finlens-accent-shadow: 0 4px 14px -2px color-mix(in srgb, var(--accent) 38%, transparent);
   --finlens-focus-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 16%, transparent);
 
+  --finlens-action-hover-bg: color-mix(in srgb, var(--ink) 90%, var(--accent));
+  --finlens-action-shadow: 0 14px 36px -12px color-mix(in srgb, var(--ink) 55%, transparent), inset 0 1px 0 rgba(var(--frost-rgb),0.06);
+  --finlens-action-shadow-hover: 0 18px 42px -12px color-mix(in srgb, var(--ink) 60%, transparent), inset 0 1px 0 rgba(var(--frost-rgb),0.08);
+
   --finlens-muted-track: color-mix(in srgb, var(--ink) 6%, transparent);
   --finlens-soft-divider: color-mix(in srgb, var(--ink) 10%, transparent);
   --finlens-category-favorite-bg: color-mix(in srgb, var(--accent) 18%, rgba(var(--surface-rgb),1) 82%);

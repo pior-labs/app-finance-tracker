@@ -9,7 +9,6 @@ export interface AuthUser {
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
   loginWithSSO: () => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -78,35 +77,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void refresh();
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
-    const response = await fetch('/api/auth/sign-in/email', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ email, password })
-    });
-
-    if (!response.ok) {
-      const payload = await parseJson(response);
-      throw new Error(toErrorMessage(payload, `Request failed: ${response.status}`));
-    }
-
-    const payload = await parseJson<{ user?: { id: string | number; name: string; email: string } }>(response);
-
-    if (!payload.user) {
-      await refresh();
-      return;
-    }
-
-    setUser({
-      id: Number(payload.user.id),
-      name: payload.user.name,
-      email: payload.user.email
-    });
-  };
-
   const loginWithSSO = async (): Promise<void> => {
     const response = await fetch('/api/auth/sign-in/oauth2', {
       method: 'POST',
@@ -154,7 +124,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       user,
       loading,
-      login,
       loginWithSSO,
       logout,
       refresh

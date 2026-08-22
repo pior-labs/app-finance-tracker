@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
   const rootEnv = loadEnv(mode, repoRoot, '');
   const apiPort = rootEnv.API_PORT ?? '3001';
   const apiTarget = process.env.API_PROXY_TARGET ?? rootEnv.API_PROXY_TARGET ?? `http://localhost:${apiPort}`;
-  const webPort = Number(process.env.WEB_PORT ?? rootEnv.WEB_PORT ?? 5174);
+  const webPort = Number(process.env.WEB_PORT ?? rootEnv.WEB_PORT ?? 5173);
 
   return {
     plugins: [react(), tailwindcss()],

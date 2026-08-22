@@ -44,6 +44,9 @@ export const auth = betterAuth({
     })
   ],
   advanced: {
+    // Development apps share localhost:5173 one at a time. Cookies outlive the
+    // dev server, so namespace FinLens cookies to prevent cross-app collisions.
+    cookiePrefix: 'finlens',
     database: {
       generateId: 'serial'
     }

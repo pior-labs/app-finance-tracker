@@ -36,11 +36,11 @@ function parseTrustedOrigins(betterAuthUrl: string, webPort: number): string[] {
   return Array.from(new Set([...configuredOrigins, ...defaults]));
 }
 
-// Finance runs beside service-auth during local development, so it uses the
-// next ports by default. Production explicitly sets API_PORT and WEB_PORT.
+// Local apps share the standard Vite port one at a time and authenticate
+// against the hosted SSO service. The API remains on its own proxied port.
 const apiPort = Number(process.env.API_PORT ?? 3001);
-const betterAuthUrl = process.env.BETTER_AUTH_URL ?? `http://localhost:${apiPort}`;
-const webPort = Number(process.env.WEB_PORT ?? 5174);
+const webPort = Number(process.env.WEB_PORT ?? 5173);
+const betterAuthUrl = process.env.BETTER_AUTH_URL ?? `http://localhost:${webPort}`;
 
 function requiredCentralAuth(name: string): string {
   const value = process.env[name]?.trim();

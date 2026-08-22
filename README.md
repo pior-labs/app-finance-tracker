@@ -83,7 +83,11 @@ pnpm dev
 The default local configuration uses:
 
 - Finance API: `http://localhost:3001`
-- Finance web: `http://localhost:5174`
+- Finance web: `http://localhost:5173`
+- Central SSO: `https://auth.szarans.ca`
+
+Development apps reuse port `5173` one at a time. Each app keeps its own
+Better Auth cookie prefix so sessions left by another local app cannot collide.
 
 Run individual components with:
 

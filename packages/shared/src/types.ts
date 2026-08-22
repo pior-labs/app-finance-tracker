@@ -1,5 +1,7 @@
 export type TransactionType = 'debit' | 'credit';
 export type TransactionStatus = 'needs_review' | 'confirmed';
+export type FinancialInstitution = 'rbc' | 'cibc';
+export type StatementAccountType = 'credit_card' | 'debit_card';
 
 export interface UserSummary {
   id: number;
@@ -37,6 +39,8 @@ export interface TransactionListItem extends Transaction {
   statement: {
     id: number;
     originalFilename: string;
+    institution: FinancialInstitution | null;
+    accountType: StatementAccountType;
     uploadedBy: number;
     uploadedByUser: UserSummary;
   };
@@ -47,7 +51,8 @@ export interface Statement {
   uploadedBy: number;
   filename: string;
   originalFilename: string;
-  institution: string | null;
+  institution: FinancialInstitution | null;
+  accountType: StatementAccountType;
   periodStart: string | null;
   periodEnd: string | null;
   createdAt: string;

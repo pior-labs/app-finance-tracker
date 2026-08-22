@@ -1,5 +1,6 @@
 import { relations } from 'drizzle-orm';
 import { boolean, index, integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import type { FinancialInstitution, StatementAccountType } from '@finlens/shared';
 
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () =>
@@ -89,7 +90,8 @@ export const statements = pgTable(
       .references(() => users.id),
     filename: text('filename').notNull(),
     originalFilename: text('original_filename').notNull(),
-    institution: text('institution'),
+    institution: text('institution').$type<FinancialInstitution>(),
+    accountType: text('account_type').$type<StatementAccountType>().notNull().default('credit_card'),
     periodStart: text('period_start'),
     periodEnd: text('period_end'),
     rawText: text('raw_text'),

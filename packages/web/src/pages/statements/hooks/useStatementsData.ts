@@ -162,12 +162,19 @@ export function useStatementsData() {
           data: current.data.filter((statement) => statement.id !== statementId),
         };
       }, { revalidate: true });
+      pushToast({
+        variant: 'success',
+        title: 'Statement deleted',
+        description: 'The statement and its imported transactions were permanently removed.',
+      });
+      return true;
     } catch (deleteError) {
       setMutationError(deleteError instanceof Error ? deleteError.message : 'Failed to delete statement');
+      return false;
     } finally {
       setPendingId(setDeletingStatementIds, statementId, false);
     }
-  }, [mutateStatements]);
+  }, [mutateStatements, pushToast]);
 
   return {
     statements,

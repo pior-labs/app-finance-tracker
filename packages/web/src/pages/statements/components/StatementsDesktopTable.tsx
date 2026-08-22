@@ -18,7 +18,7 @@ interface StatementsDesktopTableProps {
   onUpload: () => void;
   onViewStatementTransactions: (statementId: number) => void;
   onReparseStatement: (statementId: number) => void;
-  onDeleteStatement: (statementId: number) => void;
+  onDeleteStatement: (statement: StatementListItem) => void;
 }
 
 export const StatementsDesktopTable = memo(function StatementsDesktopTable({
@@ -163,7 +163,7 @@ export const StatementsDesktopTable = memo(function StatementsDesktopTable({
                         </button>
                         <button
                           type="button"
-                          onClick={() => onDeleteStatement(statement.id)}
+                          onClick={() => onDeleteStatement(statement)}
                           aria-label="Delete statement"
                           disabled={isRowPending}
                           className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-0 bg-frost/40 transition-colors hover:bg-[var(--finlens-danger-surface)] disabled:cursor-not-allowed disabled:opacity-55"

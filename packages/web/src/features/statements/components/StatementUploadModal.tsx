@@ -10,6 +10,7 @@ interface UploadResult {
   periodStart: string | null;
   periodEnd: string | null;
   filename: string;
+  institution: string | null;
 }
 
 interface StatementUploadModalProps {
@@ -73,7 +74,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
       }
 
       const payload = (await response.json()) as {
-        data: { originalFilename: string; periodStart: string | null; periodEnd: string | null };
+        data: { originalFilename: string; institution: string | null; periodStart: string | null; periodEnd: string | null };
         meta?: { insertedTransactions?: number };
       };
 
@@ -82,6 +83,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
         periodStart: payload.data.periodStart,
         periodEnd: payload.data.periodEnd,
         filename: payload.data.originalFilename,
+        institution: payload.data.institution,
       });
       setState('success');
       onUploadComplete?.();
@@ -189,7 +191,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
               onChange={(e) => onFileSelect(e.target.files?.[0])}
             />
             <p className="mt-3 text-xs" style={{ color: 'var(--ink-3)' }}>
-              Only PDF statements from the supported bank format are supported for now.
+              RBC credit card statement PDFs are supported for now. CIBC support is planned.
             </p>
             <div className="mt-4 flex justify-end">
               <button
@@ -280,7 +282,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
                     className="text-xl font-normal"
                     style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
                   >
-                    Statement imported
+                    {result.institution === 'rbc' ? 'RBC statement imported' : 'Statement imported'}
                   </div>
                   <div className="mt-0.5 text-[13px]" style={{ color: 'var(--ink-2)' }}>
                     <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 500 }}>

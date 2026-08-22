@@ -1,13 +1,16 @@
 import type {
   CategoriesResponse,
   Category,
-  Transaction as SharedTransaction,
+  TransactionListItem as SharedTransactionListItem,
   TransactionType
 } from '@finlens/shared/types';
 
 export type { Category };
 
-export type Transaction = Pick<SharedTransaction, 'id' | 'date' | 'description' | 'merchant' | 'amount' | 'type'>;
+export type Transaction = Pick<
+  SharedTransactionListItem,
+  'id' | 'date' | 'description' | 'merchant' | 'amount' | 'type' | 'statement'
+>;
 
 export interface ConfirmedItem {
   txId: number;

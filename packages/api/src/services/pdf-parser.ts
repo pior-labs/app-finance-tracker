@@ -1,5 +1,5 @@
 import { PDFParse } from 'pdf-parse';
-import type { TransactionType } from '@finlens/shared';
+import type { FinancialInstitution, StatementAccountType, TransactionType } from '@finlens/shared';
 
 export interface ParsedTransaction {
   date: string;
@@ -7,6 +7,12 @@ export interface ParsedTransaction {
   merchant: string | null;
   amount: number;
   type: TransactionType;
+}
+
+export interface ParsedBankStatement {
+  institution: FinancialInstitution | null;
+  accountType: StatementAccountType;
+  transactions: ParsedTransaction[];
 }
 
 export interface ParsedStatementRow {
@@ -373,20 +379,29 @@ export async function extractPdfText(fileBuffer: Buffer): Promise<string> {
   }
 }
 
-export function parseBankStatementText(extractedText: string): ParsedTransaction[] {
+export function parseBankStatementDocument(extractedText: string): ParsedBankStatement {
   const parsedRows = parseRbcStatementTable(extractedText);
+  const institution = /\bRBC\b|ROYAL BANK OF CANADA/i.test(extractedText) || parsedRows.length > 0 ? 'rbc' : null;
 
-  return parsedRows.map((row) => {
-    const fullDescription = row.description ? `${row.activity} ${row.description}` : row.activity;
+  return {
+    institution,
+    accountType: 'credit_card',
+    transactions: parsedRows.map((row) => {
+      const fullDescription = row.description ? `${row.activity} ${row.description}` : row.activity;
 
-    return {
-      date: row.transactionDate,
-      description: fullDescription,
-      merchant: extractMerchantName(fullDescription),
-      amount: row.amount,
-      type: row.amount < 0 ? 'credit' : 'debit'
-    };
-  });
+      return {
+        date: row.transactionDate,
+        description: fullDescription,
+        merchant: extractMerchantName(fullDescription),
+        amount: row.amount,
+        type: row.amount < 0 ? 'credit' : 'debit'
+      };
+    })
+  };
+}
+
+export function parseBankStatementText(extractedText: string): ParsedTransaction[] {
+  return parseBankStatementDocument(extractedText).transactions;
 }
 
 export async function parseBankStatement(fileBuffer: Buffer): Promise<ParsedTransaction[]> {

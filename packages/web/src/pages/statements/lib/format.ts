@@ -1,4 +1,10 @@
 import type { StatementListItem } from '../types';
+import type { FinancialInstitution } from '@finlens/shared/types';
+
+const INSTITUTION_LABELS: Record<FinancialInstitution, string> = {
+  rbc: 'RBC',
+  cibc: 'CIBC',
+};
 
 export function formatDate(value: string): string {
   const parsed = new Date(value);
@@ -25,6 +31,10 @@ export function getStatementUserInitial(statement: StatementListItem): string {
 
 export function getTransactionUnit(count: number): string {
   return count === 1 ? 'tx' : 'txs';
+}
+
+export function getInstitutionLabel(institution: FinancialInstitution | null): string {
+  return institution ? INSTITUTION_LABELS[institution] : 'Unknown bank';
 }
 
 export function sortStatementsByCreatedAt(statements: StatementListItem[]): StatementListItem[] {

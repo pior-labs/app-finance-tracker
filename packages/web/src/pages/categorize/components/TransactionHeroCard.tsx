@@ -2,7 +2,9 @@ import { memo } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { formatMoney, formatShortDate, prettyName, splitMoney } from '../lib/format';
 import type { Category, Transaction } from '../types';
+import { AccountTypeBadge } from './AccountTypeBadge';
 import { CategoryPicker } from './CategoryPicker';
+import { InstitutionBadge } from './InstitutionBadge';
 import { KeyHint } from './KeyHint';
 
 interface TransactionHeroCardProps {
@@ -29,7 +31,7 @@ export const TransactionHeroCard = memo(function TransactionHeroCard({
   onSkip,
 }: TransactionHeroCardProps) {
   const { whole, cents } = splitMoney(current.amount);
-  const isCredit = current.type === 'credit';
+  const isCreditTransaction = current.type === 'credit';
 
   return (
     <div
@@ -45,7 +47,7 @@ export const TransactionHeroCard = memo(function TransactionHeroCard({
       <div
         className="pointer-events-none absolute inset-0 overflow-hidden rounded-[28px] sm:rounded-[36px]"
         style={{
-          background: isCredit ? 'var(--finlens-success-wash)' : 'var(--finlens-danger-wash)',
+          background: isCreditTransaction ? 'var(--finlens-success-wash)' : 'var(--finlens-danger-wash)',
         }}
       />
 
@@ -60,24 +62,16 @@ export const TransactionHeroCard = memo(function TransactionHeroCard({
             <span className="text-[13px]" style={{ color: 'var(--ink-3)' }}>
               {formatShortDate(current.date)}
             </span>
-            <span
-              className="inline-flex rounded-full border px-3 py-1 text-xs font-medium"
-              style={{
-                borderColor: 'rgba(var(--frost-rgb),0.6)',
-                background: isCredit ? 'var(--finlens-success-surface-strong)' : 'var(--finlens-danger-surface)',
-                color: isCredit ? 'var(--finlens-success-ink)' : 'var(--finlens-danger-ink)',
-              }}
-            >
-              {isCredit ? 'Credit' : 'Debit'}
-            </span>
+            <AccountTypeBadge accountType={current.statement.accountType} />
+            <InstitutionBadge institution={current.statement.institution} />
           </div>
           <div
             className="text-[44px] font-normal leading-none tracking-tight tabular-nums sm:text-[52px] md:text-[64px]"
             style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)', fontFeatureSettings: "'lnum', 'tnum'" }}
-            aria-label={`${isCredit ? 'Credit' : 'Debit'} ${formatMoney(current.amount)}`}
+            aria-label={`${isCreditTransaction ? 'Credit' : 'Charge'} ${formatMoney(current.amount)}`}
           >
             <span className="align-top text-[26px] sm:text-[30px] md:text-4xl" style={{ color: 'var(--ink-3)' }}>
-              {isCredit ? '+' : '−'}
+              {isCreditTransaction ? '+' : '−'}
             </span>
             <span className="align-top text-[22px] sm:text-[26px] md:text-[32px]" style={{ color: 'var(--ink-3)' }}>$</span>
             {whole}

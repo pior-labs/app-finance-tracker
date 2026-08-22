@@ -1,11 +1,13 @@
 import { Suspense, lazy, useCallback, useState } from 'react';
 import { useUncategorizedCount } from '@/hooks/useUncategorizedCount';
 import { StatementsDesktopTable } from './components/StatementsDesktopTable';
+import { DeleteStatementModal } from './components/DeleteStatementModal';
 import { StatementsErrorBanner } from './components/StatementsErrorBanner';
 import { StatementsHeader } from './components/StatementsHeader';
 import { StatementsMobileList } from './components/StatementsMobileList';
 import { StatementsWarningFooter } from './components/StatementsWarningFooter';
 import { useStatementsData } from './hooks/useStatementsData';
+import type { StatementListItem } from './types';
 
 const UploadModal = lazy(async () => {
   const module = await import('@/features/statements/components/StatementUploadModal');
@@ -14,6 +16,7 @@ const UploadModal = lazy(async () => {
 
 export function StatementsPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [statementToDelete, setStatementToDelete] = useState<StatementListItem | null>(null);
   const { refresh: refreshUncategorizedCount } = useUncategorizedCount();
   const {
     statements,
@@ -55,9 +58,21 @@ export function StatementsPage() {
     void reparseStatement(statementId).then(refreshUncategorizedCount);
   }, [refreshUncategorizedCount, reparseStatement]);
 
-  const onDeleteStatement = useCallback((statementId: number) => {
-    void deleteStatement(statementId).then(refreshUncategorizedCount);
-  }, [deleteStatement, refreshUncategorizedCount]);
+  const onDeleteStatement = useCallback((statement: StatementListItem) => {
+    setStatementToDelete(statement);
+  }, []);
+
+  const closeDeleteModal = useCallback(() => {
+    setStatementToDelete(null);
+  }, []);
+
+  const confirmDeleteStatement = useCallback(async () => {
+    if (!statementToDelete) return;
+    const deleted = await deleteStatement(statementToDelete.id);
+    if (!deleted) return;
+    setStatementToDelete(null);
+    await refreshUncategorizedCount();
+  }, [deleteStatement, refreshUncategorizedCount, statementToDelete]);
 
   const renderUploadModal = uploadOpen ? (
     <Suspense fallback={null}>
@@ -104,6 +119,16 @@ export function StatementsPage() {
       <StatementsWarningFooter />
 
       {renderUploadModal}
+      {statementToDelete ? (
+        <DeleteStatementModal
+          statement={statementToDelete}
+          deleting={deletingStatementIds.has(statementToDelete.id)}
+          onClose={closeDeleteModal}
+          onConfirm={() => {
+            void confirmDeleteStatement();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

@@ -18,7 +18,7 @@ interface StatementsMobileListProps {
   onUpload: () => void;
   onViewStatementTransactions: (statementId: number) => void;
   onReparseStatement: (statementId: number) => void;
-  onDeleteStatement: (statementId: number) => void;
+  onDeleteStatement: (statement: StatementListItem) => void;
 }
 
 export const StatementsMobileList = memo(function StatementsMobileList({
@@ -146,7 +146,7 @@ export const StatementsMobileList = memo(function StatementsMobileList({
                 </button>
                 <button
                   type="button"
-                  onClick={() => onDeleteStatement(statement.id)}
+                  onClick={() => onDeleteStatement(statement)}
                   aria-label="Delete statement"
                   disabled={isRowPending}
                   className="inline-flex h-11 cursor-pointer items-center justify-center gap-1.5 rounded-full border-0 bg-transparent px-3 text-[13px] font-medium transition-colors hover:bg-[var(--finlens-danger-surface)] disabled:cursor-not-allowed disabled:opacity-55"

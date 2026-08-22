@@ -8,6 +8,13 @@
       "when": 1780263356206,
       "tag": "0000_mighty_blue_shield",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787424181953,
+      "tag": "0001_spooky_meggan",
+      "breakpoints": true
     }
   ]
 }

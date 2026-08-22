@@ -1,0 +1,1 @@
+ALTER TABLE "statements" ADD COLUMN "account_type" text DEFAULT 'credit_card' NOT NULL;

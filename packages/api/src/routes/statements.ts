@@ -6,7 +6,7 @@ import { Hono } from 'hono';
 import { db, schema } from '../db/index.js';
 import { ensureDir, env, resolveFromApiDir } from '../lib/env.js';
 import type { AuthVariables } from '../middleware/auth.js';
-import { extractPdfText, parseBankStatementText } from '../services/pdf-parser.js';
+import { extractPdfText, parseBankStatementDocument } from '../services/pdf-parser.js';
 
 export const statementsRouter = new Hono<{ Variables: AuthVariables }>();
 
@@ -93,18 +93,24 @@ statementsRouter.get('/', async (c) => {
   );
 
   return c.json({
-    data: statements.map((statement) => ({
-      id: statement.id,
-      uploadedBy: statement.uploadedBy,
-      filename: statement.filename,
-      originalFilename: statement.originalFilename,
-      institution: statement.institution,
-      periodStart: statement.periodStart,
-      periodEnd: statement.periodEnd,
-      createdAt: statement.createdAt,
-      uploadedByUser: statement.uploadedByUser,
-      transactionCount: transactionCountByStatementId.get(statement.id) ?? 0
-    })),
+    data: statements.map((statement) => {
+      const transactionCount = transactionCountByStatementId.get(statement.id) ?? 0;
+
+      return {
+        id: statement.id,
+        uploadedBy: statement.uploadedBy,
+        filename: statement.filename,
+        originalFilename: statement.originalFilename,
+        // RBC was the only parser before institution tracking was introduced.
+        institution: statement.institution ?? (transactionCount > 0 ? 'rbc' : null),
+        accountType: statement.accountType,
+        periodStart: statement.periodStart,
+        periodEnd: statement.periodEnd,
+        createdAt: statement.createdAt,
+        uploadedByUser: statement.uploadedByUser,
+        transactionCount
+      };
+    }),
     meta: {
       count: statements.length
     }
@@ -185,7 +191,8 @@ statementsRouter.post('/upload', async (c) => {
   await writeFile(absoluteFilePath, fileBuffer);
 
   const extractedText = await extractPdfText(fileBuffer);
-  const parsedTransactions = parseBankStatementText(extractedText);
+  const parsedStatement = parseBankStatementDocument(extractedText);
+  const parsedTransactions = parsedStatement.transactions;
   const { periodStart, periodEnd } = getStatementPeriodFromTransactions(parsedTransactions);
 
   const [createdStatement] = await db
@@ -194,6 +201,8 @@ statementsRouter.post('/upload', async (c) => {
       uploadedBy: userId,
       filename: storedFilename,
       originalFilename: sanitizedOriginalFilename,
+      institution: parsedStatement.institution,
+      accountType: parsedStatement.accountType,
       periodStart,
       periodEnd,
       rawText: extractedText
@@ -228,6 +237,7 @@ statementsRouter.post('/upload', async (c) => {
         filename: createdStatement.filename,
         originalFilename: createdStatement.originalFilename,
         institution: createdStatement.institution,
+        accountType: createdStatement.accountType,
         periodStart: createdStatement.periodStart,
         periodEnd: createdStatement.periodEnd,
         createdAt: createdStatement.createdAt
@@ -283,7 +293,8 @@ statementsRouter.post('/:id/reparse', async (c) => {
     return c.json({ error: 'Statement cannot be re-parsed because no raw text is stored.' }, 400);
   }
 
-  const parsedTransactions = parseBankStatementText(rawText);
+  const parsedStatement = parseBankStatementDocument(rawText);
+  const parsedTransactions = parsedStatement.transactions;
   const { periodStart, periodEnd } = getStatementPeriodFromTransactions(parsedTransactions);
 
   await db.transaction(async (tx) => {
@@ -309,6 +320,8 @@ statementsRouter.post('/:id/reparse', async (c) => {
     await tx
       .update(schema.statements)
       .set({
+        institution: parsedStatement.institution,
+        accountType: parsedStatement.accountType,
         periodStart,
         periodEnd
       })

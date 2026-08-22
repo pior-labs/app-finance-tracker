@@ -246,6 +246,8 @@ transactionsRouter.get('/', async (c) => {
         columns: {
           id: true,
           originalFilename: true,
+          institution: true,
+          accountType: true,
           uploadedBy: true
         },
         with: {
@@ -287,6 +289,9 @@ transactionsRouter.get('/', async (c) => {
       statement: {
         id: transaction.statement.id,
         originalFilename: transaction.statement.originalFilename,
+        // RBC was the only parser before institution tracking was introduced.
+        institution: transaction.statement.institution ?? 'rbc',
+        accountType: transaction.statement.accountType,
         uploadedBy: transaction.statement.uploadedBy,
         uploadedByUser: transaction.statement.uploadedByUser
       }

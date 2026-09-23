@@ -191,7 +191,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
               onChange={(e) => onFileSelect(e.target.files?.[0])}
             />
             <p className="mt-3 text-xs" style={{ color: 'var(--ink-3)' }}>
-              RBC credit card statement PDFs are supported for now. CIBC support is planned.
+              RBC and CIBC credit card statement PDFs are supported.
             </p>
             <div className="mt-4 flex justify-end">
               <button
@@ -282,7 +282,7 @@ export function StatementUploadModal({ open, onClose, onUploadComplete }: Statem
                     className="text-xl font-normal"
                     style={{ fontFamily: "'Fraunces', serif", color: 'var(--ink)' }}
                   >
-                    {result.institution === 'rbc' ? 'RBC statement imported' : 'Statement imported'}
+                    {result.institution === 'rbc' ? 'RBC statement imported' : result.institution === 'cibc' ? 'CIBC statement imported' : 'Statement imported'}
                   </div>
                   <div className="mt-0.5 text-[13px]" style={{ color: 'var(--ink-2)' }}>
                     <span style={{ fontFamily: "'Fraunces', serif", fontWeight: 500 }}>

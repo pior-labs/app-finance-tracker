@@ -12,6 +12,7 @@ dist/
 .env.prod
 
 # runtime data
+cibc_statement.pdf
 data/*
 !data/.gitkeep
 

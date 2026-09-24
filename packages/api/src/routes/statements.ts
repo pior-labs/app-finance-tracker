@@ -6,9 +6,14 @@ import { Hono } from 'hono';
 import { db, schema } from '../db/index.js';
 import { ensureDir, env, resolveFromApiDir } from '../lib/env.js';
 import type { AuthVariables } from '../middleware/auth.js';
-import { extractPdfText, parseBankStatementDocument } from '../services/pdf-parser.js';
+import { extractPdfText, parseStatementForImport, StatementParseError } from '../services/pdf-parser.js';
 
 export const statementsRouter = new Hono<{ Variables: AuthVariables }>();
+
+statementsRouter.onError((error, c) => {
+  if (error instanceof StatementParseError) return c.json({ error: error.message }, 422);
+  throw error;
+});
 
 function isFileLike(value: unknown): value is { name: string; type: string; arrayBuffer: () => Promise<ArrayBuffer> } {
   if (typeof value !== 'object' || value === null) {
@@ -188,10 +193,9 @@ statementsRouter.post('/upload', async (c) => {
   ensureDir(userUploadPath);
 
   const fileBuffer = Buffer.from(await uploadedFile.arrayBuffer());
-  await writeFile(absoluteFilePath, fileBuffer);
-
   const extractedText = await extractPdfText(fileBuffer);
-  const parsedStatement = parseBankStatementDocument(extractedText);
+  const parsedStatement = parseStatementForImport(extractedText);
+  await writeFile(absoluteFilePath, fileBuffer);
   const parsedTransactions = parsedStatement.transactions;
   const { periodStart, periodEnd } = getStatementPeriodFromTransactions(parsedTransactions);
 
@@ -293,7 +297,7 @@ statementsRouter.post('/:id/reparse', async (c) => {
     return c.json({ error: 'Statement cannot be re-parsed because no raw text is stored.' }, 400);
   }
 
-  const parsedStatement = parseBankStatementDocument(rawText);
+  const parsedStatement = parseStatementForImport(rawText);
   const parsedTransactions = parsedStatement.transactions;
   const { periodStart, periodEnd } = getStatementPeriodFromTransactions(parsedTransactions);
 

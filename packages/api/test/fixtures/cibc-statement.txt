@@ -1,0 +1,32 @@
+CIBC credit card statement
+Transactions from December 14 to January 13, 2026
+Your payments
+Trans
+date
+Post
+date Description Amount($)
+Dec 27 Dec 28 PAYMENT THANK YOU/PAIEMENT MERCI 300.00
+Total payments $300.00
+Your new charges and credits
+Trans
+date
+Post
+date Description Spend Categories Amount($)
+Card number XXXX XXXX XXXX XXXX
+Dec 30 Jan 02 Ý SAMPLE FUEL ANYTOWN ON Transportation 45.00
+Dec 31 Jan 01 SAMPLE MARKET ANYTOWN ON Retail and Grocery 90.00
+Jan 06 Jan 08 Ý SAMPLE CAFE
+-- 2 of 4 --
+CIBC credit card statement
+Trans
+date
+Post
+date Description Spend Categories Amount($)
+Card number XXXX XXXX XXXX XXXX
+ANYTOWN ON Restaurants 20.00
+Jan 07 Jan 08 SAMPLE REFUND ANYTOWN ON Retail and Grocery -10.00
+Jan 08 Jan 09 SAMPLE RETURN ANYTOWN ON Retail and Grocery 5.00 CR
+Total for XXXX XXXX XXXX XXXX $140.00
+Spend Categories Transactions Amount($)
+Retail and Grocery 3 75.00
+Total 5 140.00

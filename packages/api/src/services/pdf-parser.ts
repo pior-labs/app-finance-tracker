@@ -15,6 +15,8 @@ export interface ParsedBankStatement {
   transactions: ParsedTransaction[];
 }
 
+export class StatementParseError extends Error {}
+
 export interface ParsedStatementRow {
   transactionDate: string;
   postingDate: string;
@@ -42,6 +44,7 @@ const LEGACY_TABLE_HEADER = 'TRANSACTION POSTING ACTIVITY DESCRIPTION AMOUNT ($)
 const CURRENT_TABLE_HEADER = 'DATE ACTIVITY DESCRIPTION AMOUNT ($)';
 const ROW_START_REGEX =
   /^(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s+(\d{1,2})\s+(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s+(\d{1,2})\s+(.+)$/;
+const CIBC_ROW_START_REGEX = new RegExp(ROW_START_REGEX.source, 'i');
 const AMOUNT_REGEX = /^-?\$\d{1,3}(?:,\d{3})*\.\d{2}$/;
 const PAGE_BREAK_REGEX = /^--\s+\d+\s+of\s+\d+\s+--$/;
 const REFERENCE_NUMBER_REGEX = /^\d{16,25}$/;
@@ -379,9 +382,98 @@ export async function extractPdfText(fileBuffer: Buffer): Promise<string> {
   }
 }
 
+function parseCibcTransactions(rawText: string): ParsedTransaction[] {
+  const periodMatch = rawText.match(/Transactions from\s+([A-Za-z]+)\s+\d{1,2}(?:,\s*(\d{4}))?\s+to\s+([A-Za-z]+)\s+\d{1,2},\s*(\d{4})/i);
+  if (!periodMatch) throw new StatementParseError('CIBC statement period could not be read.');
+  const startMonth = MONTH_INDEX_BY_ABBREV[periodMatch[1].slice(0, 3).toUpperCase()];
+  const endMonth = MONTH_INDEX_BY_ABBREV[periodMatch[3].slice(0, 3).toUpperCase()];
+  if (!startMonth || !endMonth) throw new StatementParseError('CIBC statement period contains an invalid month.');
+  const endYear = Number(periodMatch[4]);
+  const period: StatementPeriod = {
+    startMonth,
+    endMonth,
+    endYear,
+    startYear: Number(periodMatch[2]) || (startMonth > endMonth ? endYear - 1 : endYear)
+  };
+  const transactions: ParsedTransaction[] = [];
+  let section: 'payments' | 'charges' | null = null;
+  let pending: { date: string; details: string } | null = null;
+  const requireCompleteRow = () => {
+    if (pending) throw new StatementParseError('A CIBC transaction could not be read completely. No transactions were imported.');
+  };
+  const date = (month: string, day: string) => {
+    const iso = toIsoDate(month.toUpperCase(), Number(day), period);
+    const parsed = new Date(`${iso}T00:00:00Z`);
+    if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== iso) {
+      throw new StatementParseError('A CIBC transaction contains an invalid date.');
+    }
+    return iso;
+  };
+
+  for (const line of normalizeTextLines(rawText)) {
+    const compact = line.replace(/\s+/g, ' ').trim();
+    if (/^Your payments$/i.test(compact)) {
+      requireCompleteRow();
+      section = 'payments';
+      continue;
+    }
+    if (/^Your new charges and credits(?:\s*\(continued\))?$/i.test(compact)) {
+      section = 'charges';
+      continue;
+    }
+    if (/^Total (?:payments|for)\b/i.test(compact)) {
+      requireCompleteRow();
+      section = null;
+      continue;
+    }
+    // An additional card on the same statement starts another charges table.
+    if (/^Card number\b/i.test(compact)) {
+      section = 'charges';
+      continue;
+    }
+    if (!section || !compact || PAGE_BREAK_REGEX.test(compact)) continue;
+    if (/^(?:CIBC\b|Trans$|Post$|date(?:\s|$)|Transactions from\b|Page \d+|Ý Identifies\b|same rate\.)/i.test(compact)) continue;
+
+    const start = compact.match(CIBC_ROW_START_REGEX);
+    if (start) {
+      requireCompleteRow();
+      date(start[3], start[4]); // Validate the posting date too, but store the transaction date.
+      pending = { date: date(start[1], start[2]), details: start[5] };
+    } else if (pending) {
+      pending.details += ` ${compact}`;
+    } else continue;
+
+    const amountMatch = pending.details.match(/\s+(-?\$?\d[\d,]*\.\d{2})(?:\s*(CR))?$/i);
+    if (!amountMatch) continue;
+    let description = pending.details.slice(0, amountMatch.index).replace(/^Ý\s*/, '').trim();
+    // Spend Categories is a separate CIBC column, not part of the merchant.
+    description = description.replace(/\s+(?:Retail and Grocery|Transportation|Restaurants|Health and Education|Home and Office Improvement|Personal and Household Expenses|Professional and Financial Services|Hotel,? Entertainment and Recreation|Foreign Currency Transactions|Other)\s*$/i, '');
+    if (!description) throw new StatementParseError('A CIBC transaction is missing its description.');
+    const rawAmount = parseAmountCents(amountMatch[1]);
+    const amount = section === 'payments' || amountMatch[2] ? -Math.abs(rawAmount) : rawAmount;
+    transactions.push({
+      date: pending.date,
+      description,
+      merchant: extractMerchantName(description),
+      amount,
+      type: amount < 0 ? 'credit' : 'debit'
+    });
+    pending = null;
+  }
+  requireCompleteRow();
+  return transactions;
+}
+
 export function parseBankStatementDocument(extractedText: string): ParsedBankStatement {
-  const parsedRows = parseRbcStatementTable(extractedText);
-  const institution = /\bRBC\b|ROYAL BANK OF CANADA/i.test(extractedText) || parsedRows.length > 0 ? 'rbc' : null;
+  const isCibc = /\bCIBC\b|CANADIAN IMPERIAL BANK OF COMMERCE/i.test(extractedText);
+  const isRbc = /\bRBC\b|ROYAL BANK OF CANADA/i.test(extractedText);
+  // Require both the bank identity and its statement layout; a merchant name
+  // mentioning another bank must not select that bank's parser.
+  if (isCibc && /Your (?:payments|new charges and credits)/i.test(extractedText)) {
+    return { institution: 'cibc', accountType: 'credit_card', transactions: parseCibcTransactions(extractedText) };
+  }
+  const institution = isRbc ? 'rbc' : isCibc ? 'cibc' : null;
+  const parsedRows = institution === 'rbc' ? parseRbcStatementTable(extractedText) : [];
 
   return {
     institution,
@@ -402,6 +494,19 @@ export function parseBankStatementDocument(extractedText: string): ParsedBankSta
 
 export function parseBankStatementText(extractedText: string): ParsedTransaction[] {
   return parseBankStatementDocument(extractedText).transactions;
+}
+
+// Used by both upload and re-parse before any database writes. An empty parse
+// cannot safely distinguish an unsupported layout from a zero-activity month.
+export function parseStatementForImport(extractedText: string): ParsedBankStatement {
+  const parsed = parseBankStatementDocument(extractedText);
+  if (!parsed.institution) {
+    throw new StatementParseError('Unsupported statement. Upload an RBC or CIBC credit card statement PDF.');
+  }
+  if (parsed.transactions.length === 0) {
+    throw new StatementParseError('No transactions could be read. The statement may be empty, scanned, or use an unsupported layout.');
+  }
+  return parsed;
 }
 
 export async function parseBankStatement(fileBuffer: Buffer): Promise<ParsedTransaction[]> {

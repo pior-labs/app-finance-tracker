@@ -107,6 +107,14 @@ docker compose up --build
 
 The Compose stack includes the API, web application, and MCP server. Loopback-only host bindings are retained for local diagnostics and deployment compatibility; normal production browser traffic enters through the shared Caddy edge.
 
+All three services use `restart: unless-stopped` so Docker restarts exited containers and restores them after a Docker daemon or host restart, unless they were manually stopped. Apply this policy to an existing deployment with:
+
+```bash
+docker compose up -d
+```
+
+Restart policies act on container exits. A network outage or failed health check alone does not restart a container that is still running. Recovery from that condition requires application reconnection logic or separate health-based recovery. See [Docker restart policies](https://docs.docker.com/engine/containers/start-containers-automatically/).
+
 ### Platform networking
 
 The production web and API services join the external `pior_edge` Docker network with stable aliases:

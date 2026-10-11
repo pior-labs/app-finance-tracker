@@ -49,9 +49,20 @@ jobs:
         run: docker build -f packages/api/Dockerfile .
 
       - name: Build web Docker image
-        run: docker build -f packages/web/Dockerfile --secret id=node_auth_token,env=NODE_AUTH_TOKEN .
+        run: docker build -f packages/web/Dockerfile --secret id=node_auth_token,env=NODE_AUTH_TOKEN -t finlens-web:ci .
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify public assets in web Docker image
+        run: |
+          docker run --rm --entrypoint sh finlens-web:ci -ec '
+            for asset in "$@"; do
+              if [ ! -s "/srv/${asset##*/}" ]; then
+                echo "Missing public asset in web image: $asset"
+                exit 1
+              fi
+            done
+          ' -- packages/web/public/*
 
   deploy:
     name: Deploy to OptiPlex

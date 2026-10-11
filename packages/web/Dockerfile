@@ -24,6 +24,7 @@ ARG VITE_API_BASE_URL=/api
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 COPY packages/web/tsconfig.json packages/web/index.html packages/web/vite.config.ts packages/web/components.json ./
 COPY packages/web/src ./src
+COPY packages/web/public ./public
 RUN pnpm build
 
 FROM caddy:2-alpine AS runtime

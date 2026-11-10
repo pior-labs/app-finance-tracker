@@ -34,6 +34,9 @@ configuration alone does not provision a runner or establish a live deployment.
   Never relocate or delete it during release cleanup: it contains uploads.
   Loopback diagnostics, network aliases and the stdio MCP container are preserved.
 - Deployment is now manual after successful CI. A merge no longer restarts Finance.
+- Ingress checks cover the frontend and the existing anonymous
+  `/api/auth/get-session` endpoint used by the web app; container health checks
+  cover the internal API and MCP database access.
 
 ## Release and deployment
 

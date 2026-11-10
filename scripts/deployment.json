@@ -13,6 +13,7 @@
   ],
   "base_url": "https://finance.szarans.ca",
   "health_paths": [
+    "/api/auth/get-session",
     "/"
   ],
   "host_data_mounts": {

@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  validate:
+    name: CI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.8.1
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Typecheck workspace
+        run: pnpm typecheck
+
+      - name: Build workspace
+        run: pnpm build
+
+
+  images:
+    name: Build release images
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build api image
+        id: api
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/api/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ github.repository }}-api:run-${{ github.run_id }}-${{ github.run_attempt }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+      - name: Build web image
+        id: web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/web/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ github.repository }}-web:run-${{ github.run_id }}-${{ github.run_attempt }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
+          secrets: |
+            node_auth_token=${{ secrets.GITHUB_TOKEN }}
+          load: true
+      - name: Verify public assets in release web image
+        run: |
+          docker run --rm --entrypoint sh "ghcr.io/$GITHUB_REPOSITORY-web:run-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT" -ec '
+            for asset in "$@"; do test -s "/srv/${asset##*/}" || exit 1; done
+          ' -- packages/web/public/*
+      - name: Build mcp-server image
+        id: mcp_server
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/mcp-server/Dockerfile
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: ghcr.io/${{ github.repository }}-mcp-server:run-${{ github.run_id }}-${{ github.run_attempt }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=mcp-server
+          cache-to: type=gha,mode=max,scope=mcp-server
+      - name: Write release manifest
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          API_DIGEST: ${{ steps.api.outputs.digest }}
+          WEB_DIGEST: ${{ steps.web.outputs.digest }}
+          MCP_SERVER_DIGEST: ${{ steps.mcp_server.outputs.digest }}
+        run: python3 scripts/release.py create
+      - name: Save release manifest
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ github.run_attempt }}
+          path: release.json
+          if-no-files-found: error
+          retention-days: 90

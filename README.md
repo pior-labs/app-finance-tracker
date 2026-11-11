@@ -148,3 +148,10 @@ The production container uses stdio transport and intentionally publishes no por
 ## Security and scope
 
 FinLens is a private household application rather than a public multi-tenant finance service. Application access is intended for trusted LAN clients and authenticated Tailscale devices. Production credentials, private addresses, and operational secrets are not stored in this public repository.
+
+## Verified CI releases
+
+CI publishes immutable images after validation; production deployment is manual
+and selects a successful main CI run. Configure the separate
+`COMPOSE_PROJECT_NAME` Actions secret and follow [deployment operations](docs/DEPLOYMENT.md)
+for activation, exact run selection, persistent-data boundaries and recovery.

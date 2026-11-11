@@ -1,0 +1,40 @@
+{
+  "services": [
+    "api",
+    "web",
+    "mcp-server"
+  ],
+  "compose_files": [
+    "docker-compose.yml"
+  ],
+  "migration": [
+    "node",
+    "dist/db/migrate.js"
+  ],
+  "base_url": "https://finance.szarans.ca",
+  "health_paths": [
+    "/api/auth/get-session",
+    "/"
+  ],
+  "host_data_mounts": {
+    "api": {
+      "/app/data": "data"
+    }
+  },
+  "build_secrets": [
+    "node_auth_token"
+  ],
+  "preflight_script": "validate-production.sh",
+  "pre_migration": [
+    [
+      "run",
+      "--rm",
+      "--no-deps",
+      "api",
+      "node",
+      "--input-type=module",
+      "-e",
+      "\n  const discoveryUrl = process.env.CENTRAL_AUTH_DISCOVERY_URL;\n  const expectedIssuer = process.env.CENTRAL_AUTH_ISSUER;\n  const response = await fetch(discoveryUrl);\n  if (!response.ok) {\n    throw new Error(`Discovery request failed with HTTP ${response.status}`);\n  }\n  const discovery = await response.json();\n  if (discovery.issuer !== expectedIssuer) {\n    throw new Error(`OIDC issuer mismatch: expected ${expectedIssuer}, received ${discovery.issuer}`);\n  }\n  console.log(`Verified central Auth issuer: ${discovery.issuer}`);\n"
+    ]
+  ]
+}

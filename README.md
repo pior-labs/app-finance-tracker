@@ -50,6 +50,9 @@ https://auth.szarans.ca/api/auth
 - pnpm
 - PostgreSQL
 - a local or reachable Pior Labs Auth instance for the full SSO flow
+- GitHub Packages read access for `@pior-labs/design-system`: export a token with
+  `read:packages` as `GITHUB_TOKEN` and add `//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}` to your
+  user-level `~/.npmrc` (current pnpm ignores credentials in the committed `.npmrc`)
 
 ### Setup
 

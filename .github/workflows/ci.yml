@@ -28,6 +28,10 @@ jobs:
         with:
           version: 10.8.1
 
+      # pnpm only expands credentials from user-level config. The literal
+      # ${NODE_AUTH_TOKEN} is expanded at install time; no token is written.
+      - name: Configure GitHub Packages auth
+        run: echo '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' >> ~/.npmrc
       - name: Install workspace dependencies
         run: pnpm install --frozen-lockfile
         env:

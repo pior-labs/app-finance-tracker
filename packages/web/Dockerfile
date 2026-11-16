@@ -10,10 +10,15 @@ COPY packages/mcp-server/package.json ./packages/mcp-server/package.json
 COPY packages/shared/package.json ./packages/shared/package.json
 COPY packages/web/package.json ./packages/web/package.json
 # @pior-labs/design-system is pulled from GitHub Packages; the token is
-# mounted as a build secret so it never persists in an image layer.
+# mounted as a build secret so it never persists in an image layer. pnpm only
+# expands credentials from user-level config, so the auth line (holding the
+# literal ${NODE_AUTH_TOKEN}) lives in a temporary user config.
 RUN --mount=type=secret,id=node_auth_token \
+    printf '%s\n' '//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}' > /tmp/registry-auth.npmrc && \
     NODE_AUTH_TOKEN="$(cat /run/secrets/node_auth_token)" \
-    pnpm install --frozen-lockfile --filter @finlens/web...
+    NPM_CONFIG_USERCONFIG=/tmp/registry-auth.npmrc \
+    pnpm install --frozen-lockfile --filter @finlens/web... && \
+    rm /tmp/registry-auth.npmrc
 
 FROM deps AS build
 COPY packages/shared/tsconfig.json ./packages/shared/tsconfig.json

@@ -20,8 +20,8 @@ importers:
         specifier: workspace:*
         version: link:../shared
       '@hono/node-server':
-        specifier: ^1.14.1
-        version: 1.19.14(hono@4.13.16)
+        specifier: ^2.0.0
+        version: 2.1.9(hono@4.12.23)
       better-auth:
         specifier: ^1.6.9
         version: 1.6.14(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(kysely@0.29.2)(postgres@3.4.9))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -2520,6 +2520,10 @@ snapshots:
   '@hono/node-server@2.1.9(hono@4.13.19)':
     dependencies:
       hono: 4.13.19
+
+  '@hono/node-server@2.1.9(hono@4.12.23)':
+    dependencies:
+      hono: 4.12.23
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

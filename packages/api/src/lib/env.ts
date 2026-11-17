@@ -59,9 +59,11 @@ export const env = {
   betterAuthTrustedOrigins: parseTrustedOrigins(betterAuthUrl, webPort),
   centralAuth: {
     // Provider id must match the OAuth callback path registered with the auth
-    // service: /api/auth/oauth2/callback/auth-pior
+    // service: /api/auth/callback/auth-pior
     providerId: 'auth-pior',
     discoveryUrl: requiredCentralAuth('CENTRAL_AUTH_DISCOVERY_URL'),
+    // Better Auth reads the issuer from discovery. This expected value is kept
+    // so deployment verification can pin it (scripts/deployment.json).
     issuer: requiredCentralAuth('CENTRAL_AUTH_ISSUER'),
     clientId: requiredCentralAuth('CENTRAL_AUTH_CLIENT_ID'),
     clientSecret: requiredCentralAuth('CENTRAL_AUTH_CLIENT_SECRET')

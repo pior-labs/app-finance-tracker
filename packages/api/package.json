@@ -19,11 +19,10 @@
     "merchants:normalize": "tsx src/scripts/normalize-merchants.ts"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "^1.6.9",
     "@finlens/db": "workspace:*",
     "@finlens/shared": "workspace:*",
     "@hono/node-server": "^2.0.0",
-    "better-auth": "^1.6.9",
+    "better-auth": "^1.7.23",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.45.2",
     "hono": "^4.7.2",

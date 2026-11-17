@@ -27,8 +27,11 @@ export const auth = betterAuth({
         {
           providerId: env.centralAuth.providerId,
           discoveryUrl: env.centralAuth.discoveryUrl,
-          issuer: env.centralAuth.issuer,
-          requireIssuerValidation: true,
+          // Better Auth 1.7 takes the issuer and signing keys from discovery and
+          // verifies each ID token's signature, issuer, audience and nonce.
+          // Requiring that verification makes a discovery document without an
+          // issuer or JWKS disable the provider instead of silently skipping it.
+          requireIdTokenVerification: true,
           clientId: env.centralAuth.clientId,
           clientSecret: env.centralAuth.clientSecret,
           scopes: ['openid', 'profile', 'email', 'offline_access'],

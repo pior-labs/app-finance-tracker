@@ -46,8 +46,9 @@ https://auth.szarans.ca/api/auth
 
 ### Prerequisites
 
-- Node.js
-- pnpm
+- the Node.js version in `.node-version` (fnm, mise, nodenv and asdf read it directly)
+- any pnpm release; pnpm switches itself to the version in `packageManager`.
+  Node.js 25 and later no longer bundle Corepack
 - PostgreSQL
 - a local or reachable Pior Labs Auth instance for the full SSO flow
 - GitHub Packages read access for `@pior-labs/design-system`: export a token with

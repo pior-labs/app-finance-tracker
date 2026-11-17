@@ -2,7 +2,10 @@
   "name": "finlens",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@10.8.1",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": "26.x"
+  },
   "scripts": {
     "dev": "pnpm --filter @finlens/shared build && pnpm --filter @finlens/db build && pnpm --parallel --filter @finlens/api --filter @finlens/web dev",
     "dev:api": "pnpm --filter @finlens/shared build && pnpm --filter @finlens/db build && pnpm --filter @finlens/api dev",

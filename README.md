@@ -19,7 +19,7 @@ The production application is reached at `https://finance.szarans.ca`. Split-hor
 
 | Component | Technology | Responsibility |
 | --- | --- | --- |
-| Web | React 19, Vite, Tailwind CSS, Pior Labs design system | User interface |
+| Web | React, Vite, Tailwind CSS, Pior Labs design system | User interface |
 | API | Hono, TypeScript | Application API and session integration |
 | Database | PostgreSQL, Drizzle ORM | Finance data and migrations |
 | Auth | Better Auth client integration + Pior Labs Auth | Central SSO |
@@ -36,7 +36,7 @@ https://auth.szarans.ca/api/auth
 
 - `packages/api/` — Hono + TypeScript API, authentication integration, migrations, and application services
 - `packages/db/` — shared Drizzle schema, PostgreSQL client factory, and finance queries
-- `packages/web/` — React 19 + Vite frontend using the shared Pior Labs design system
+- `packages/web/` - React + Vite frontend using the shared Pior Labs design system
 - `packages/shared/` — shared finance contracts and pure date/money helpers
 - `packages/mcp-server/` — internal read-only MCP server
 - `docs/` — application specifications and supporting documentation
